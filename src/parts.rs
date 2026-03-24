@@ -6,8 +6,8 @@ use super::Timestamp;
 use super::c_bindings;
 
 use crate::constant::{
-    TIMEZONE_UTC, U32_NANOS_IN_MILLI, U64_MILLIS_IN_SECOND, U64_NANOS_IN_MILLI,
-    U128_NANOS_IN_SECOND,
+    DAY_NAMES, MONTH_NAMES, TIMEZONE_UTC, U32_NANOS_IN_MILLI, U64_MILLIS_IN_SECOND,
+    U64_NANOS_IN_MILLI, U128_NANOS_IN_SECOND,
 };
 
 #[derive(Debug, PartialEq)]
@@ -42,8 +42,8 @@ impl<'l> TimestampParts<'_> {
             month_day: tm.tm_mday as _,
             month: (1 + tm.tm_mon) as _,
             year: (1900 + tm.tm_year) as _,
-            week_day: tm.tm_wday as _,
-            year_day: tm.tm_yday as _,
+            week_day: (1 + tm.tm_wday) as _,
+            year_day: (1 + tm.tm_yday) as _,
             gmt_offset_secs: 0 as _,
             timezone: TIMEZONE_UTC,
         }
@@ -80,8 +80,8 @@ impl<'l> TimestampParts<'_> {
             month_day: tm.tm_mday as _,
             month: (1 + tm.tm_mon) as _,
             year: (1900 + tm.tm_year) as _,
-            week_day: tm.tm_wday as _,
-            year_day: tm.tm_yday as _,
+            week_day: (1 + tm.tm_wday) as _,
+            year_day: (1 + tm.tm_yday) as _,
             gmt_offset_secs: gmt_offset_secs,
             timezone: timezone,
         }
@@ -108,14 +108,17 @@ impl<'l> TimestampParts<'_> {
 
 impl<'l> TimestampParts<'_> {
     pub fn day_name(&self) -> &str {
-        ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][(self.week_day % 8) as usize]
+        if self.week_day == 0 {
+            panic!("invalid week day for {self:?}");
+        }
+        DAY_NAMES[((self.week_day - 1) % 7) as usize]
     }
 
     pub fn month_name(&self) -> &str {
-        [
-            "---", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov",
-            "Dec",
-        ][(self.month % 13) as usize]
+        if self.week_day == 0 {
+            panic!("invalid month for {self:?}");
+        }
+        MONTH_NAMES[((self.month - 1) % 12) as usize]
     }
 
     pub fn utc_to_timestamp(&self) -> Timestamp {
@@ -154,3 +157,35 @@ impl<'l> TimestampParts<'_> {
 }
 
 /* ----------------------- Tests ----------------------- */
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn utc_to_and_from_parts() {
+        let ts = Timestamp::from_utc_date(2026, 03, 24, 18, 47, 31, 111, 222);
+        let parts = ts.as_utc_parts();
+
+        assert_eq!(
+            parts,
+            TimestampParts {
+                nanoseconds: 222,
+                milliseconds: 111,
+                seconds: 31,
+                minutes: 47,
+                hour: 18,
+                month_day: 24,
+                month: 3,
+                year: 2026,
+                week_day: 3,
+                year_day: 83,
+                gmt_offset_secs: 0,
+                timezone: "UTC",
+            }
+        );
+
+        let from_parts: Timestamp = parts.utc_to_timestamp();
+        assert_eq!(ts, from_parts);
+    }
+}

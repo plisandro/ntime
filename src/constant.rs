@@ -1,4 +1,8 @@
 pub const TIMEZONE_UTC: &str = "UTC";
+pub const DAY_NAMES: [&str; 7] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+pub const MONTH_NAMES: [&str; 12] = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
 
 // dumb conversion constants, but these *really* help redability
 pub const U32_MILLIS_IN_SECOND: u32 = 1000;
