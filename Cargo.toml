@@ -1,0 +1,28 @@
+[package]
+name = "ntime"
+description = "NanoTime is a lightweight, high-performance Rust library for nanosecond-precision timestamps."
+version = "0.1.0"
+authors = ["Lisandro Pin <lisandrop@proton.me>"]
+categories = ["date-and-time"]
+license = "MIT"
+edition = "2024"
+exclude = [".github/", ".gitignore", "assets/"]
+readme = "README.md"
+keywords = ["duration", "time", "timestamp"]
+#repository = "https://github.com/mgeisler/textwrap"
+
+include = [
+  "Cargo.toml",
+  "LICENSE",
+  "src/**/*",
+]
+
+[lib]
+name = "ntime"
+path = "src/lib.rs"
+
+[dependencies]
+# no external dependencies FTW
+
+[features]
+mock-test = []
