@@ -22,11 +22,31 @@ pub struct TimestampParts<'l> {
     pub year: u16,
     pub week_day: u8,
     pub year_day: u16,
-    pub gmt_offset_secs: i16,
+    pub gmt_offset_negative: bool,
+    pub gmt_offset_hours: u8,
+    pub gmt_offset_minutes: u8,
     pub timezone: &'l str,
 }
 
 impl<'l> TimestampParts<'_> {
+    fn _gmt_offset_parts(gmt_offset_secs: i16) -> (bool, u8, u8) {
+        let secs: i16;
+        let negative: bool;
+
+        if gmt_offset_secs >= 0 {
+            negative = false;
+            secs = gmt_offset_secs;
+        } else {
+            negative = true;
+            secs = -gmt_offset_secs;
+        }
+
+        let hours = (secs / (60 * 60)) as u8;
+        let mins = ((secs % (60 * 60)) / 60) as u8;
+
+        (negative, hours, mins)
+    }
+
     pub fn utc(seconds: u64, nanos: u32) -> Self {
         let ts = seconds as c_bindings::CTime;
         let Some(tm) = c_bindings::c_time_to_utc_tm(ts) else {
@@ -44,7 +64,9 @@ impl<'l> TimestampParts<'_> {
             year: (1900 + tm.tm_year) as _,
             week_day: (1 + tm.tm_wday) as _,
             year_day: (1 + tm.tm_yday) as _,
-            gmt_offset_secs: 0 as _,
+            gmt_offset_negative: false,
+            gmt_offset_hours: 0 as _,
+            gmt_offset_minutes: 0 as _,
             timezone: TIMEZONE_UTC,
         }
     }
@@ -68,8 +90,11 @@ impl<'l> TimestampParts<'_> {
         }
         #[cfg(target_env = "msvc")]
         {
-            (timezone, gmt_offset) = c_bindings::c_tz_info();
+            (timezone, gmt_offset_secs) = c_bindings::c_tz_info();
         }
+
+        let (gmt_offset_negative, gmt_offset_hours, gmt_offset_minutes) =
+            Self::_gmt_offset_parts(gmt_offset_secs);
 
         TimestampParts {
             nanoseconds: (nanos % U32_NANOS_IN_MILLI) as _,
@@ -82,7 +107,9 @@ impl<'l> TimestampParts<'_> {
             year: (1900 + tm.tm_year) as _,
             week_day: (1 + tm.tm_wday) as _,
             year_day: (1 + tm.tm_yday) as _,
-            gmt_offset_secs: gmt_offset_secs,
+            gmt_offset_negative: gmt_offset_negative,
+            gmt_offset_hours: gmt_offset_hours,
+            gmt_offset_minutes: gmt_offset_minutes,
             timezone: timezone,
         }
     }
@@ -142,28 +169,6 @@ impl<'l> TimestampParts<'_> {
         let nanos = self.nanoseconds + ((self.milliseconds as u32) * U32_NANOS_IN_MILLI);
         super::Timestamp::new(secs, nanos)
     }
-
-    pub fn gmt_offset_sign(&self) -> &str {
-        if self.gmt_offset_secs >= 0 { "+" } else { "-" }
-    }
-
-    pub fn gmt_offset_hours(&self) -> u8 {
-        let secs = if self.gmt_offset_secs >= 0 {
-            self.gmt_offset_secs
-        } else {
-            -self.gmt_offset_secs
-        };
-        (secs / (60 * 60)) as _
-    }
-
-    pub fn gmt_offset_minutes(&self) -> u8 {
-        let secs = if self.gmt_offset_secs >= 0 {
-            self.gmt_offset_secs
-        } else {
-            -self.gmt_offset_secs
-        };
-        ((secs % (60 * 60)) / 60) as _
-    }
 }
 
 /* ----------------------- Tests ----------------------- */
@@ -171,6 +176,12 @@ impl<'l> TimestampParts<'_> {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn gmt_offset_parts() {
+        assert_eq!(TimestampParts::_gmt_offset_parts(30600), (false, 8, 30));
+        assert_eq!(TimestampParts::_gmt_offset_parts(-13500), (true, 3, 45));
+    }
 
     #[test]
     fn utc_to_and_from_parts() {
@@ -190,51 +201,14 @@ mod test {
                 year: 2026,
                 week_day: 3,
                 year_day: 83,
-                gmt_offset_secs: 0,
+                gmt_offset_negative: false,
+                gmt_offset_hours: 0,
+                gmt_offset_minutes: 0,
                 timezone: "UTC",
             }
         );
 
         let from_parts: Timestamp = parts.utc_to_timestamp();
         assert_eq!(ts, from_parts);
-    }
-
-    #[test]
-    fn gmt_offset_parts() {
-        let mut parts = TimestampParts {
-            nanoseconds: 0,
-            milliseconds: 0,
-            seconds: 0,
-            minutes: 0,
-            hour: 0,
-            month_day: 0,
-            month: 3,
-            year: 0,
-            week_day: 0,
-            year_day: 0,
-            gmt_offset_secs: 30600,
-            timezone: "weird_timezone_1",
-        };
-        assert_eq!(parts.gmt_offset_sign(), "+");
-        assert_eq!(parts.gmt_offset_hours(), 8);
-        assert_eq!(parts.gmt_offset_minutes(), 30);
-
-        let mut parts = TimestampParts {
-            nanoseconds: 0,
-            milliseconds: 0,
-            seconds: 0,
-            minutes: 0,
-            hour: 0,
-            month_day: 0,
-            month: 3,
-            year: 0,
-            week_day: 0,
-            year_day: 0,
-            gmt_offset_secs: -13500,
-            timezone: "weird_timezone_2",
-        };
-        assert_eq!(parts.gmt_offset_sign(), "-");
-        assert_eq!(parts.gmt_offset_hours(), 3);
-        assert_eq!(parts.gmt_offset_minutes(), 45);
     }
 }

@@ -63,7 +63,6 @@ impl StringFormat {
     }
 
     pub fn write<T: io::Write>(&self, out: &mut T, ts: &Timestamp) -> io::Result<()> {
-        //Result<(), io::Error> {
         let parts = if self.is_utc() {
             ts.as_utc_parts()
         } else {
@@ -90,9 +89,9 @@ impl StringFormat {
                 hour = parts.hour,
                 mins = parts.minutes,
                 secs = parts.seconds,
-                offset_sign = parts.gmt_offset_sign(),
-                offset_hours = parts.gmt_offset_hours(),
-                offset_minutes = parts.gmt_offset_minutes(),
+                offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
+                offset_hours = parts.gmt_offset_hours,
+                offset_minutes = parts.gmt_offset_minutes,
             ),
             StringFormat::UtcMillisDateTime => write!(
                 out,
@@ -115,9 +114,9 @@ impl StringFormat {
                 mins = parts.minutes,
                 secs = parts.seconds,
                 msecs = parts.milliseconds,
-                offset_sign = parts.gmt_offset_sign(),
-                offset_hours = parts.gmt_offset_hours(),
-                offset_minutes = parts.gmt_offset_minutes(),
+                offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
+                offset_hours = parts.gmt_offset_hours,
+                offset_minutes = parts.gmt_offset_minutes,
             ),
             StringFormat::UtcNanosDateTime => write!(
                 out,
@@ -142,9 +141,9 @@ impl StringFormat {
                 secs = parts.seconds,
                 msecs = parts.milliseconds,
                 nsecs = parts.nanoseconds,
-                offset_sign = parts.gmt_offset_sign(),
-                offset_hours = parts.gmt_offset_hours(),
-                offset_minutes = parts.gmt_offset_minutes(),
+                offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
+                offset_hours = parts.gmt_offset_hours,
+                offset_minutes = parts.gmt_offset_minutes,
             ),
             StringFormat::UtcFileName | StringFormat::LocalFileName => write!(
                 out,
@@ -190,9 +189,9 @@ impl StringFormat {
                 hour = parts.hour,
                 mins = parts.minutes,
                 secs = parts.seconds,
-                offset_sign = parts.gmt_offset_sign(),
-                offset_hours = parts.gmt_offset_hours(),
-                offset_minutes = parts.gmt_offset_minutes(),
+                offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
+                offset_hours = parts.gmt_offset_hours,
+                offset_minutes = parts.gmt_offset_minutes,
             ),
             StringFormat::UtcRFC3339 => write!(
                 out,
@@ -213,9 +212,9 @@ impl StringFormat {
                 hour = parts.hour,
                 mins = parts.minutes,
                 secs = parts.seconds,
-                offset_sign = parts.gmt_offset_sign(),
-                offset_hours = parts.gmt_offset_hours(),
-                offset_minutes = parts.gmt_offset_minutes(),
+                offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
+                offset_hours = parts.gmt_offset_hours,
+                offset_minutes = parts.gmt_offset_minutes,
             ),
             StringFormat::UtcHTTP
             | StringFormat::UtcRFC7231
@@ -244,10 +243,14 @@ impl StringFormat {
             panic!("failed to serialize Timestamp: {}", e);
         }
 
+        let s = unsafe { String::from_utf8_unchecked(out.into_inner()) };
+        /*
         match String::from_utf8(out.into_inner()) {
             Ok(s) => s,
             Err(e) => panic!("failed to convert Timestamp to String: {}", e),
         }
+        */
+        s
     }
 }
 

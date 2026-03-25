@@ -73,7 +73,9 @@ impl Timestamp {
             year: year,
             week_day: 0,
             year_day: 0,
-            gmt_offset_secs: 0,
+            gmt_offset_negative: false,
+            gmt_offset_hours: 0,
+            gmt_offset_minutes: 0,
             timezone: TIMEZONE_UTC,
         }
         .utc_to_timestamp()
@@ -111,11 +113,11 @@ impl Timestamp {
         TimestampParts::local(self.seconds, self.nanoseconds)
     }
 
-    pub fn as_string(&self, format: &StringFormat) -> String {
+    pub fn as_string(&self, format: StringFormat) -> String {
         format.as_string(self)
     }
 
-    pub fn write<T: io::Write>(&self, out: &mut T, format: &StringFormat) -> io::Result<()> {
+    pub fn write<T: io::Write>(&self, out: &mut T, format: StringFormat) -> io::Result<()> {
         format.write(out, self)
     }
 
@@ -159,7 +161,7 @@ impl Timestamp {
 
 impl fmt::Display for Timestamp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.as_string(&StringFormat::LocalDateTime))
+        write!(f, "{}", self.as_string(StringFormat::LocalDateTime))
     }
 }
 
@@ -302,7 +304,9 @@ mod tests {
                 year: 2026,
                 week_day: 2,
                 year_day: 61,
-                gmt_offset_secs: 0,
+                gmt_offset_negative: false,
+                gmt_offset_hours: 0,
+                gmt_offset_minutes: 0,
                 timezone: TIMEZONE_UTC,
             },
             "UTC parts from milliseconds timestamp"
@@ -321,7 +325,9 @@ mod tests {
                 year: 2026,
                 week_day: 2,
                 year_day: 61,
-                gmt_offset_secs: 0,
+                gmt_offset_negative: false,
+                gmt_offset_hours: 0,
+                gmt_offset_minutes: 0,
                 timezone: TIMEZONE_UTC,
             },
             "UTC parts from nanoseconds timestamp"
@@ -340,7 +346,9 @@ mod tests {
                 year: 2026,
                 week_day: 0,
                 year_day: 0,
-                gmt_offset_secs: 0,
+                gmt_offset_negative: false,
+                gmt_offset_hours: 0,
+                gmt_offset_minutes: 0,
                 timezone: TIMEZONE_UTC,
             }
             .utc_to_timestamp(),
