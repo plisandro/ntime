@@ -10,6 +10,8 @@ pub enum StringFormat {
 	UtcMillisDateTime,
 	/// Compact datetime with nanoseconds, in UTC: `2026-03-02 13:22:15.488728341`
 	UtcNanosDateTime,
+	/// Compact date, in UTC: `2025-03-02`
+	UtcDate,
 	/// Compact time, in UTC: `13:22:15`
 	UtcTime,
 	/// Compact time with milliseconds, in UTC: `13:22:15.488`
@@ -33,6 +35,8 @@ pub enum StringFormat {
 	LocalMillisDateTime,
 	/// Compact datetime with nanoseconds, in local timezone: `2026-03-02 13:22:15.488728341 +0200`
 	LocalNanosDateTime,
+	/// Compact date, in local timezone: `2025-03-02`
+	LocalDate,
 	/// Compact time, in local timezone: `15:22:15`
 	LocalTime,
 	/// Compact time with milliseconds, in local timezone: `15:22:15.488`
@@ -179,6 +183,7 @@ impl StringFormat {
 				mins = parts.minutes,
 				secs = parts.seconds,
 			),
+			StringFormat::UtcDate | StringFormat::LocalDate => write!(out, "{year}-{month:02}-{day:02}", year = parts.year, month = parts.month, day = parts.month_day),
 			StringFormat::UtcTime | StringFormat::LocalTime => write!(out, "{hour:02}:{mins:02}:{secs:02}", hour = parts.hour, mins = parts.minutes, secs = parts.seconds),
 			StringFormat::UtcMillisTime | StringFormat::LocalMillisTime => write!(
 				out,
@@ -291,6 +296,7 @@ mod test_format {
 		assert_eq!(StringFormat::UtcMillisDateTime.as_string(&ts), "2026-03-06 14:43:49.038");
 		assert_eq!(StringFormat::UtcNanosDateTime.as_string(&ts), "2026-03-06 14:43:49.038023456");
 		assert_eq!(StringFormat::UtcFileName.as_string(&ts), "2026-03-06_14-43-49");
+		assert_eq!(StringFormat::UtcDate.as_string(&ts), "2026-03-06");
 		assert_eq!(StringFormat::UtcTime.as_string(&ts), "14:43:49");
 		assert_eq!(StringFormat::UtcMillisTime.as_string(&ts), "14:43:49.038");
 		assert_eq!(StringFormat::UtcNanosTime.as_string(&ts), "14:43:49.038023456");
@@ -309,6 +315,7 @@ mod test_format {
 			assert_eq!(StringFormat::LocalMillisDateTime.as_string(&ts), "2026-03-06 11:43:49.038 -0300");
 			assert_eq!(StringFormat::LocalNanosDateTime.as_string(&ts), "2026-03-06 11:43:49.038023456 -0300");
 			assert_eq!(StringFormat::LocalFileName.as_string(&ts), "2026-03-06_11-43-49");
+			assert_eq!(StringFormat::LocalDate.as_string(&ts), "2026-03-06");
 			assert_eq!(StringFormat::LocalTime.as_string(&ts), "11:43:49");
 			assert_eq!(StringFormat::LocalMillisTime.as_string(&ts), "11:43:49.038");
 			assert_eq!(StringFormat::LocalNanosTime.as_string(&ts), "11:43:49.038023456");

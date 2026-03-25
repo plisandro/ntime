@@ -6,7 +6,7 @@ use std::os::raw::c_long;
 
 /* ----------------------- Bindings for C stdlib time functions ----------------------- */
 
-// time_t is platform-specific, so use the largest type available
+// time_t is platform-specific, so use the largest single-register type available
 pub type CTime = u64;
 #[cfg(target_env = "msvc")]
 pub type CErrno = c_char;
@@ -52,6 +52,7 @@ unsafe extern "C" {
 	unsafe fn localtime_r(ts: *const CTime, tm: *mut c_tm) -> *mut c_tm;
 	unsafe fn timegm(tm: *mut c_tm) -> CTime;
 	#[cfg(test)]
+	// tzet() is only used to temporarily change the local timezone in tests
 	unsafe fn tzset();
 }
 
@@ -133,6 +134,7 @@ pub fn c_utc_tm_to_time(tm: &mut c_tm) -> CTime {
 }
 
 #[cfg(test)]
+/// Forces a libc reload of timezone information. Used only for testing.
 pub fn c_reload_tz_info() {
 	unsafe {
 		#[cfg(not(target_env = "msvc"))]
