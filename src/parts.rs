@@ -148,11 +148,21 @@ impl<'l> TimestampParts<'_> {
     }
 
     pub fn gmt_offset_hours(&self) -> u8 {
-        (self.gmt_offset_secs / (60 * 60)) as _
+        let secs = if self.gmt_offset_secs >= 0 {
+            self.gmt_offset_secs
+        } else {
+            -self.gmt_offset_secs
+        };
+        (secs / (60 * 60)) as _
     }
 
     pub fn gmt_offset_minutes(&self) -> u8 {
-        ((self.gmt_offset_secs % (60 * 60)) / 60) as _
+        let secs = if self.gmt_offset_secs >= 0 {
+            self.gmt_offset_secs
+        } else {
+            -self.gmt_offset_secs
+        };
+        ((secs % (60 * 60)) / 60) as _
     }
 }
 
@@ -187,5 +197,44 @@ mod test {
 
         let from_parts: Timestamp = parts.utc_to_timestamp();
         assert_eq!(ts, from_parts);
+    }
+
+    #[test]
+    fn gmt_offset_parts() {
+        let mut parts = TimestampParts {
+            nanoseconds: 0,
+            milliseconds: 0,
+            seconds: 0,
+            minutes: 0,
+            hour: 0,
+            month_day: 0,
+            month: 3,
+            year: 0,
+            week_day: 0,
+            year_day: 0,
+            gmt_offset_secs: 30600,
+            timezone: "weird_timezone_1",
+        };
+        assert_eq!(parts.gmt_offset_sign(), "+");
+        assert_eq!(parts.gmt_offset_hours(), 8);
+        assert_eq!(parts.gmt_offset_minutes(), 30);
+
+        let mut parts = TimestampParts {
+            nanoseconds: 0,
+            milliseconds: 0,
+            seconds: 0,
+            minutes: 0,
+            hour: 0,
+            month_day: 0,
+            month: 3,
+            year: 0,
+            week_day: 0,
+            year_day: 0,
+            gmt_offset_secs: -13500,
+            timezone: "weird_timezone_2",
+        };
+        assert_eq!(parts.gmt_offset_sign(), "-");
+        assert_eq!(parts.gmt_offset_hours(), 3);
+        assert_eq!(parts.gmt_offset_minutes(), 45);
     }
 }

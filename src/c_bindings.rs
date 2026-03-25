@@ -51,6 +51,7 @@ unsafe extern "C" {
     unsafe fn gmtime_r(ts: *const CTime, tm: *mut c_tm) -> *mut c_tm;
     unsafe fn localtime_r(ts: *const CTime, tm: *mut c_tm) -> *mut c_tm;
     unsafe fn timegm(tm: *mut c_tm) -> CTime;
+    unsafe fn tzset();
 }
 
 // Windows MSVC standard time functions
@@ -67,6 +68,7 @@ unsafe extern "C" {
         sizeInBytes: *mut c_size_t,
         index: *mut c_int,
     ) -> CErrno;
+    // TODO: add Windows version of tszet for tests.
 }
 
 // Safe C function wrappers
@@ -132,6 +134,19 @@ pub fn c_utc_tm_to_time(tm: &mut c_tm) -> CTime {
     }
 
     ct
+}
+
+pub fn c_reload_tz_info() {
+    unsafe {
+        #[cfg(not(target_env = "msvc"))]
+        {
+            tzset();
+        }
+        #[cfg(target_env = "msvc")]
+        {
+            todo!("c_reload_tz_info() not yet implemented for Windows");
+        }
+    }
 }
 
 #[cfg(target_env = "msvc")]

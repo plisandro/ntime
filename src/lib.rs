@@ -2,6 +2,7 @@ mod c_bindings;
 mod constant;
 pub mod format;
 mod parts;
+mod test_helpers;
 
 use core::ops::Sub;
 use std::cmp::{Ord, Ordering, PartialOrd};
@@ -197,6 +198,7 @@ pub fn sleep_millis(millis: u64) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_helpers;
 
     #[test]
     fn from_date() {
@@ -262,28 +264,28 @@ mod tests {
         assert_eq!(ts.as_nanos(), 1772457319038123456, "cast to nanos");
     }
 
-    // TODO: pin timezone for these tests
-    /*
     #[test]
     fn to_string() {
-        assert_eq!(
-            Timestamp::new(1772457020, 789).to_string(),
-            "2026-03-02 13:10:20.789"
-        );
-        assert_eq!(
-            Timestamp::from_secs(1772457213).to_string(),
-            "2026-03-02 13:13:33.000",
-        );
-        assert_eq!(
-            Timestamp::from_millis(1772457213123).to_string(),
-            "2026-03-02 13:13:33.123",
-        );
-        assert_eq!(
-            Timestamp::from_utc_date(2026, 03, 06, 14, 43, 39, 128, 564).to_string(),
-            "2026-03-06 14:43:39.128",
-        );
+        // the Display trait implementation serializes Timestamps into local time strings.
+        test_helpers::with_mock_timezone("Asia/Macao", || {
+            assert_eq!(
+                Timestamp::new(1772457020, 789).to_string(),
+                "2026-03-02 21:10:20 +0800",
+            );
+            assert_eq!(
+                Timestamp::from_secs(1772457213).to_string(),
+                "2026-03-02 21:13:33 +0800",
+            );
+            assert_eq!(
+                Timestamp::from_millis(1772457213123).to_string(),
+                "2026-03-02 21:13:33 +0800",
+            );
+            assert_eq!(
+                Timestamp::from_utc_date(2026, 03, 06, 14, 43, 39, 128, 564).to_string(),
+                "2026-03-06 22:43:39 +0800",
+            );
+        });
     }
-    */
 
     #[test]
     fn utc_parts_conversion() {

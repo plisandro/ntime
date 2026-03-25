@@ -1,6 +1,7 @@
 use std::io;
 
 use crate::Timestamp;
+use crate::test_helpers;
 
 pub enum StringFormat {
     UtcDateTime,       // "2026-03-02 13:22:15"
@@ -257,6 +258,21 @@ mod test_format {
     use super::*;
 
     #[test]
+    fn timestamp_as_number() {
+        let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456);
+
+        assert_eq!(StringFormat::TimestampSeconds.as_string(&ts), "1772808229");
+        assert_eq!(
+            StringFormat::TimestampMilliseconds.as_string(&ts),
+            "1772808229038"
+        );
+        assert_eq!(
+            StringFormat::TimestampNanoseconds.as_string(&ts),
+            "1772808229038023456"
+        );
+    }
+
+    #[test]
     fn timestamp_as_utc_string() {
         let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456);
 
@@ -298,48 +314,51 @@ mod test_format {
             StringFormat::UtcRFC7231.as_string(&ts),
             "Fri, 06 Mar 2026 14:43:49 UTC"
         );
-
-        assert_eq!(StringFormat::TimestampSeconds.as_string(&ts), "1772808229");
-        assert_eq!(
-            StringFormat::TimestampMilliseconds.as_string(&ts),
-            "1772808229038"
-        );
-        assert_eq!(
-            StringFormat::TimestampNanoseconds.as_string(&ts),
-            "1772808229038023456"
-        );
     }
 
-    // TODO: this test does nothing but verifying the library doesn't crash. improve :)
     #[test]
     fn timestamp_as_local_string() {
-        let now = Timestamp::now();
+        test_helpers::with_mock_timezone("America/Montevideo", || {
+            let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456);
 
-        println!(
-            "RFC2822 utc:   {}",
-            now.as_string(&StringFormat::UtcRFC2822)
-        );
-        println!(
-            "RFC2822 local: {}",
-            now.as_string(&StringFormat::LocalRFC2822)
-        );
-
-        println!(
-            "RFC7231 utc:   {}",
-            now.as_string(&StringFormat::UtcRFC7231)
-        );
-        println!(
-            "RFC7231 local: {}",
-            now.as_string(&StringFormat::LocalRFC7231)
-        );
-
-        println!(
-            "RFC3339 utc:   {}",
-            now.as_string(&StringFormat::UtcRFC3339)
-        );
-        println!(
-            "RFC3339 local: {}",
-            now.as_string(&StringFormat::LocalRFC3339)
-        );
+            assert_eq!(
+                StringFormat::LocalDateTime.as_string(&ts),
+                "2026-03-06 11:43:49 -0300"
+            );
+            assert_eq!(
+                StringFormat::LocalMillisDateTime.as_string(&ts),
+                "2026-03-06 11:43:49.038 -0300"
+            );
+            assert_eq!(
+                StringFormat::LocalNanosDateTime.as_string(&ts),
+                "2026-03-06 11:43:49.038023456 -0300"
+            );
+            assert_eq!(
+                StringFormat::LocalFileName.as_string(&ts),
+                "2026-03-06_11-43-49"
+            );
+            assert_eq!(StringFormat::LocalTime.as_string(&ts), "11:43:49");
+            assert_eq!(StringFormat::LocalMillisTime.as_string(&ts), "11:43:49.038");
+            assert_eq!(
+                StringFormat::LocalNanosTime.as_string(&ts),
+                "11:43:49.038023456"
+            );
+            assert_eq!(
+                StringFormat::LocalRFC2822.as_string(&ts),
+                "Fri, 06 Mar 2026 11:43:49 -0300"
+            );
+            assert_eq!(
+                StringFormat::LocalRFC3339.as_string(&ts),
+                "2026-03-06T11:43:49-0300"
+            );
+            assert_eq!(
+                StringFormat::LocalHTTP.as_string(&ts),
+                "Fri, 06 Mar 2026 11:43:49 -03"
+            );
+            assert_eq!(
+                StringFormat::LocalRFC7231.as_string(&ts),
+                "Fri, 06 Mar 2026 11:43:49 -03"
+            );
+        });
     }
 }
