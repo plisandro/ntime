@@ -96,13 +96,11 @@ impl Timestamp {
 		(self.seconds as u128) * U128_NANOS_IN_SECOND + self.nanoseconds as u128
 	}
 
-	/// Returns a [`TimestampParts`] structure for the timestamp, in UTC.
-	pub fn as_utc_parts(&self) -> TimestampParts<'_> {
+	fn as_utc_parts(&self) -> TimestampParts<'_> {
 		TimestampParts::utc(self.seconds, self.nanoseconds)
 	}
 
-	/// Returns a [`TimestampParts`] structure for the timestamp, in local timezone.
-	pub fn as_local_parts(&self) -> TimestampParts<'_> {
+	fn as_local_parts(&self) -> TimestampParts<'_> {
 		TimestampParts::local(self.seconds, self.nanoseconds)
 	}
 

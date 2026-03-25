@@ -24,7 +24,7 @@ pub enum StringFormat {
 	UtcRFC2822,
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF), in UTC: `2026-03-02T13:22:15Z`
 	UtcRFC3339,
-	/// An alias for [`UtcRFC7231`]
+	/// An alias for [`StringFormat::UtcRFC7231`].
 	UtcHTTP,
 	/// [RFC 7231](https://www.rfc-editor.org/rfc/rfc3339.html) (HTTP/1.1), in UTC: `Mon, 02 Mar 2026 13:22:15 UTC`
 	UtcRFC7231,
@@ -49,7 +49,7 @@ pub enum StringFormat {
 	LocalRFC2822,
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF), in local timezone: `2026-03-02T15:22:15+0200`
 	LocalRFC3339,
-	/// An alias for [`LocalRFC7231`]
+	/// An alias for [`StringFormat::LocalRFC7231`].
 	LocalHTTP,
 	/// [RFC 7231](https://www.rfc-editor.org/rfc/rfc3339.html) (HTTP/1.1), in local timezone: `Mon, 02 Mar 2026 15:22:15 CET`
 	LocalRFC7231,
@@ -93,7 +93,7 @@ impl StringFormat {
 		}
 	}
 
-	/// Serializes a [`Timestamp`] as string, into a given [`io::Writer`].
+	/// Serializes a [`Timestamp`] as string, into a given [`std::io::Write`].
 	pub fn write<T: io::Write>(&self, out: &mut T, ts: &Timestamp) -> io::Result<()> {
 		let parts = if self.is_utc() { ts.as_utc_parts() } else { ts.as_local_parts() };
 

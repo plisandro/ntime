@@ -4,7 +4,7 @@
 //!
 //! NanoTime is optimized for performance - it has no external dependencies, and relies solely
 //! on (g)libc to resolve date information from timestamps. As a result, it has also a limited
-//! scope; if you happen to need features such a asdate/time management, timezone conversion or
+//! scope; if you happen to need features such as date/time management, timezone conversion or
 //! calendar operations, you're likely better off using [Chrono](https://docs.rs/chrono/latest/chrono/) or similar.
 //!
 //! # Features
@@ -15,7 +15,7 @@
 //!   * Current time: [`Timestamp::now()`]
 //!   * A standard `SystemTime`: [`Timestamp::from_system_time()`]
 //!   * A UTC date & time: [`Timestamp::from_utc_date()`]
-//!   * From a timestamp in milliseconds/nanoseconds: [`Timestamp::new()`], ['Timestamp::from_secs()`], [`Timestamp::from_millis()`], [`Timestamps::from_nanos()`].
+//!   * From a timestamp in milliseconds/nanoseconds: [`Timestamp::new()`], [`Timestamp::from_secs()`], [`Timestamp::from_millis()`], [`Timestamp::from_nanos()`].
 //!
 //! [`Timestamp`]s can efficiently be converted into a text representation, with multiple formats supported.
 //!
@@ -75,8 +75,14 @@
 //! ntime::sleep_millis(1500);
 //! ```
 //!
+//! # Limitations and caveats
+//!
+//!   * As noted, NanoTime is not well suited for applications requiring calendar operations, and/or flexible timezone management.
+//!   * Windows support is currently limited, lacking string conversion support for local timezones.
+//!
 
 #![deny(missing_docs)]
+#![allow(dead_code)]
 
 mod c_bindings;
 mod constant;
