@@ -3,8 +3,8 @@ use core::ffi::c_char;
 use std::ptr;
 
 use super::Timestamp;
-use super::c_bindings;
 
+use crate::c_bindings;
 use crate::constant::{DAY_NAMES, MONTH_NAMES, TIMEZONE_UTC, U32_NANOS_IN_MILLI, U64_MILLIS_IN_SECOND, U64_NANOS_IN_MILLI, U128_NANOS_IN_SECOND};
 
 #[derive(Debug, PartialEq)]
