@@ -13,6 +13,7 @@ use parts::TimestampParts;
 
 pub use format::StringFormat;
 
+/// Encapsulates a timestamp, as number of nanoseconds since UNIX epoch (1970-01-01 00:00 UTC).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Timestamp {
 	seconds: u64,
@@ -20,14 +21,17 @@ pub struct Timestamp {
 }
 
 impl Timestamp {
+	/// Creates a [`Timestamp`] from a given epoch timestamp in seconds + nanoseconds.
 	pub fn new(secs: u64, nanos: u32) -> Self {
 		Self { seconds: secs, nanoseconds: nanos }
 	}
 
+	/// Creates a [`Timestamp`] from a given epoch timestamp in seconds.
 	pub fn from_secs(secs: u64) -> Self {
 		Self { seconds: secs, nanoseconds: 0 }
 	}
 
+	/// Creates a [`Timestamp`] from a given epoch timestamp in milliseconds.
 	pub fn from_millis(msecs: u128) -> Self {
 		Self {
 			seconds: (msecs / U128_MILLIS_IN_SECOND) as _,
@@ -35,6 +39,7 @@ impl Timestamp {
 		}
 	}
 
+	/// Creates a [`Timestamp`] from a given epoch timestamp in nanoseconds.
 	pub fn from_nanos(nanos: u128) -> Self {
 		Self {
 			seconds: (nanos / U128_NANOS_IN_SECOND) as _,
@@ -42,6 +47,7 @@ impl Timestamp {
 		}
 	}
 
+	/// Creates a [`Timestamp`] from a given UTC date + time.
 	pub fn from_utc_date(year: u16, month: u8, day: u8, hour: u8, minutes: u8, secs: u8, millis: u16, nanos: u32) -> Self {
 		TimestampParts {
 			nanoseconds: nanos,
@@ -62,6 +68,7 @@ impl Timestamp {
 		.utc_to_timestamp()
 	}
 
+	/// Creates a [`Timestamp`] from a given [`std::time::SystemTime`].
 	pub fn from_system_time(time: std::time::SystemTime) -> Self {
 		match time.duration_since(time::UNIX_EPOCH) {
 			Ok(d) => Self::from_nanos(d.as_nanos()),
@@ -69,38 +76,47 @@ impl Timestamp {
 		}
 	}
 
+	/// Creates a [`Timestamp`] for the current time.
 	pub fn now() -> Self {
 		Self::from_system_time(time::SystemTime::now())
 	}
 
+	/// Returns number of seconds since UNIX epoch.
 	pub fn as_secs(&self) -> u64 {
 		self.seconds
 	}
 
+	/// Returns number of milliseconds since UNIX epoch.
 	pub fn as_millis(&self) -> u128 {
 		(self.seconds as u128) * U128_MILLIS_IN_SECOND + (self.nanoseconds as u128 / U128_NANOS_IN_MILLI)
 	}
 
+	/// Returns number of nanoseconds since UNIX epoch.
 	pub fn as_nanos(&self) -> u128 {
 		(self.seconds as u128) * U128_NANOS_IN_SECOND + self.nanoseconds as u128
 	}
 
+	/// Returns a [`TimestampParts`] structure for the timestamp, in UTC.
 	pub fn as_utc_parts(&self) -> TimestampParts<'_> {
 		TimestampParts::utc(self.seconds, self.nanoseconds)
 	}
 
+	/// Returns a [`TimestampParts`] structure for the timestamp, in local timezone.
 	pub fn as_local_parts(&self) -> TimestampParts<'_> {
 		TimestampParts::local(self.seconds, self.nanoseconds)
 	}
 
+	/// Returns a string representation for the timestamp, in a given [`StringFormat`].
 	pub fn as_string(&self, format: &StringFormat) -> String {
 		format.as_string(self)
 	}
 
+	/// Serializes a string representatio into a [`io::Write`],in the given [`StringFormat`].
 	pub fn write<T: io::Write>(&self, out: &mut T, format: &StringFormat) -> io::Result<()> {
 		format.write(out, self)
 	}
 
+	/// Adds a [`time::Duration`] to the timestamp.
 	pub fn add_duration(&mut self, d: &Duration) -> &Self {
 		let nanos = d.as_nanos() + self.nanoseconds as u128;
 
@@ -110,6 +126,7 @@ impl Timestamp {
 		self
 	}
 
+	/// Compares two timestamps for ordering.
 	fn cmp(&self, other: &Self) -> Ordering {
 		if self.seconds == other.seconds {
 			if self.nanoseconds < other.nanoseconds {
@@ -127,6 +144,7 @@ impl Timestamp {
 		Ordering::Greater
 	}
 
+	/// Returns the difference between two timestamps as [`time::Duration`].
 	pub fn diff_as_duration(&self, other: &Self) -> Duration {
 		let self_nanos = self.as_nanos();
 		let other_nanos = other.as_nanos();

@@ -2,37 +2,64 @@ use std::io;
 
 use crate::Timestamp;
 
+/// Defines a format for [`Timestamp`] string serialization.
 pub enum StringFormat {
-	UtcDateTime,       // "2026-03-02 13:22:15"
-	UtcMillisDateTime, // "2026-03-02 13:22:15.488"
-	UtcNanosDateTime,  // "2026-03-02 13:22:15.488728341"
-	UtcTime,           // "13:22:15"
-	UtcMillisTime,     // "13:22:15.488"
-	UtcNanosTime,      // "13:22:15.488167982"
-	UtcFileName,       // "2026-03-02_13-22-15"
-	UtcRFC2822,        // "Mon, 02 Mar 2026 13:22:15 +0000"
-	UtcRFC3339,        // "2026-03-02T13:22:15Z"
-	UtcHTTP,           // an alias for...
-	UtcRFC7231,        // "Mon, 02 Mar 2026 13:22:15 UTC"
+	/// Compact datetime, in UTC: `2026-03-02 13:22:15`
+	UtcDateTime,
+	/// Compact datetime with milliseconds, in UTC: `2026-03-02 13:22:15.488`
+	UtcMillisDateTime,
+	/// Compact datetime with nanoseconds, in UTC: `2026-03-02 13:22:15.488728341`
+	UtcNanosDateTime,
+	/// Compact time, in UTC: `13:22:15`
+	UtcTime,
+	/// Compact time with milliseconds, in UTC: `13:22:15.488`
+	UtcMillisTime,
+	/// Compact time with nanoseconds, in UTC: `13:22:15.488167982`
+	UtcNanosTime,
+	/// Date/time format suitable to append to filenames. in UTC: `2026-03-02_13-22-15`
+	UtcFileName,
+	/// [RFC 2822](https://www.rfc-editor.org/rfc/rfc2822.html) (Internet Message Format), in UTC: `Mon, 02 Mar 2026 13:22:15 +0000`
+	UtcRFC2822,
+	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF), in UTC: `2026-03-02T13:22:15Z`
+	UtcRFC3339,
+	/// An alias for [`UtcRFC7231`]
+	UtcHTTP,
+	/// [RFC 7231](https://www.rfc-editor.org/rfc/rfc3339.html) (HTTP/1.1), in UTC: `Mon, 02 Mar 2026 13:22:15 UTC`
+	UtcRFC7231,
 
-	LocalDateTime,       // "2026-03-02 13:22:15 +0100"
-	LocalMillisDateTime, // "2026-03-02 13:22:15.488 +0100"
-	LocalNanosDateTime,  // "2026-03-02 13:22:15.488728341 +0100"
-	LocalTime,           // "13:22:15"
-	LocalMillisTime,     // "13:22:15.488"
-	LocalNanosTime,      // "13:22:15.488167982"
-	LocalFileName,       // "2026-03-02_13-22-15"
-	LocalRFC2822,        // "Mon, 02 Mar 2026 15:22:15 +0200"
-	LocalRFC3339,        // "2026-03-02T12:22:15-0100"
-	LocalHTTP,           // an alias for...
-	LocalRFC7231,        // "Mon, 02 Mar 2026 14:22:15 CET"
+	/// Compact datetime, in local timezone: `2026-03-02 15:22:15 +0200`
+	LocalDateTime,
+	/// Compact datetime with milliseconds, in local timezone: `2026-03-02 15:22:15.488 +0200`
+	LocalMillisDateTime,
+	/// Compact datetime with nanoseconds, in local timezone: `2026-03-02 13:22:15.488728341 +0200`
+	LocalNanosDateTime,
+	/// Compact time, in local timezone: `15:22:15`
+	LocalTime,
+	/// Compact time with milliseconds, in local timezone: `15:22:15.488`
+	LocalMillisTime,
+	/// Compact time with nanoseconds, in local timezone: `15:22:15.488167982`
+	LocalNanosTime,
+	/// Date/time format suitable to append to filenames. in local timezone: `2026-03-02_15-22-15`
+	LocalFileName,
+	/// [RFC 2822](https://www.rfc-editor.org/rfc/rfc2822.html) (Internet Message Format), in local timezone: `Mon, 02 Mar 2026 15:22:15 +0200`
+	LocalRFC2822,
+	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF), in local timezone: `2026-03-02T15:22:15+0200`
+	LocalRFC3339,
+	/// An alias for [`LocalRFC7231`]
+	LocalHTTP,
+	/// [RFC 7231](https://www.rfc-editor.org/rfc/rfc3339.html) (HTTP/1.1), in local timezone: `Mon, 02 Mar 2026 15:22:15 CET`
+	LocalRFC7231,
 
-	TimestampSeconds,      // 1772795501
-	TimestampMilliseconds, // 1772795501890
-	TimestampNanoseconds,  // 1772795501890546
+	/// Seconds since UNIX epoch: `1772795501`
+	TimestampSeconds,
+	/// Milliseconds since UNIX epoch: `1772795501890`
+	TimestampMilliseconds, //
+	/// Nanoseconds since UNIX epoch: `1772795501890546`
+	TimestampNanoseconds,
 }
 
 impl StringFormat {
+	/// Evaluates if the given [`StringFormat`] is a fully numeric representation.
 	pub fn is_numeric(&self) -> bool {
 		match &self {
 			Self::TimestampSeconds => true,
@@ -42,6 +69,7 @@ impl StringFormat {
 		}
 	}
 
+	/// Evaluates if the given [`StringFormat`] is in UTC timezone.
 	pub fn is_utc(&self) -> bool {
 		match &self {
 			Self::UtcDateTime => true,
@@ -61,6 +89,7 @@ impl StringFormat {
 		}
 	}
 
+	/// Serializes a [`Timestamp`] as string, into a given [`io::Writer`].
 	pub fn write<T: io::Write>(&self, out: &mut T, ts: &Timestamp) -> io::Result<()> {
 		let parts = if self.is_utc() { ts.as_utc_parts() } else { ts.as_local_parts() };
 
@@ -223,20 +252,18 @@ impl StringFormat {
 		}
 	}
 
+	/// Serializes a [`Timestamp`] into a [`String`].
 	pub fn as_string(&self, ts: &Timestamp) -> String {
 		let mut out = io::Cursor::new(Vec::new());
 		if let Err(e) = self.write(&mut out, ts) {
 			panic!("failed to serialize Timestamp: {}", e);
 		}
 
-		let s = unsafe { String::from_utf8_unchecked(out.into_inner()) };
-		/*
+		// unsafe { String::from_utf8_unchecked(out.into_inner()) }
 		match String::from_utf8(out.into_inner()) {
 			Ok(s) => s,
 			Err(e) => panic!("failed to convert Timestamp to String: {}", e),
 		}
-		*/
-		s
 	}
 }
 

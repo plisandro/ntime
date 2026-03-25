@@ -7,6 +7,7 @@ use super::Timestamp;
 use crate::c_bindings;
 use crate::constant::{DAY_NAMES, MONTH_NAMES, TIMEZONE_UTC, U32_NANOS_IN_MILLI, U64_MILLIS_IN_SECOND, U64_NANOS_IN_MILLI, U128_NANOS_IN_SECOND};
 
+/// A decomposition of a [`Timestamp`] into date/time parts, for a given timezone.
 #[derive(Debug, PartialEq)]
 pub struct TimestampParts<'l> {
 	pub nanoseconds: u32,
@@ -44,12 +45,13 @@ impl<'l> TimestampParts<'_> {
 		(negative, hours, mins)
 	}
 
+	/// Creates a UTC [`TimestampParts`] for a given timestamp in seconds + nanoseconds.
 	pub fn utc(seconds: u64, nanos: u32) -> Self {
 		let ts = seconds as c_bindings::CTime;
-		let Some(tm) = c_bindings::c_time_to_utc_tm(ts) else {
-			panic!("failed to parse UTC parts for timestamp={}s", seconds);
+		let tm = match c_bindings::c_time_to_utc_tm(ts) {
+			Some(tm) => tm,
+			None => panic!("failed to parse UTC parts for timestamp={seconds}s"),
 		};
-
 		TimestampParts {
 			nanoseconds: (nanos % U32_NANOS_IN_MILLI) as _,
 			milliseconds: (nanos / U32_NANOS_IN_MILLI) as _,
@@ -68,10 +70,12 @@ impl<'l> TimestampParts<'_> {
 		}
 	}
 
+	/// Creates a local timezone [`TimestampParts`] for a given timestamp in seconds + nanoseconds.
 	pub fn local(seconds: u64, nanos: u32) -> Self {
 		let ts = seconds as c_bindings::CTime;
-		let Some(tm) = c_bindings::c_time_to_local_tm(ts) else {
-			panic!("failed to parse local parts for timestamp={}s", seconds);
+		let tm = match c_bindings::c_time_to_local_tm(ts) {
+			Some(tm) => tm,
+			None => panic!("failed to parse local parts for timestamp={seconds}s"),
 		};
 
 		let gmt_offset_secs: i16;
@@ -110,20 +114,24 @@ impl<'l> TimestampParts<'_> {
 		}
 	}
 
+	/// Creates a UTC [`TimestampParts`] for a given timestamp in seconds.
 	pub fn utc_from_secs(seconds: u64) -> Self {
 		Self::utc(seconds, 0)
 	}
 
+	/// Creates a UTC [`TimestampParts`] for a given timestamp in milliseconds.
 	pub fn utc_from_millis(millis: u64) -> Self {
 		Self::utc(millis / U64_MILLIS_IN_SECOND, ((millis % U64_MILLIS_IN_SECOND) * U64_NANOS_IN_MILLI) as u32)
 	}
 
+	/// Creates a UTC [`TimestampParts`] for a given timestamp in nanoseconds.
 	pub fn utc_from_nanos(nanos: u128) -> Self {
 		Self::utc((nanos / U128_NANOS_IN_SECOND) as _, (nanos % U128_NANOS_IN_SECOND) as _)
 	}
 }
 
 impl<'l> TimestampParts<'_> {
+	/// Returns a short day name: `Tue`
 	pub fn day_name(&self) -> &str {
 		if self.week_day == 0 {
 			panic!("invalid week day for {self:?}");
@@ -131,6 +139,7 @@ impl<'l> TimestampParts<'_> {
 		DAY_NAMES[((self.week_day - 1) % 7) as usize]
 	}
 
+	/// Returns a short month name: `Mar`
 	pub fn month_name(&self) -> &str {
 		if self.week_day == 0 {
 			panic!("invalid month for {self:?}");
@@ -138,7 +147,12 @@ impl<'l> TimestampParts<'_> {
 		MONTH_NAMES[((self.month - 1) % 12) as usize]
 	}
 
+	// Converts the parts structure back into a [`Timestamp`], interpreting it as UTC.
 	pub fn utc_to_timestamp(&self) -> Timestamp {
+		if self.timezone != TIMEZONE_UTC {
+			panic!("cannot convert a TimestampParts in timezone `{tz}' to UTC back to Timestamp", tz = self.timezone);
+		}
+
 		let null_c_char: *const c_char = ptr::null();
 		let tm = &mut c_bindings::c_tm {
 			tm_sec: self.seconds as _,
