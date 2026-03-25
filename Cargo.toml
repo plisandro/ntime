@@ -17,6 +17,9 @@ include = [
   "src/**/*",
 ]
 
+[lints.rust]
+warnings = "deny"
+
 [lib]
 name = "ntime"
 path = "src/lib.rs"
