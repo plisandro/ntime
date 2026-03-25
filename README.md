@@ -1,8 +1,10 @@
 # NanoTime
 
 NanoTime is a lightweight, high-performance Rust library for nanosecond-precision timestamps.
-It offers support for timestamp generation, comparsion and casting to various string
+It offers support for timestamp generation, arithmetics, comparsion and casting to various string
 representations, in either local or UTC timezones.
+
+NanoTime has no external dependencies, and runs on all Unix and Windows platforms.
 
 ## Usage 
 
@@ -15,24 +17,31 @@ ntime = "0.0.1"
 
 ## Basic examples
 
-NanoTime can resolve timestamps, and serialize them into local or UTC date strings.
+NanoTime can resolve timestamps, and serialize them as multiple formats.
 
 ```rust
 let now = Timestamp::now();
-println!("current time (local): {}", now.as_string(&StringFormat::LocalMillisDateTime));
-println!("current time (UTC):   {}", now.as_string(&StringFormat::UtcRFC7231));
+println!("current times as nanos: {}", now.as_nanos());
+println!("current time as debug:  {:?}", now);
+println!("current time as string: {}", now.to_string());
+println!("current time (local):   {}", now.as_string(&StringFormat::LocalMillisDateTime));
+println!("current time (UTC):     {}", now.as_string(&StringFormat::UtcRFC7231));
 ```
 ```
-Current time (local): 2026-03-24 17:27:01.732 +0100
-Current time (UTC):   Tue, 24 Mar 2026 16:27:01 UTC
+current time as nanos:  1774369621732000558
+current time as debug:  Timestamp { seconds: 1774369621, nanoseconds: 732000558 },
+current time as string: 2026-03-24 17:21:01 +0100
+current time (local):   2026-03-24 17:27:01.732 +0100
+current time (UTC):     Tue, 24 Mar 2026 16:27:01 UTC
 ```
 
-It can also compare, and compute durations between timestamps. And it's _blazing_ fast!
+It can also compute durations between timestamps. And it's _very_ fast - on modern x64 systems,
+NanoTime has an overhead of 70-90ns over libc primitives.
 
 ```rust
 let start = Timestamp::now();
 start.write(&mut io::empty(), &StringFormat::UtcMillisDateTime).expect("oh no the write failed");
-println!("wrote a serialized timestam in {elapsed:?}", elapsed = Timestamp::now() - start);
+println!("wrote a serialized timestamp in {elapsed:?}", elapsed = Timestamp::now() - start);
 ```
 ```
 wrote a serialized timestamp in 133ns.
@@ -42,7 +51,7 @@ wrote a serialized timestamp in 133ns.
 
   * NanoTime is intended mainly to deal with precision timestamps. If you need date/time management
     with full support for timezone and calendar operations, see [Chrono](https://docs.rs/chrono/latest/chrono/) instead.
-  * Supports both Unix and Windows platforms. Windows support is partial and under developement thou.
+  * Windows support is partial, and under developement.
 
 ## Documentation
 

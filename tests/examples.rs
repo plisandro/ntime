@@ -9,12 +9,16 @@ mod dummy_examples {
     #[test]
     fn now() {
         let now = Timestamp::now();
+
+        println!("current time as nanos:  {}", now.as_nanos());
+        println!("current time as debug:  {:?}", now);
+        println!("current time as string: {}", now.to_string(),);
         println!(
-            "current time (local): {}",
+            "current time (local):   {}",
             now.as_string(&StringFormat::LocalMillisDateTime),
         );
         println!(
-            "current time (UTC): {}",
+            "current time (UTC):     {}",
             now.as_string(&StringFormat::UtcMillisDateTime),
         );
     }
