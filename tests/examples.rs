@@ -11,11 +11,11 @@ mod dummy_examples {
         let now = Timestamp::now();
         println!(
             "current time (local): {}",
-            now.as_string(StringFormat::LocalMillisDateTime),
+            now.as_string(&StringFormat::LocalMillisDateTime),
         );
         println!(
             "current time (UTC): {}",
-            now.as_string(StringFormat::UtcMillisDateTime),
+            now.as_string(&StringFormat::UtcMillisDateTime),
         );
     }
 

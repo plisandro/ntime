@@ -17,7 +17,7 @@ mod benchmarks {
 
         for _ in 0..count {
             start
-                .write(&mut io::empty(), StringFormat::LocalMillisDateTime)
+                .write(&mut io::empty(), &StringFormat::LocalMillisDateTime)
                 .expect("benchmar timestamp write failed");
         }
 
@@ -34,7 +34,7 @@ mod benchmarks {
         let count = TOTAL_BENCHMARK_RUNS;
 
         for _ in 0..count {
-            let _ = start.as_string(StringFormat::UtcMillisDateTime);
+            let _ = start.as_string(&StringFormat::UtcMillisDateTime);
         }
 
         let elapsed = Timestamp::now() - start;

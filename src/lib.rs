@@ -113,11 +113,11 @@ impl Timestamp {
         TimestampParts::local(self.seconds, self.nanoseconds)
     }
 
-    pub fn as_string(&self, format: StringFormat) -> String {
+    pub fn as_string(&self, format: &StringFormat) -> String {
         format.as_string(self)
     }
 
-    pub fn write<T: io::Write>(&self, out: &mut T, format: StringFormat) -> io::Result<()> {
+    pub fn write<T: io::Write>(&self, out: &mut T, format: &StringFormat) -> io::Result<()> {
         format.write(out, self)
     }
 
@@ -161,7 +161,7 @@ impl Timestamp {
 
 impl fmt::Display for Timestamp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.as_string(StringFormat::LocalDateTime))
+        write!(f, "{}", self.as_string(&StringFormat::LocalDateTime))
     }
 }
 
