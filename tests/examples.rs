@@ -1,10 +1,6 @@
-//use ntime::Duration;
-use ntime::StringFormat;
-use ntime::Timestamp;
-
 #[cfg(test)]
 mod dummy_examples {
-	use super::*;
+	use ntime::{StringFormat, Timestamp};
 
 	#[test]
 	fn now() {

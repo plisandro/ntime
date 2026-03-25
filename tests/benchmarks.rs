@@ -1,30 +1,27 @@
-use std::io;
+// TODO: switch over to 'cargo bench`, once that feature finally becomes stable >:(
 
-use ntime::StringFormat;
-use ntime::Timestamp;
-
+// benchmarks should not be executed in parallel, so we declare them here, and
+// launch them in sequence below.
 #[cfg(test)]
-mod benchmarks {
-	use super::*;
+mod benchmark {
+	use std::io;
+
+	use ntime::{Duration, StringFormat, Timestamp};
 
 	const TOTAL_BENCHMARK_RUNS: u32 = 1000000;
 
-	#[test]
-	fn write_serialization() {
+	fn write_serialization() -> (u32, Duration) {
 		let start = Timestamp::now();
 		let count = TOTAL_BENCHMARK_RUNS;
-		//let mut black_hole = io::empty();
 
 		for _ in 0..count {
 			start.write(&mut io::empty(), &StringFormat::LocalMillisDateTime).expect("benchmar timestamp write failed");
 		}
 
-		let elapsed = Timestamp::now() - start;
-		println!("wrote {count} serialized timestamps in {elapsed:?}, average {avg:?}/op", avg = elapsed / count,);
+		(count, Timestamp::now() - start)
 	}
 
-	#[test]
-	fn to_string_serialization() {
+	fn to_string_serialization() -> (u32, Duration) {
 		let start = Timestamp::now();
 		let count = TOTAL_BENCHMARK_RUNS;
 
@@ -32,7 +29,31 @@ mod benchmarks {
 			let _ = start.as_string(&StringFormat::UtcMillisDateTime);
 		}
 
-		let elapsed = Timestamp::now() - start;
-		println!("serialized {count} timestamp into string in {elapsed:?}, average {avg:?}/op", avg = elapsed / count,);
+		(count, Timestamp::now() - start)
+	}
+
+	#[test]
+	fn run() {
+		struct Benchmark {
+			name: String,
+			func: fn() -> (u32, Duration),
+		}
+
+		let benchmarks: [Benchmark; _] = [
+			Benchmark {
+				name: "write serialized timestamps".into(),
+				func: write_serialization,
+			},
+			Benchmark {
+				name: "convert timestamps to String".into(),
+				func: to_string_serialization,
+			},
+		];
+
+		for b in benchmarks {
+			println!("--- Benchmark: {name} ---", name = b.name);
+			let (total, runtime) = (b.func)();
+			println!("{total} items in {runtime:?}, average {avg:?}/op\n", avg = runtime / total);
+		}
 	}
 }

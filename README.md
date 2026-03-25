@@ -44,7 +44,7 @@ start.write(&mut io::empty(), &StringFormat::UtcMillisDateTime).expect("oh no th
 println!("wrote a serialized timestamp in {elapsed:?}", elapsed = Timestamp::now() - start);
 ```
 ```
-wrote a serialized timestamp in 133ns.
+wrote a serialized timestamp in 121ns.
 ```
 
 ## Limitations
