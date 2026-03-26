@@ -95,162 +95,209 @@ impl StringFormat {
 
 	/// Serializes a [`Timestamp`] as string, into a given [`std::io::Write`].
 	pub fn write<T: io::Write>(&self, out: &mut T, ts: &Timestamp) -> io::Result<()> {
-		let parts = if self.is_utc() { ts.as_utc_parts() } else { ts.as_local_parts() };
+		let get_parts = || {
+			if self.is_utc() { ts.as_utc_parts() } else { ts.as_local_parts() }
+		};
 
 		match self {
-			StringFormat::UtcDateTime => write!(
-				out,
-				"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}",
-				year = parts.year,
-				month = parts.month,
-				day = parts.month_day,
-				hour = parts.hour,
-				mins = parts.minutes,
-				secs = parts.seconds,
-			),
-			StringFormat::LocalDateTime => write!(
-				out,
-				"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02} {offset_sign}{offset_hours:02}{offset_minutes:02}",
-				year = parts.year,
-				month = parts.month,
-				day = parts.month_day,
-				hour = parts.hour,
-				mins = parts.minutes,
-				secs = parts.seconds,
-				offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
-				offset_hours = parts.gmt_offset_hours,
-				offset_minutes = parts.gmt_offset_minutes,
-			),
-			StringFormat::UtcMillisDateTime => write!(
-				out,
-				"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03}",
-				year = parts.year,
-				month = parts.month,
-				day = parts.month_day,
-				hour = parts.hour,
-				mins = parts.minutes,
-				secs = parts.seconds,
-				msecs = parts.milliseconds,
-			),
-			StringFormat::LocalMillisDateTime => write!(
-				out,
-				"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03} {offset_sign}{offset_hours:02}{offset_minutes:02}",
-				year = parts.year,
-				month = parts.month,
-				day = parts.month_day,
-				hour = parts.hour,
-				mins = parts.minutes,
-				secs = parts.seconds,
-				msecs = parts.milliseconds,
-				offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
-				offset_hours = parts.gmt_offset_hours,
-				offset_minutes = parts.gmt_offset_minutes,
-			),
-			StringFormat::UtcNanosDateTime => write!(
-				out,
-				"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}",
-				year = parts.year,
-				month = parts.month,
-				day = parts.month_day,
-				hour = parts.hour,
-				mins = parts.minutes,
-				secs = parts.seconds,
-				msecs = parts.milliseconds,
-				nsecs = parts.nanoseconds,
-			),
-			StringFormat::LocalNanosDateTime => write!(
-				out,
-				"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06} {offset_sign}{offset_hours:02}{offset_minutes:02}",
-				year = parts.year,
-				month = parts.month,
-				day = parts.month_day,
-				hour = parts.hour,
-				mins = parts.minutes,
-				secs = parts.seconds,
-				msecs = parts.milliseconds,
-				nsecs = parts.nanoseconds,
-				offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
-				offset_hours = parts.gmt_offset_hours,
-				offset_minutes = parts.gmt_offset_minutes,
-			),
-			StringFormat::UtcFileName | StringFormat::LocalFileName => write!(
-				out,
-				"{year}-{month:02}-{day:02}_{hour:02}-{mins:02}-{secs:02}",
-				year = parts.year,
-				month = parts.month,
-				day = parts.month_day,
-				hour = parts.hour,
-				mins = parts.minutes,
-				secs = parts.seconds,
-			),
-			StringFormat::UtcDate | StringFormat::LocalDate => write!(out, "{year}-{month:02}-{day:02}", year = parts.year, month = parts.month, day = parts.month_day),
-			StringFormat::UtcTime | StringFormat::LocalTime => write!(out, "{hour:02}:{mins:02}:{secs:02}", hour = parts.hour, mins = parts.minutes, secs = parts.seconds),
-			StringFormat::UtcMillisTime | StringFormat::LocalMillisTime => write!(
-				out,
-				"{hour:02}:{mins:02}:{secs:02}.{msecs:03}",
-				hour = parts.hour,
-				mins = parts.minutes,
-				secs = parts.seconds,
-				msecs = parts.milliseconds,
-			),
-			StringFormat::UtcNanosTime | StringFormat::LocalNanosTime => write!(
-				out,
-				"{hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}",
-				hour = parts.hour,
-				mins = parts.minutes,
-				secs = parts.seconds,
-				msecs = parts.milliseconds,
-				nsecs = parts.nanoseconds,
-			),
-			StringFormat::UtcRFC2822 | StringFormat::LocalRFC2822 => write!(
-				out,
-				"{day_name}, {day:02} {month_name} {year} {hour:02}:{mins:02}:{secs:02} {offset_sign}{offset_hours:02}{offset_minutes:02}",
-				day_name = parts.day_name(),
-				day = parts.month_day,
-				month_name = parts.month_name(),
-				year = parts.year,
-				hour = parts.hour,
-				mins = parts.minutes,
-				secs = parts.seconds,
-				offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
-				offset_hours = parts.gmt_offset_hours,
-				offset_minutes = parts.gmt_offset_minutes,
-			),
-			StringFormat::UtcRFC3339 => write!(
-				out,
-				"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}Z",
-				year = parts.year,
-				month = parts.month,
-				day = parts.month_day,
-				hour = parts.hour,
-				mins = parts.minutes,
-				secs = parts.seconds,
-			),
-			StringFormat::LocalRFC3339 => write!(
-				out,
-				"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}{offset_sign}{offset_hours:02}{offset_minutes:02}",
-				year = parts.year,
-				month = parts.month,
-				day = parts.month_day,
-				hour = parts.hour,
-				mins = parts.minutes,
-				secs = parts.seconds,
-				offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
-				offset_hours = parts.gmt_offset_hours,
-				offset_minutes = parts.gmt_offset_minutes,
-			),
-			StringFormat::UtcHTTP | StringFormat::UtcRFC7231 | StringFormat::LocalHTTP | StringFormat::LocalRFC7231 => write!(
-				out,
-				"{day_name}, {day:02} {month_name} {year} {hour:02}:{mins:02}:{secs:02} {timezone}",
-				day_name = parts.day_name(),
-				day = parts.month_day,
-				month_name = parts.month_name(),
-				year = parts.year,
-				hour = parts.hour,
-				mins = parts.minutes,
-				secs = parts.seconds,
-				timezone = parts.timezone,
-			),
+			StringFormat::UtcDateTime => {
+				let parts = ts.as_utc_parts();
+				write!(
+					out,
+					"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}",
+					year = parts.year,
+					month = parts.month,
+					day = parts.month_day,
+					hour = parts.hour,
+					mins = parts.minutes,
+					secs = parts.seconds,
+				)
+			}
+			StringFormat::LocalDateTime => {
+				let parts = ts.as_local_parts();
+				write!(
+					out,
+					"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02} {offset_sign}{offset_hours:02}{offset_minutes:02}",
+					year = parts.year,
+					month = parts.month,
+					day = parts.month_day,
+					hour = parts.hour,
+					mins = parts.minutes,
+					secs = parts.seconds,
+					offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
+					offset_hours = parts.gmt_offset_hours,
+					offset_minutes = parts.gmt_offset_minutes,
+				)
+			}
+			StringFormat::UtcMillisDateTime => {
+				let parts = ts.as_utc_parts();
+				write!(
+					out,
+					"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03}",
+					year = parts.year,
+					month = parts.month,
+					day = parts.month_day,
+					hour = parts.hour,
+					mins = parts.minutes,
+					secs = parts.seconds,
+					msecs = parts.milliseconds,
+				)
+			}
+			StringFormat::LocalMillisDateTime => {
+				let parts = ts.as_local_parts();
+				write!(
+					out,
+					"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03} {offset_sign}{offset_hours:02}{offset_minutes:02}",
+					year = parts.year,
+					month = parts.month,
+					day = parts.month_day,
+					hour = parts.hour,
+					mins = parts.minutes,
+					secs = parts.seconds,
+					msecs = parts.milliseconds,
+					offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
+					offset_hours = parts.gmt_offset_hours,
+					offset_minutes = parts.gmt_offset_minutes,
+				)
+			}
+			StringFormat::UtcNanosDateTime => {
+				let parts = ts.as_utc_parts();
+				write!(
+					out,
+					"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}",
+					year = parts.year,
+					month = parts.month,
+					day = parts.month_day,
+					hour = parts.hour,
+					mins = parts.minutes,
+					secs = parts.seconds,
+					msecs = parts.milliseconds,
+					nsecs = parts.nanoseconds,
+				)
+			}
+			StringFormat::LocalNanosDateTime => {
+				let parts = ts.as_local_parts();
+				write!(
+					out,
+					"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06} {offset_sign}{offset_hours:02}{offset_minutes:02}",
+					year = parts.year,
+					month = parts.month,
+					day = parts.month_day,
+					hour = parts.hour,
+					mins = parts.minutes,
+					secs = parts.seconds,
+					msecs = parts.milliseconds,
+					nsecs = parts.nanoseconds,
+					offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
+					offset_hours = parts.gmt_offset_hours,
+					offset_minutes = parts.gmt_offset_minutes,
+				)
+			}
+			StringFormat::UtcFileName | StringFormat::LocalFileName => {
+				let parts = get_parts();
+				write!(
+					out,
+					"{year}-{month:02}-{day:02}_{hour:02}-{mins:02}-{secs:02}",
+					year = parts.year,
+					month = parts.month,
+					day = parts.month_day,
+					hour = parts.hour,
+					mins = parts.minutes,
+					secs = parts.seconds,
+				)
+			}
+			StringFormat::UtcDate | StringFormat::LocalDate => {
+				let parts = get_parts();
+				write!(out, "{year}-{month:02}-{day:02}", year = parts.year, month = parts.month, day = parts.month_day)
+			}
+			StringFormat::UtcTime | StringFormat::LocalTime => {
+				let parts = get_parts();
+				write!(out, "{hour:02}:{mins:02}:{secs:02}", hour = parts.hour, mins = parts.minutes, secs = parts.seconds)
+			}
+			StringFormat::UtcMillisTime | StringFormat::LocalMillisTime => {
+				let parts = get_parts();
+				write!(
+					out,
+					"{hour:02}:{mins:02}:{secs:02}.{msecs:03}",
+					hour = parts.hour,
+					mins = parts.minutes,
+					secs = parts.seconds,
+					msecs = parts.milliseconds,
+				)
+			}
+			StringFormat::UtcNanosTime | StringFormat::LocalNanosTime => {
+				let parts = get_parts();
+				write!(
+					out,
+					"{hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}",
+					hour = parts.hour,
+					mins = parts.minutes,
+					secs = parts.seconds,
+					msecs = parts.milliseconds,
+					nsecs = parts.nanoseconds,
+				)
+			}
+			StringFormat::UtcRFC2822 | StringFormat::LocalRFC2822 => {
+				let parts = get_parts();
+				write!(
+					out,
+					"{day_name}, {day:02} {month_name} {year} {hour:02}:{mins:02}:{secs:02} {offset_sign}{offset_hours:02}{offset_minutes:02}",
+					day_name = parts.day_name(),
+					day = parts.month_day,
+					month_name = parts.month_name(),
+					year = parts.year,
+					hour = parts.hour,
+					mins = parts.minutes,
+					secs = parts.seconds,
+					offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
+					offset_hours = parts.gmt_offset_hours,
+					offset_minutes = parts.gmt_offset_minutes,
+				)
+			}
+			StringFormat::UtcRFC3339 => {
+				let parts = ts.as_utc_parts();
+				write!(
+					out,
+					"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}Z",
+					year = parts.year,
+					month = parts.month,
+					day = parts.month_day,
+					hour = parts.hour,
+					mins = parts.minutes,
+					secs = parts.seconds,
+				)
+			}
+			StringFormat::LocalRFC3339 => {
+				let parts = ts.as_local_parts();
+				write!(
+					out,
+					"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}{offset_sign}{offset_hours:02}{offset_minutes:02}",
+					year = parts.year,
+					month = parts.month,
+					day = parts.month_day,
+					hour = parts.hour,
+					mins = parts.minutes,
+					secs = parts.seconds,
+					offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
+					offset_hours = parts.gmt_offset_hours,
+					offset_minutes = parts.gmt_offset_minutes,
+				)
+			}
+			StringFormat::UtcHTTP | StringFormat::UtcRFC7231 | StringFormat::LocalHTTP | StringFormat::LocalRFC7231 => {
+				let parts = get_parts();
+				write!(
+					out,
+					"{day_name}, {day:02} {month_name} {year} {hour:02}:{mins:02}:{secs:02} {timezone}",
+					day_name = parts.day_name(),
+					day = parts.month_day,
+					month_name = parts.month_name(),
+					year = parts.year,
+					hour = parts.hour,
+					mins = parts.minutes,
+					secs = parts.seconds,
+					timezone = parts.timezone,
+				)
+			}
 			StringFormat::TimestampSeconds => write!(out, "{}", ts.as_secs()),
 			StringFormat::TimestampMilliseconds => write!(out, "{}", ts.as_millis()),
 			StringFormat::TimestampNanoseconds => write!(out, "{}", ts.as_nanos()),

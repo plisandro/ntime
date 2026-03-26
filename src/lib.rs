@@ -13,7 +13,7 @@
 //! since Unix epoch (1970-01-01 00:00 UTC). [`Timestamp`]s can be instantiated by...
 //!
 //!   * Current time: [`Timestamp::now()`]
-//!   * A standard `SystemTime`: [`Timestamp::from_system_time()`]
+//!   * A standard [`std::time::SystemTime`]: [`Timestamp::from_system_time()`]
 //!   * A UTC date & time: [`Timestamp::from_utc_date()`]
 //!   * From a timestamp in milliseconds/nanoseconds: [`Timestamp::new()`], [`Timestamp::from_secs()`], [`Timestamp::from_millis()`], [`Timestamp::from_nanos()`].
 //!
@@ -78,7 +78,7 @@
 //! # Limitations and caveats
 //!
 //!   * As noted, NanoTime is not well suited for applications requiring calendar operations, and/or flexible timezone management.
-//!   * Windows support is currently limited, lacking string conversion support for local timezones.
+//!   * Windows support is currently partial, lacking string conversion support for local timezones.
 //!
 
 #![deny(missing_docs)]
