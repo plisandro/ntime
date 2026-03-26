@@ -47,6 +47,8 @@ pub struct c_tm {
 
 // *nix C standard time functions
 #[cfg(not(target_env = "msvc"))]
+// SAFETY: Wrapper for standard (g)libc time functions. Callers must guarantee
+// the correct type and initialization for all passed parameters.
 unsafe extern "C" {
 	unsafe fn gmtime_r(ts: *const CTime, tm: *mut c_tm) -> *mut c_tm;
 	unsafe fn localtime_r(ts: *const CTime, tm: *mut c_tm) -> *mut c_tm;
@@ -58,6 +60,8 @@ unsafe extern "C" {
 
 // Windows MSVC standard time functions
 #[cfg(target_env = "msvc")]
+// SAFETY: Wrapper for standard (g)libc time functions. Callers must guarantee
+// the correct type and initialization for all passed parameters.
 unsafe extern "C" {
 	unsafe fn _gmtime64_s(tm: *mut c_tm, ts: *const CTime) -> c_int;
 	unsafe fn _localtime64_s(tm: *mut c_tm, ts: *const CTime) -> c_int;
@@ -74,6 +78,7 @@ pub fn c_time_to_utc_tm(ts: CTime) -> Option<c_tm> {
 	let ts: *const CTime = &ts;
 	let mut tm = MaybeUninit::<c_tm>::uninit();
 
+	// SAFETY: Calling (g)libc functions with properly initialized types.
 	unsafe {
 		#[cfg(not(target_env = "msvc"))]
 		{
@@ -97,6 +102,7 @@ pub fn c_time_to_local_tm(ts: CTime) -> Option<c_tm> {
 	let ts: *const CTime = &ts;
 	let mut tm = MaybeUninit::<c_tm>::uninit();
 
+	// SAFETY: Calling (g)libc functions with properly initialized types.
 	unsafe {
 		#[cfg(not(target_env = "msvc"))]
 		{
@@ -119,6 +125,7 @@ pub fn c_utc_tm_to_time(tm: &mut c_tm) -> CTime {
 	let ct: CTime;
 	let tm: *mut c_tm = tm;
 
+	// SAFETY: Calling (g)libc functions with properly initialized types.
 	unsafe {
 		#[cfg(not(target_env = "msvc"))]
 		{
@@ -136,6 +143,7 @@ pub fn c_utc_tm_to_time(tm: &mut c_tm) -> CTime {
 #[cfg(test)]
 /// Forces a libc reload of timezone information. Used only for testing.
 pub fn c_reload_tz_info() {
+	// SAFETY: Calling a (g)libc functions without arguments.
 	unsafe {
 		#[cfg(not(target_env = "msvc"))]
 		{

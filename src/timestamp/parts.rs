@@ -83,6 +83,7 @@ impl<'l> TimestampParts<'_> {
 		#[cfg(not(target_env = "msvc"))]
 		{
 			gmt_offset_secs = tm.tm_gmtoff as _;
+			// SAFETY: Parsing a C pointer which is guaranteed to be intialized by (g)libc functions.
 			let c_timezone = unsafe { CStr::from_ptr(tm.tm_zone).to_str() };
 			match c_timezone {
 				Ok(s) => timezone = s,

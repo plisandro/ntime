@@ -35,8 +35,8 @@ current time (local):                2026-03-24 17:27:01.732 +0100
 current time (UTC):                  Tue, 24 Mar 2026 16:27:01 UTC
 ```
 
-It can also compute durations between timestamps. And it's _very_ fast - on modern x64 systems,
-NanoTime has an overhead of 70-90ns over libc primitives.
+It can also compute durations between timestamps. And it's _fast_ - on modern x64 systems,
+most of NanoTime's overhead is introduced solely by (g)libc primitives.
 
 ```rust
 let start = Timestamp::now();
