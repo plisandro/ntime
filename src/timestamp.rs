@@ -227,7 +227,7 @@ mod tests {
 	#[test]
 	fn to_string() {
 		// the Display trait implementation serializes Timestamps into local time strings.
-		test_helpers::mocks::with_timezone("Asia/Macao", || {
+		test_helpers::mocks::with_timezone("Asia/Kuching", || {
 			assert_eq!(Timestamp::new(1772457020, 789).to_string(), "2026-03-02 21:10:20 +0800",);
 			assert_eq!(Timestamp::from_secs(1772457213).to_string(), "2026-03-02 21:13:33 +0800",);
 			assert_eq!(Timestamp::from_millis(1772457213123).to_string(), "2026-03-02 21:13:33 +0800",);
