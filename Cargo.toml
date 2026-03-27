@@ -29,3 +29,4 @@ path = "src/lib.rs"
 
 [features]
 mock-test = []
+benchmark = []
