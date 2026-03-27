@@ -4,6 +4,11 @@ pub const MONTH_NAMES: [&str; 12] = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "
 pub const TIMEZONE_UTC: &str = "UTC";
 
 // dumb conversion constants, but these *really* help redability
+pub const U8_DAYS_IN_WEEK: u8 = 7;
+pub const U8_MONTHS_IN_YEAR: u8 = 12;
+pub const U16_SECONDS_IN_MINUTE: u16 = 60;
+pub const U16_MINUTES_IN_HOUR: u16 = 60;
+pub const U16_SECONDS_IN_HOUR: u16 = U16_MINUTES_IN_HOUR * U16_SECONDS_IN_MINUTE;
 pub const U32_MILLIS_IN_SECOND: u32 = 1000;
 pub const U32_NANOS_IN_MILLI: u32 = 1000 * 1000;
 pub const U32_NANOS_IN_SECOND: u32 = U32_MILLIS_IN_SECOND * U32_NANOS_IN_MILLI;

@@ -10,6 +10,17 @@ mod benchmark {
 
 	const TOTAL_BENCHMARK_RUNS: u32 = 1000000;
 
+	fn nanos_write_serialization() -> (u32, Duration) {
+		let start = Timestamp::now();
+		let count = TOTAL_BENCHMARK_RUNS;
+
+		for _ in 0..count {
+			start.write(&mut io::empty(), &StringFormat::TimestampNanoseconds).expect("benchmar timestamp write failed");
+		}
+
+		(count, Timestamp::now() - start)
+	}
+
 	fn utc_write_serialization() -> (u32, Duration) {
 		let start = Timestamp::now();
 		let count = TOTAL_BENCHMARK_RUNS;
@@ -62,6 +73,10 @@ mod benchmark {
 		}
 
 		let benchmarks: [Benchmark; _] = [
+			Benchmark {
+				name: "write serialized nanoseconds timestamps".into(),
+				func: nanos_write_serialization,
+			},
 			Benchmark {
 				name: "write serialized UTC timestamps".into(),
 				func: utc_write_serialization,

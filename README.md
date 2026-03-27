@@ -12,7 +12,7 @@ To use the ntime crate, add this to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-ntime = "0.0.1"
+ntime = "0.2.0"
 ```
 
 ## Basic examples
@@ -35,8 +35,8 @@ current time (local):                2026-03-24 17:27:01.732 +0100
 current time (UTC):                  Tue, 24 Mar 2026 16:27:01 UTC
 ```
 
-It can also compute durations between timestamps. And it's _fast_ - on modern x64 systems,
-most of NanoTime's overhead is introduced solely by (g)libc primitives.
+It can also compute durations between timestamps. And it's _blazing_ fast, too - see the 
+[assets/benchmark.md](benchamrks) page for details
 
 ```rust
 let start = Timestamp::now();
@@ -44,7 +44,7 @@ start.write(&mut io::empty(), &StringFormat::UtcMillisDateTime).expect("oh no th
 println!("wrote a serialized timestamp in {elapsed:?}", elapsed = Timestamp::now() - start);
 ```
 ```
-wrote a serialized timestamp in 121ns.
+wrote a serialized timestamp in 21ns.
 ```
 
 ## Limitations

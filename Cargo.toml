@@ -28,5 +28,4 @@ path = "src/lib.rs"
 # no external dependencies FTW
 
 [features]
-mock-test = []
 benchmark = []

@@ -1,8 +1,12 @@
+use core::ffi::CStr;
 use std::mem::MaybeUninit;
 use std::os::raw::{c_char, c_int};
+use std::ptr;
 
 #[cfg(not(target_env = "msvc"))]
 use std::os::raw::c_long;
+
+pub const NULL_C_CHAR: *mut c_char = ptr::null::<*mut c_char>() as *mut c_char;
 
 /* ----------------------- Bindings for C stdlib time functions ----------------------- */
 
@@ -160,4 +164,15 @@ pub fn c_reload_tz_info() {
 pub fn c_tz_info() -> (&string, i16) {
 	todo!("TZ information support for Windows is not yet implemented");
 	("UTC", 0)
+}
+
+/// Extracts a timezone string from a c_tm struct.
+pub fn c_timezone_from_tm<'f>(tm: &c_tm) -> &'f str {
+	// SAFETY: Parsing a C pointer which is guaranteed to be intialized by (g)libc functions.
+	let c_timezone = unsafe { CStr::from_ptr(tm.tm_zone).to_str() };
+
+	match c_timezone {
+		Ok(s) => s,
+		Err(e) => panic!("failed to resolve TZ string from {tm:?}: {e}"),
+	}
 }

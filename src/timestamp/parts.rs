@@ -1,11 +1,10 @@
-use core::ffi::CStr;
-use core::ffi::c_char;
-use std::ptr;
-
 use super::Timestamp;
 
 use crate::c_bindings;
-use crate::constant::{DAY_NAMES, MONTH_NAMES, TIMEZONE_UTC, U32_NANOS_IN_MILLI, U64_MILLIS_IN_SECOND, U64_NANOS_IN_MILLI, U128_NANOS_IN_SECOND};
+use crate::constant::{
+	DAY_NAMES, MONTH_NAMES, TIMEZONE_UTC, U8_DAYS_IN_WEEK, U8_MONTHS_IN_YEAR, U16_SECONDS_IN_HOUR, U16_SECONDS_IN_MINUTE, U32_NANOS_IN_MILLI, U64_MILLIS_IN_SECOND, U64_NANOS_IN_MILLI,
+	U128_NANOS_IN_SECOND,
+};
 
 /// A decomposition of a [`Timestamp`] into date/time parts, for a given timezone.
 #[derive(Debug, PartialEq)]
@@ -28,19 +27,19 @@ pub struct TimestampParts<'l> {
 
 impl<'l> TimestampParts<'_> {
 	fn _gmt_offset_parts(gmt_offset_secs: i16) -> (bool, u8, u8) {
-		let secs: i16;
+		let secs: u16;
 		let negative: bool;
 
 		if gmt_offset_secs >= 0 {
 			negative = false;
-			secs = gmt_offset_secs;
+			secs = gmt_offset_secs as u16;
 		} else {
 			negative = true;
-			secs = -gmt_offset_secs;
+			secs = -gmt_offset_secs as u16;
 		}
 
-		let hours = (secs / (60 * 60)) as u8;
-		let mins = ((secs % (60 * 60)) / 60) as u8;
+		let hours = (secs / U16_SECONDS_IN_HOUR) as u8;
+		let mins = ((secs % U16_SECONDS_IN_HOUR) / U16_SECONDS_IN_MINUTE) as u8;
 
 		(negative, hours, mins)
 	}
@@ -83,12 +82,7 @@ impl<'l> TimestampParts<'_> {
 		#[cfg(not(target_env = "msvc"))]
 		{
 			gmt_offset_secs = tm.tm_gmtoff as _;
-			// SAFETY: Parsing a C pointer which is guaranteed to be intialized by (g)libc functions.
-			let c_timezone = unsafe { CStr::from_ptr(tm.tm_zone).to_str() };
-			match c_timezone {
-				Ok(s) => timezone = s,
-				Err(e) => panic!("failed to resolve TZ string from {tm:?}: {e}"),
-			};
+			timezone = c_bindings::c_timezone_from_tm(&tm);
 		}
 		#[cfg(target_env = "msvc")]
 		{
@@ -129,15 +123,13 @@ impl<'l> TimestampParts<'_> {
 	pub fn utc_from_nanos(nanos: u128) -> Self {
 		Self::utc((nanos / U128_NANOS_IN_SECOND) as _, (nanos % U128_NANOS_IN_SECOND) as _)
 	}
-}
 
-impl<'l> TimestampParts<'_> {
 	/// Returns a short day name: `Tue`
 	pub fn day_name(&self) -> &str {
 		if self.week_day == 0 {
 			panic!("invalid week day for {self:?}");
 		}
-		DAY_NAMES[((self.week_day - 1) % 7) as usize]
+		DAY_NAMES[((self.week_day - 1) % U8_DAYS_IN_WEEK) as usize]
 	}
 
 	/// Returns a short month name: `Mar`
@@ -145,7 +137,7 @@ impl<'l> TimestampParts<'_> {
 		if self.week_day == 0 {
 			panic!("invalid month for {self:?}");
 		}
-		MONTH_NAMES[((self.month - 1) % 12) as usize]
+		MONTH_NAMES[((self.month - 1) % U8_MONTHS_IN_YEAR) as usize]
 	}
 
 	// Converts the parts structure back into a [`Timestamp`], interpreting it as UTC.
@@ -154,7 +146,6 @@ impl<'l> TimestampParts<'_> {
 			panic!("cannot convert a TimestampParts in timezone `{tz}' to UTC back to Timestamp", tz = self.timezone);
 		}
 
-		let null_c_char: *const c_char = ptr::null();
 		let tm = &mut c_bindings::c_tm {
 			tm_sec: self.seconds as _,
 			tm_min: self.minutes as _,
@@ -167,7 +158,7 @@ impl<'l> TimestampParts<'_> {
 			tm_yday: 0 as _,
 			tm_isdst: 0,
 			tm_gmtoff: 0,
-			tm_zone: null_c_char as *mut c_char,
+			tm_zone: c_bindings::NULL_C_CHAR,
 		};
 
 		let secs = c_bindings::c_utc_tm_to_time(tm) as u64;

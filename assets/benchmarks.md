@@ -12,15 +12,18 @@ All figures below were collected on 16-core AMD Ryzen 9 5950X system with 64GB o
 Initial release, (g)libc based implementation.
 
 ```
+--- Benchmark: write serialized nanoseconds timestamps ---
+1000000 items in 2.041761ms, average 2ns/op
+
 --- Benchmark: write serialized UTC timestamps ---
-1000000 items in 21.124662ms, average 21ns/op
+1000000 items in 19.862931ms, average 19ns/op
 
 --- Benchmark: write serialized local timestamps ---
-1000000 items in 49.085857ms, average 49ns/op
+1000000 items in 47.459056ms, average 47ns/op
 
 --- Benchmark: convert UTC timestamps to String ---
-1000000 items in 205.405142ms, average 205ns/op
+1000000 items in 207.324203ms, average 207ns/op
 
 --- Benchmark: convert local timestamps to String ---
-1000000 items in 258.136062ms, average 258ns/op
+1000000 items in 266.320416ms, average 266ns/op
 ```

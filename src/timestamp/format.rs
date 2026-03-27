@@ -306,13 +306,13 @@ impl StringFormat {
 
 	/// Serializes a [`Timestamp`] into a [`String`].
 	pub fn as_string(&self, ts: &Timestamp) -> String {
-		let mut out = io::Cursor::new(Vec::new());
+		let mut out = Vec::new();
 		if let Err(e) = self.write(&mut out, ts) {
 			panic!("failed to serialize Timestamp: {}", e);
 		}
 
 		// unsafe { String::from_utf8_unchecked(out.into_inner()) }
-		match String::from_utf8(out.into_inner()) {
+		match String::from_utf8(out) {
 			Ok(s) => s,
 			Err(e) => panic!("failed to convert Timestamp to String: {}", e),
 		}
