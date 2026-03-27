@@ -1,10 +1,13 @@
 # NanoTime
 
+[![](https://img.shields.io/crates/v/ntime.svg)][crates-io]
+[![](https://docs.rs/ntime/badge.svg)][api-docs]
+
 NanoTime is a lightweight, high-performance Rust library for nanosecond-precision timestamps.
 It offers support for timestamp generation, arithmetics, comparsion and casting to various string
 representations, in either local or UTC timezones.
 
-NanoTime has no external dependencies, and runs on all Unix and Windows platforms.
+NanoTime has no external Rust dependencies, and runs on all Unix and Windows platforms.
 
 ## Usage 
 
@@ -36,7 +39,7 @@ current time (UTC):                  Tue, 24 Mar 2026 16:27:01 UTC
 ```
 
 It can also compute durations between timestamps. And it's _blazing_ fast, too - see the 
-[assets/benchmark.md](benchamrks) page for details
+[benchmarks] page for details
 
 ```rust
 let start = Timestamp::now();
@@ -55,12 +58,18 @@ wrote a serialized timestamp in 21ns.
 
 ## Documentation
 
-**[API documentation][api-docs]**
+  * [API documentation][api-docs]
+  * [CHANGELOG]
+  * [Real-world benchmarks][benchmarks]
 
 ## License
 
 NanoTime is distrubuted under the [MIT license][mit].
 
+<img src="assets/Developed-By-a-Human-Not-By-AI-Badge-white.svg" alt="Courtesy of https://notbyai.fyi/" height="80px"/>
+
+[api-docs]: https://docs.rs/ntime
 [crates-io]: https://crates.io/crates/ntime
-[CHANGELOG file]: CHANGELOG.md
+[CHANGELOG]: CHANGELOG.md
+[benchmarks]: assets/benchmarks.md
 [mit]: LICENSE

@@ -7,7 +7,7 @@ Basic benchmark tests, intended to gauge performance progress across versions, l
 
 All figures below were collected on 16-core AMD Ryzen 9 5950X system with 64GB of DDR4 memory.
 
-### Latest: 2026-03-26, version 0.2.0
+## Version 0.2.0 (2026-03-26)
 
 Initial release, (g)libc based implementation.
 
