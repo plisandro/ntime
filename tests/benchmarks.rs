@@ -6,7 +6,7 @@
 mod benchmark {
 	use std::io;
 
-	use ntime::{Duration, StringFormat, Timestamp};
+	use ntime::{Duration, Format, Timestamp};
 
 	const TOTAL_BENCHMARK_RUNS: u32 = 1000000;
 
@@ -15,7 +15,7 @@ mod benchmark {
 		let count = TOTAL_BENCHMARK_RUNS;
 
 		for _ in 0..count {
-			start.write(&mut io::empty(), &StringFormat::TimestampNanoseconds).expect("benchmar timestamp write failed");
+			start.write(&mut io::empty(), &Format::TimestampNanoseconds).expect("benchmar timestamp write failed");
 		}
 
 		(count, Timestamp::now() - start)
@@ -26,7 +26,7 @@ mod benchmark {
 		let count = TOTAL_BENCHMARK_RUNS;
 
 		for _ in 0..count {
-			start.write(&mut io::empty(), &StringFormat::UtcMillisDateTime).expect("benchmar timestamp write failed");
+			start.write(&mut io::empty(), &Format::UtcMillisDateTime).expect("benchmar timestamp write failed");
 		}
 
 		(count, Timestamp::now() - start)
@@ -37,7 +37,7 @@ mod benchmark {
 		let count = TOTAL_BENCHMARK_RUNS;
 
 		for _ in 0..count {
-			start.write(&mut io::empty(), &StringFormat::LocalMillisDateTime).expect("benchmar timestamp write failed");
+			start.write(&mut io::empty(), &Format::LocalMillisDateTime).expect("benchmar timestamp write failed");
 		}
 
 		(count, Timestamp::now() - start)
@@ -48,7 +48,7 @@ mod benchmark {
 		let count = TOTAL_BENCHMARK_RUNS;
 
 		for _ in 0..count {
-			let _ = start.as_string(&StringFormat::UtcMillisDateTime);
+			let _ = start.as_string(&Format::UtcMillisDateTime);
 		}
 
 		(count, Timestamp::now() - start)
@@ -59,7 +59,7 @@ mod benchmark {
 		let count = TOTAL_BENCHMARK_RUNS;
 
 		for _ in 0..count {
-			let _ = start.as_string(&StringFormat::LocalMillisDateTime);
+			let _ = start.as_string(&Format::LocalMillisDateTime);
 		}
 
 		(count, Timestamp::now() - start)

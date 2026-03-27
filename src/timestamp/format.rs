@@ -3,7 +3,7 @@ use std::io;
 use crate::Timestamp;
 
 /// Defines a format for [`Timestamp`] string serialization.
-pub enum StringFormat {
+pub enum Format {
 	/// Compact datetime, in UTC: `2026-03-02 13:22:15`
 	UtcDateTime,
 	/// Compact datetime with milliseconds, in UTC: `2026-03-02 13:22:15.488`
@@ -24,7 +24,7 @@ pub enum StringFormat {
 	UtcRFC2822,
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF), in UTC: `2026-03-02T13:22:15Z`
 	UtcRFC3339,
-	/// An alias for [`StringFormat::UtcRFC7231`].
+	/// An alias for [`Format::UtcRFC7231`].
 	UtcHTTP,
 	/// [RFC 7231](https://www.rfc-editor.org/rfc/rfc3339.html) (HTTP/1.1), in UTC: `Mon, 02 Mar 2026 13:22:15 UTC`
 	UtcRFC7231,
@@ -49,7 +49,7 @@ pub enum StringFormat {
 	LocalRFC2822,
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF), in local timezone: `2026-03-02T15:22:15+0200`
 	LocalRFC3339,
-	/// An alias for [`StringFormat::LocalRFC7231`].
+	/// An alias for [`Format::LocalRFC7231`].
 	LocalHTTP,
 	/// [RFC 7231](https://www.rfc-editor.org/rfc/rfc3339.html) (HTTP/1.1), in local timezone: `Mon, 02 Mar 2026 15:22:15 CET`
 	LocalRFC7231,
@@ -62,8 +62,8 @@ pub enum StringFormat {
 	TimestampNanoseconds,
 }
 
-impl StringFormat {
-	/// Evaluates if the given [`StringFormat`] is a fully numeric representation.
+impl Format {
+	/// Evaluates if the given [`Format`] is a fully numeric representation.
 	pub fn is_numeric(&self) -> bool {
 		match &self {
 			Self::TimestampSeconds => true,
@@ -73,7 +73,7 @@ impl StringFormat {
 		}
 	}
 
-	/// Evaluates if the given [`StringFormat`] is in UTC timezone.
+	/// Evaluates if the given [`Format`] is in UTC timezone.
 	pub fn is_utc(&self) -> bool {
 		match &self {
 			Self::UtcDateTime => true,
@@ -100,7 +100,7 @@ impl StringFormat {
 		};
 
 		match self {
-			StringFormat::UtcDateTime => {
+			Format::UtcDateTime => {
 				let parts = ts.as_utc_parts();
 				write!(
 					out,
@@ -113,7 +113,7 @@ impl StringFormat {
 					secs = parts.seconds,
 				)
 			}
-			StringFormat::LocalDateTime => {
+			Format::LocalDateTime => {
 				let parts = ts.as_local_parts();
 				write!(
 					out,
@@ -129,7 +129,7 @@ impl StringFormat {
 					offset_minutes = parts.gmt_offset_minutes,
 				)
 			}
-			StringFormat::UtcMillisDateTime => {
+			Format::UtcMillisDateTime => {
 				let parts = ts.as_utc_parts();
 				write!(
 					out,
@@ -143,7 +143,7 @@ impl StringFormat {
 					msecs = parts.milliseconds,
 				)
 			}
-			StringFormat::LocalMillisDateTime => {
+			Format::LocalMillisDateTime => {
 				let parts = ts.as_local_parts();
 				write!(
 					out,
@@ -160,7 +160,7 @@ impl StringFormat {
 					offset_minutes = parts.gmt_offset_minutes,
 				)
 			}
-			StringFormat::UtcNanosDateTime => {
+			Format::UtcNanosDateTime => {
 				let parts = ts.as_utc_parts();
 				write!(
 					out,
@@ -175,7 +175,7 @@ impl StringFormat {
 					nsecs = parts.nanoseconds,
 				)
 			}
-			StringFormat::LocalNanosDateTime => {
+			Format::LocalNanosDateTime => {
 				let parts = ts.as_local_parts();
 				write!(
 					out,
@@ -193,7 +193,7 @@ impl StringFormat {
 					offset_minutes = parts.gmt_offset_minutes,
 				)
 			}
-			StringFormat::UtcFileName | StringFormat::LocalFileName => {
+			Format::UtcFileName | Format::LocalFileName => {
 				let parts = get_parts();
 				write!(
 					out,
@@ -206,15 +206,15 @@ impl StringFormat {
 					secs = parts.seconds,
 				)
 			}
-			StringFormat::UtcDate | StringFormat::LocalDate => {
+			Format::UtcDate | Format::LocalDate => {
 				let parts = get_parts();
 				write!(out, "{year}-{month:02}-{day:02}", year = parts.year, month = parts.month, day = parts.month_day)
 			}
-			StringFormat::UtcTime | StringFormat::LocalTime => {
+			Format::UtcTime | Format::LocalTime => {
 				let parts = get_parts();
 				write!(out, "{hour:02}:{mins:02}:{secs:02}", hour = parts.hour, mins = parts.minutes, secs = parts.seconds)
 			}
-			StringFormat::UtcMillisTime | StringFormat::LocalMillisTime => {
+			Format::UtcMillisTime | Format::LocalMillisTime => {
 				let parts = get_parts();
 				write!(
 					out,
@@ -225,7 +225,7 @@ impl StringFormat {
 					msecs = parts.milliseconds,
 				)
 			}
-			StringFormat::UtcNanosTime | StringFormat::LocalNanosTime => {
+			Format::UtcNanosTime | Format::LocalNanosTime => {
 				let parts = get_parts();
 				write!(
 					out,
@@ -237,7 +237,7 @@ impl StringFormat {
 					nsecs = parts.nanoseconds,
 				)
 			}
-			StringFormat::UtcRFC2822 | StringFormat::LocalRFC2822 => {
+			Format::UtcRFC2822 | Format::LocalRFC2822 => {
 				let parts = get_parts();
 				write!(
 					out,
@@ -254,7 +254,7 @@ impl StringFormat {
 					offset_minutes = parts.gmt_offset_minutes,
 				)
 			}
-			StringFormat::UtcRFC3339 => {
+			Format::UtcRFC3339 => {
 				let parts = ts.as_utc_parts();
 				write!(
 					out,
@@ -267,7 +267,7 @@ impl StringFormat {
 					secs = parts.seconds,
 				)
 			}
-			StringFormat::LocalRFC3339 => {
+			Format::LocalRFC3339 => {
 				let parts = ts.as_local_parts();
 				write!(
 					out,
@@ -283,7 +283,7 @@ impl StringFormat {
 					offset_minutes = parts.gmt_offset_minutes,
 				)
 			}
-			StringFormat::UtcHTTP | StringFormat::UtcRFC7231 | StringFormat::LocalHTTP | StringFormat::LocalRFC7231 => {
+			Format::UtcHTTP | Format::UtcRFC7231 | Format::LocalHTTP | Format::LocalRFC7231 => {
 				let parts = get_parts();
 				write!(
 					out,
@@ -298,9 +298,9 @@ impl StringFormat {
 					timezone = parts.timezone,
 				)
 			}
-			StringFormat::TimestampSeconds => write!(out, "{}", ts.as_secs()),
-			StringFormat::TimestampMilliseconds => write!(out, "{}", ts.as_millis()),
-			StringFormat::TimestampNanoseconds => write!(out, "{}", ts.as_nanos()),
+			Format::TimestampSeconds => write!(out, "{}", ts.as_secs()),
+			Format::TimestampMilliseconds => write!(out, "{}", ts.as_millis()),
+			Format::TimestampNanoseconds => write!(out, "{}", ts.as_nanos()),
 		}
 	}
 
@@ -330,27 +330,27 @@ mod test_format {
 	fn timestamp_as_number() {
 		let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456);
 
-		assert_eq!(StringFormat::TimestampSeconds.as_string(&ts), "1772808229");
-		assert_eq!(StringFormat::TimestampMilliseconds.as_string(&ts), "1772808229038");
-		assert_eq!(StringFormat::TimestampNanoseconds.as_string(&ts), "1772808229038023456");
+		assert_eq!(Format::TimestampSeconds.as_string(&ts), "1772808229");
+		assert_eq!(Format::TimestampMilliseconds.as_string(&ts), "1772808229038");
+		assert_eq!(Format::TimestampNanoseconds.as_string(&ts), "1772808229038023456");
 	}
 
 	#[test]
 	fn timestamp_as_utc_string() {
 		let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456);
 
-		assert_eq!(StringFormat::UtcDateTime.as_string(&ts), "2026-03-06 14:43:49");
-		assert_eq!(StringFormat::UtcMillisDateTime.as_string(&ts), "2026-03-06 14:43:49.038");
-		assert_eq!(StringFormat::UtcNanosDateTime.as_string(&ts), "2026-03-06 14:43:49.038023456");
-		assert_eq!(StringFormat::UtcFileName.as_string(&ts), "2026-03-06_14-43-49");
-		assert_eq!(StringFormat::UtcDate.as_string(&ts), "2026-03-06");
-		assert_eq!(StringFormat::UtcTime.as_string(&ts), "14:43:49");
-		assert_eq!(StringFormat::UtcMillisTime.as_string(&ts), "14:43:49.038");
-		assert_eq!(StringFormat::UtcNanosTime.as_string(&ts), "14:43:49.038023456");
-		assert_eq!(StringFormat::UtcRFC2822.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 +0000");
-		assert_eq!(StringFormat::UtcRFC3339.as_string(&ts), "2026-03-06T14:43:49Z");
-		assert_eq!(StringFormat::UtcHTTP.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 UTC");
-		assert_eq!(StringFormat::UtcRFC7231.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 UTC");
+		assert_eq!(Format::UtcDateTime.as_string(&ts), "2026-03-06 14:43:49");
+		assert_eq!(Format::UtcMillisDateTime.as_string(&ts), "2026-03-06 14:43:49.038");
+		assert_eq!(Format::UtcNanosDateTime.as_string(&ts), "2026-03-06 14:43:49.038023456");
+		assert_eq!(Format::UtcFileName.as_string(&ts), "2026-03-06_14-43-49");
+		assert_eq!(Format::UtcDate.as_string(&ts), "2026-03-06");
+		assert_eq!(Format::UtcTime.as_string(&ts), "14:43:49");
+		assert_eq!(Format::UtcMillisTime.as_string(&ts), "14:43:49.038");
+		assert_eq!(Format::UtcNanosTime.as_string(&ts), "14:43:49.038023456");
+		assert_eq!(Format::UtcRFC2822.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 +0000");
+		assert_eq!(Format::UtcRFC3339.as_string(&ts), "2026-03-06T14:43:49Z");
+		assert_eq!(Format::UtcHTTP.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 UTC");
+		assert_eq!(Format::UtcRFC7231.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 UTC");
 	}
 
 	#[test]
@@ -358,18 +358,18 @@ mod test_format {
 		test_helpers::mocks::with_timezone("America/Montevideo", || {
 			let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456);
 
-			assert_eq!(StringFormat::LocalDateTime.as_string(&ts), "2026-03-06 11:43:49 -0300");
-			assert_eq!(StringFormat::LocalMillisDateTime.as_string(&ts), "2026-03-06 11:43:49.038 -0300");
-			assert_eq!(StringFormat::LocalNanosDateTime.as_string(&ts), "2026-03-06 11:43:49.038023456 -0300");
-			assert_eq!(StringFormat::LocalFileName.as_string(&ts), "2026-03-06_11-43-49");
-			assert_eq!(StringFormat::LocalDate.as_string(&ts), "2026-03-06");
-			assert_eq!(StringFormat::LocalTime.as_string(&ts), "11:43:49");
-			assert_eq!(StringFormat::LocalMillisTime.as_string(&ts), "11:43:49.038");
-			assert_eq!(StringFormat::LocalNanosTime.as_string(&ts), "11:43:49.038023456");
-			assert_eq!(StringFormat::LocalRFC2822.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -0300");
-			assert_eq!(StringFormat::LocalRFC3339.as_string(&ts), "2026-03-06T11:43:49-0300");
-			assert_eq!(StringFormat::LocalHTTP.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -03");
-			assert_eq!(StringFormat::LocalRFC7231.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -03");
+			assert_eq!(Format::LocalDateTime.as_string(&ts), "2026-03-06 11:43:49 -0300");
+			assert_eq!(Format::LocalMillisDateTime.as_string(&ts), "2026-03-06 11:43:49.038 -0300");
+			assert_eq!(Format::LocalNanosDateTime.as_string(&ts), "2026-03-06 11:43:49.038023456 -0300");
+			assert_eq!(Format::LocalFileName.as_string(&ts), "2026-03-06_11-43-49");
+			assert_eq!(Format::LocalDate.as_string(&ts), "2026-03-06");
+			assert_eq!(Format::LocalTime.as_string(&ts), "11:43:49");
+			assert_eq!(Format::LocalMillisTime.as_string(&ts), "11:43:49.038");
+			assert_eq!(Format::LocalNanosTime.as_string(&ts), "11:43:49.038023456");
+			assert_eq!(Format::LocalRFC2822.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -0300");
+			assert_eq!(Format::LocalRFC3339.as_string(&ts), "2026-03-06T11:43:49-0300");
+			assert_eq!(Format::LocalHTTP.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -03");
+			assert_eq!(Format::LocalRFC7231.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -03");
 		});
 	}
 }

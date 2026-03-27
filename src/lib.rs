@@ -41,12 +41,12 @@
 //! ## String conversion and casting
 //!
 //! ```rust
-//! use ntime::{StringFormat, Timestamp};
+//! use ntime::{Format, Timestamp};
 //!
 //! let now = Timestamp::now();
 //! println!("nanos since epoch: {}", now.as_nanos());
 //! println!("to_string:         {}", now.to_string());
-//! println!("HTTP/1.1 (UTC):    {}", now.as_string(&StringFormat::UtcRFC7231));
+//! println!("HTTP/1.1 (UTC):    {}", now.as_string(&Format::UtcRFC7231));
 //! ```
 //! ```text
 //! nanos since epoch:  1774369621732000558
@@ -96,5 +96,5 @@ use std::time;
 // Public exported symbols.
 pub use sleep::*;
 pub use time::Duration;
-pub use timestamp::StringFormat;
+pub use timestamp::Format;
 pub use timestamp::Timestamp;

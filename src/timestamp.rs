@@ -11,7 +11,7 @@ use std::time::Duration;
 use crate::constant::{TIMEZONE_UTC, U128_MILLIS_IN_SECOND, U128_NANOS_IN_MILLI, U128_NANOS_IN_SECOND};
 use parts::TimestampParts;
 
-pub use format::StringFormat;
+pub use format::Format;
 
 /// Encapsulates a timestamp, as number of nanoseconds since UNIX epoch (1970-01-01 00:00 UTC).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -104,13 +104,13 @@ impl Timestamp {
 		TimestampParts::local(self.seconds, self.nanoseconds)
 	}
 
-	/// Returns a string representation for the timestamp, in a given [`StringFormat`].
-	pub fn as_string(&self, format: &StringFormat) -> String {
+	/// Returns a string representation for the timestamp, in a given [`Format`].
+	pub fn as_string(&self, format: &Format) -> String {
 		format.as_string(self)
 	}
 
-	/// Serializes a string representatio into a [`io::Write`],in the given [`StringFormat`].
-	pub fn write<T: io::Write>(&self, out: &mut T, format: &StringFormat) -> io::Result<()> {
+	/// Serializes a string representatio into a [`io::Write`],in the given [`Format`].
+	pub fn write<T: io::Write>(&self, out: &mut T, format: &Format) -> io::Result<()> {
 		format.write(out, self)
 	}
 
@@ -157,7 +157,7 @@ impl Timestamp {
 
 impl fmt::Display for Timestamp {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		write!(f, "{}", self.as_string(&StringFormat::LocalDateTime))
+		write!(f, "{}", self.as_string(&Format::LocalDateTime))
 	}
 }
 

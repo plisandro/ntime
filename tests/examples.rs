@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod dummy_examples {
-	use ntime::{StringFormat, Timestamp};
+	use ntime::{Format, Timestamp};
 
 	#[test]
 	fn now() {
@@ -9,8 +9,8 @@ mod dummy_examples {
 		println!("current time as nanos:  {}", now.as_nanos());
 		println!("current time as debug:  {:?}", now);
 		println!("current time as string: {}", now.to_string(),);
-		println!("current time (local):   {}", now.as_string(&StringFormat::LocalMillisDateTime),);
-		println!("current time (UTC):     {}", now.as_string(&StringFormat::UtcMillisDateTime),);
+		println!("current time (local):   {}", now.as_string(&Format::LocalMillisDateTime),);
+		println!("current time (UTC):     {}", now.as_string(&Format::UtcMillisDateTime),);
 	}
 
 	#[test]
