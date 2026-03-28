@@ -63,16 +63,6 @@ pub enum Format {
 }
 
 impl Format {
-	/// Evaluates if the given [`Format`] is a fully numeric representation.
-	pub fn is_numeric(&self) -> bool {
-		match &self {
-			Self::TimestampSeconds => true,
-			Self::TimestampMilliseconds => true,
-			Self::TimestampNanoseconds => true,
-			_ => false,
-		}
-	}
-
 	/// Evaluates if the given [`Format`] is in UTC timezone.
 	pub fn is_utc(&self) -> bool {
 		match &self {
@@ -311,10 +301,19 @@ impl Format {
 			panic!("failed to serialize Timestamp: {}", e);
 		}
 
-		// unsafe { String::from_utf8_unchecked(out.into_inner()) }
 		match String::from_utf8(out) {
 			Ok(s) => s,
 			Err(e) => panic!("failed to convert Timestamp to String: {}", e),
+		}
+	}
+
+	/// Serializes a [`Timestamp`] into am integer, if the format supports it.
+	pub fn as_integer(&self, ts: &Timestamp) -> Option<u128> {
+		match self {
+			Format::TimestampSeconds => Some(ts.as_secs() as u128),
+			Format::TimestampMilliseconds => Some(ts.as_millis()),
+			Format::TimestampNanoseconds => Some(ts.as_nanos()),
+			_ => None,
 		}
 	}
 }
@@ -327,7 +326,7 @@ mod test_format {
 	use crate::test_helpers;
 
 	#[test]
-	fn timestamp_as_number() {
+	fn timestamp_as_number_string() {
 		let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456);
 
 		assert_eq!(Format::TimestampSeconds.as_string(&ts), "1772808229");
@@ -371,5 +370,19 @@ mod test_format {
 			assert_eq!(Format::LocalHTTP.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -03");
 			assert_eq!(Format::LocalRFC7231.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -03");
 		});
+	}
+
+	#[test]
+	fn timestamp_as_integer() {
+		let ts = Timestamp::from_utc_date(2026, 01, 29, 07, 43, 19, 134, 943903);
+
+		assert_eq!(Format::TimestampSeconds.as_integer(&ts), Some(1769672599 as u128));
+		assert_eq!(Format::TimestampMilliseconds.as_integer(&ts), Some(1769672599134 as u128));
+		assert_eq!(Format::TimestampNanoseconds.as_integer(&ts), Some(1769672599134943903 as u128));
+		assert_eq!(Format::UtcDateTime.as_integer(&ts), None);
+		assert_eq!(Format::UtcNanosDateTime.as_integer(&ts), None);
+		assert_eq!(Format::UtcTime.as_integer(&ts), None);
+		assert_eq!(Format::UtcRFC2822.as_integer(&ts), None);
+		assert_eq!(Format::UtcRFC7231.as_integer(&ts), None);
 	}
 }

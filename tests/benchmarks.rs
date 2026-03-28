@@ -65,6 +65,16 @@ mod benchmark {
 		(count, Timestamp::now() - start)
 	}
 
+	fn to_integer_conversion() -> (u32, Duration) {
+		let start = Timestamp::now();
+		let count = TOTAL_BENCHMARK_RUNS;
+
+		for _ in 0..count {
+			let _ = start.as_integer(&Format::TimestampNanoseconds);
+		}
+
+		(count, Timestamp::now() - start)
+	}
 	#[test]
 	fn run() {
 		struct Benchmark {
@@ -92,6 +102,10 @@ mod benchmark {
 			Benchmark {
 				name: "convert local timestamps to String".into(),
 				func: local_to_string_serialization,
+			},
+			Benchmark {
+				name: "timestamps to integer".into(),
+				func: to_integer_conversion,
 			},
 		];
 

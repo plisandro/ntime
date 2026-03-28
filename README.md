@@ -27,8 +27,8 @@ let now = Timestamp::now();
 println!("current time, as nanos since epoch: {}", now.as_nanos());
 println!("current time as debug:              {:?}", now);
 println!("current time as string:             {}", now.to_string());
-println!("current time (local):               {}", now.as_string(&StringFormat::LocalMillisDateTime));
-println!("current time (UTC):                 {}", now.as_string(&StringFormat::UtcRFC7231));
+println!("current time (local):               {}", now.as_string(&Format::LocalMillisDateTime));
+println!("current time (UTC):                 {}", now.as_string(&Format::UtcRFC7231));
 ```
 ```
 current time, as nanos since epoch:  1774369621732000558
@@ -43,7 +43,7 @@ It can also compute durations between timestamps. And it's _blazing_ fast, too -
 
 ```rust
 let start = Timestamp::now();
-start.write(&mut io::empty(), &StringFormat::UtcMillisDateTime).expect("oh no the write failed");
+start.write(&mut io::empty(), &Format::UtcMillisDateTime).expect("oh no the write failed");
 println!("wrote a serialized timestamp in {elapsed:?}", elapsed = Timestamp::now() - start);
 ```
 ```

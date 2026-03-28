@@ -109,6 +109,10 @@ impl Timestamp {
 		format.as_string(self)
 	}
 
+	/// Returns a integer representation for the timestamp, if the given [`Format`] supports it.
+	pub fn as_integer(&self, format: &Format) -> Option<u128> {
+		format.as_integer(self)
+	}
 	/// Serializes a string representatio into a [`io::Write`],in the given [`Format`].
 	pub fn write<T: io::Write>(&self, out: &mut T, format: &Format) -> io::Result<()> {
 		format.write(out, self)
