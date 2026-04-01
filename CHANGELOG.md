@@ -1,6 +1,10 @@
 # Changelog
 
-This file lists the most important changes made in each release of `textwrap`.
+A list of important changes for relevant `ntime` releases.
+
+## Version 0.3.0 (2026-04-02)
+
+Improved formatting options, benchmarks and unit tests.
 
 ## Version 0.2.0 (2026-03-26)
 

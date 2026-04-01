@@ -11,11 +11,11 @@ NanoTime has no external Rust dependencies, and runs on all Unix and Windows pla
 
 ## Usage 
 
-To use the ntime crate, add this to your `Cargo.toml` file:
+Latest stable release is **v0.3.0**. To use it, add the `ntime` crate to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-ntime = "0.2.0"
+ntime = "0.3.0"
 ```
 
 ## Basic examples
@@ -39,7 +39,7 @@ current time (UTC):                  Tue, 24 Mar 2026 16:27:01 UTC
 ```
 
 It can also compute durations between timestamps. And it's _blazing_ fast, too - see the 
-[benchmarks] page for details
+[benchmarks] page for details - with lock time being dictated mostly by (g)libc calls.
 
 ```rust
 let start = Timestamp::now();
