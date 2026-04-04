@@ -3,6 +3,7 @@ use std::io;
 use crate::Timestamp;
 
 /// Defines a format for [`Timestamp`] string serialization.
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Format {
 	/// Compact datetime, in UTC: `2026-03-02 13:22:15`
 	UtcDateTime,
