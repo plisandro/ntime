@@ -73,7 +73,8 @@ unsafe extern "C" {
 	// Windows is stupid and doesn't return TZ information in tm structs, so...
 	unsafe fn _get_timezone(seconds: *mut s) -> CErrno;
 	unsafe fn _get_tzname(pReturnValue: *mut c_size_t, timeZoneName: *mut c_char, sizeInBytes: *mut c_size_t, index: *mut c_int) -> CErrno;
-	// TODO: add Windows version of tszet for tests.
+	// _tzet() is only used to temporarily change the local timezone in tests
+	unsafe fn _tzset();
 }
 
 // Safe C function wrappers
@@ -147,7 +148,7 @@ pub fn c_utc_tm_to_time(tm: &mut c_tm) -> CTime {
 #[cfg(test)]
 /// Forces a libc reload of timezone information. Used only for testing.
 pub fn c_reload_tz_info() {
-	// SAFETY: Calling a (g)libc functions without arguments.
+	// SAFETY: Calling a (g)libc functions without arguments nor return values.
 	unsafe {
 		#[cfg(not(target_env = "msvc"))]
 		{
@@ -155,7 +156,7 @@ pub fn c_reload_tz_info() {
 		}
 		#[cfg(target_env = "msvc")]
 		{
-			todo!("c_reload_tz_info() not yet implemented for Windows");
+			_tzset();
 		}
 	}
 }
