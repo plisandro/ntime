@@ -1,9 +1,18 @@
 # NanoTime
 
+<p>
+    <picture>
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/plisandro/ntime/master/assets/nanotime_title_light_horizontal.png" width="350px">
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/plisandro/ntime/master/assets/nanotime_title_dark_horizontal.png" width="350px">
+      <img src="https://raw.githubusercontent.com/plisandro/ntime/master/assets/nanotime_title_light_horizontal.png" width="350px" />
+    </picture>
+    <br>
+</p>
+
 [![](https://img.shields.io/crates/v/ntime.svg)][crates-io]
 [![](https://docs.rs/ntime/badge.svg)][api-docs]
 
-NanoTime is a lightweight, high-performance Rust library for nanosecond-precision timestamps.
+NanoTime is a lightweight, high performance Rust library for nanosecond-precision timestamps.
 It offers support for timestamp generation, arithmetics, comparsion and casting to various string
 representations, in either local or UTC timezones.
 
@@ -20,7 +29,7 @@ ntime = "0.3.0"
 
 ## Basic examples
 
-NanoTime can resolve timestamps, and serialize them as multiple formats.
+NanoTime can resolve timestamps, and serialize them in multiple formats.
 
 ```rust
 let now = Timestamp::now();
