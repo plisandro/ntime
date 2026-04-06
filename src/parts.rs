@@ -252,9 +252,9 @@ impl<'i> TimestampParts<'i> {
 
 	/// Converts the parts structure back into a [`Timestamp`], much like glibc's timegm().
 	// TODO: return errors
-	pub fn to_timestamp(&self) -> Timestamp {
+	pub fn to_timestamp(&self) -> Result<Timestamp, &'i str> {
 		if let Err(e) = self.validate_fields() {
-			panic!("{}", e);
+			return Err(e);
 		}
 
 		// See https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_15 for
@@ -284,7 +284,7 @@ impl<'i> TimestampParts<'i> {
 
 		let nanos = self.nanoseconds + ((self.milliseconds as u32) * U32_NANOS_IN_MILLI);
 
-		super::Timestamp::new(secs, nanos)
+		Ok(super::Timestamp::new(secs, nanos))
 	}
 }
 
@@ -446,19 +446,19 @@ mod test {
 		};
 
 		// UTC parts
-		assert_eq!(parts.to_timestamp(), Timestamp::from_nanos(1772947335320123456));
+		assert_eq!(parts.to_timestamp(), Ok(Timestamp::from_nanos(1772947335320123456)));
 
 		// timezoned parts
 		parts.gmt_offset_negative = true;
 		parts.gmt_offset_hours = 9;
 		parts.gmt_offset_minutes = 30;
 		parts.timezone = "Pacific/Marquesas";
-		assert_eq!(parts.to_timestamp(), Timestamp::from_nanos(1772981535320123456));
+		assert_eq!(parts.to_timestamp(), Ok(Timestamp::from_nanos(1772981535320123456)));
 	}
 
 	#[test]
 	fn utc_to_and_from_parts() {
-		let ts = Timestamp::from_utc_date(2026, 03, 24, 18, 47, 31, 111, 222);
+		let ts = Timestamp::from_utc_date(2026, 03, 24, 18, 47, 31, 111, 222).expect("invalid parts");
 		let parts = ts.as_utc_parts();
 
 		assert_eq!(
@@ -481,7 +481,7 @@ mod test {
 			}
 		);
 
-		let from_parts: Timestamp = parts.to_timestamp();
+		let from_parts: Timestamp = parts.to_timestamp().expect("invalid TimestampParts casted from Timestamp");
 		assert_eq!(ts, from_parts);
 	}
 }

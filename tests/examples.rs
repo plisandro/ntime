@@ -17,8 +17,8 @@ mod dummy_examples {
 
 	#[test]
 	fn duration() {
-		let a = Timestamp::from_utc_date(2026, 03, 24, 17, 44, 48, 123, 456);
-		let b = Timestamp::from_utc_date(2026, 03, 24, 17, 25, 30, 789, 012);
+		let a = Timestamp::from_utc_date(2026, 03, 24, 17, 44, 48, 123, 456).expect("invalid parameters for timestamp A");
+		let b = Timestamp::from_utc_date(2026, 03, 24, 17, 25, 30, 789, 012).expect("invalid parameters for timestamp B");
 
 		print!("from {a} to {b}: ");
 		println!("{:?}", (a - b));

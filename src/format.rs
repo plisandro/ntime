@@ -328,7 +328,7 @@ mod test_format {
 
 	#[test]
 	fn timestamp_as_number_string() {
-		let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456);
+		let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
 
 		assert_eq!(Format::TimestampSeconds.as_string(&ts), "1772808229");
 		assert_eq!(Format::TimestampMilliseconds.as_string(&ts), "1772808229038");
@@ -337,7 +337,7 @@ mod test_format {
 
 	#[test]
 	fn timestamp_as_utc_string() {
-		let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456);
+		let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
 
 		assert_eq!(Format::UtcDateTime.as_string(&ts), "2026-03-06 14:43:49");
 		assert_eq!(Format::UtcMillisDateTime.as_string(&ts), "2026-03-06 14:43:49.038");
@@ -356,7 +356,7 @@ mod test_format {
 	#[test]
 	fn timestamp_as_local_string() {
 		test_helpers::mocks::with_timezone("America/Montevideo", || {
-			let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456);
+			let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
 
 			assert_eq!(Format::LocalDateTime.as_string(&ts), "2026-03-06 11:43:49 -0300");
 			assert_eq!(Format::LocalMillisDateTime.as_string(&ts), "2026-03-06 11:43:49.038 -0300");
@@ -375,7 +375,7 @@ mod test_format {
 
 	#[test]
 	fn timestamp_as_integer() {
-		let ts = Timestamp::from_utc_date(2026, 01, 29, 07, 43, 19, 134, 943903);
+		let ts = Timestamp::from_utc_date(2026, 01, 29, 07, 43, 19, 134, 943903).expect("invalid parts");
 
 		assert_eq!(Format::TimestampSeconds.as_integer(&ts), Some(1769672599 as u128));
 		assert_eq!(Format::TimestampMilliseconds.as_integer(&ts), Some(1769672599134 as u128));

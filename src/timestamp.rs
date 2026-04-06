@@ -16,7 +16,7 @@ pub struct Timestamp {
 	nanoseconds: u32,
 }
 
-impl Timestamp {
+impl<'i> Timestamp {
 	/// Creates a [`Timestamp`] from a given epoch timestamp in seconds + nanoseconds.
 	pub fn new(secs: u64, nanos: u32) -> Self {
 		Self { seconds: secs, nanoseconds: nanos }
@@ -44,12 +44,12 @@ impl Timestamp {
 	}
 
 	/// Creates a [`Timestamp`] from a given [`TimestampParts`].
-	pub fn from_parts(parts: &TimestampParts) -> Self {
+	pub fn from_parts(parts: &'i TimestampParts) -> Result<Self, &'i str> {
 		parts.to_timestamp()
 	}
 
 	/// Creates a [`Timestamp`] from a given UTC date + time.
-	pub fn from_utc_date(year: u16, month: u8, day: u8, hour: u8, minutes: u8, secs: u8, millis: u16, nanos: u32) -> Self {
+	pub fn from_utc_date(year: u16, month: u8, day: u8, hour: u8, minutes: u8, secs: u8, millis: u16, nanos: u32) -> Result<Self, &'i str> {
 		TimestampParts {
 			nanoseconds: nanos,
 			milliseconds: millis,
@@ -109,12 +109,12 @@ impl Timestamp {
 	}
 
 	/// Returns a [`TimestampParts`] for the timezone, as UTC.
-	pub fn as_utc_parts(&self) -> TimestampParts<'_> {
+	pub fn as_utc_parts(&self) -> TimestampParts<'i> {
 		TimestampParts::utc(&self)
 	}
 
 	/// Returns a [`TimestampParts`] for the timezone, in the local timezone.
-	pub fn as_local_parts(&self) -> TimestampParts<'_> {
+	pub fn as_local_parts(&self) -> TimestampParts<'i> {
 		TimestampParts::local(&self)
 	}
 
@@ -210,10 +210,10 @@ mod tests {
 	fn from_date() {
 		assert_eq!(
 			Timestamp::from_utc_date(2026, 03, 07, 04, 48, 17, 446, 37892),
-			Timestamp {
+			Ok(Timestamp {
 				seconds: 1772858897,
 				nanoseconds: 446037892,
-			},
+			}),
 			"cast from UTC date"
 		);
 	}
@@ -249,7 +249,10 @@ mod tests {
 			assert_eq!(Timestamp::new(1772457020, 789).to_string(), "2026-03-02 21:10:20 +0800",);
 			assert_eq!(Timestamp::from_secs(1772457213).to_string(), "2026-03-02 21:13:33 +0800",);
 			assert_eq!(Timestamp::from_millis(1772457213123).to_string(), "2026-03-02 21:13:33 +0800",);
-			assert_eq!(Timestamp::from_utc_date(2026, 03, 06, 14, 43, 39, 128, 564).to_string(), "2026-03-06 22:43:39 +0800",);
+			assert_eq!(
+				Timestamp::from_utc_date(2026, 03, 06, 14, 43, 39, 128, 564).expect("invalid parts").to_string(),
+				"2026-03-06 22:43:39 +0800",
+			);
 		});
 	}
 
@@ -295,28 +298,6 @@ mod tests {
 				timezone: TIMEZONE_UTC,
 			},
 			"UTC parts from nanoseconds timestamp"
-		);
-
-		// TODO: move me somewhere else.
-		assert_eq!(
-			TimestampParts {
-				nanoseconds: 123456,
-				milliseconds: 320,
-				seconds: 15,
-				minutes: 22,
-				hour: 5,
-				month_day: 8,
-				month: 3,
-				year: 2026,
-				week_day: 1,
-				year_day: 67,
-				gmt_offset_negative: false,
-				gmt_offset_hours: 0,
-				gmt_offset_minutes: 0,
-				timezone: TIMEZONE_UTC,
-			}
-			.to_timestamp(),
-			Timestamp::from_nanos(1772947335320123456),
 		);
 	}
 
