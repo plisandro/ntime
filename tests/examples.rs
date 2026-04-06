@@ -11,6 +11,8 @@ mod dummy_examples {
 		println!("current time as string: {}", now.to_string(),);
 		println!("current time (local):   {}", now.as_string(&Format::LocalMillisDateTime),);
 		println!("current time (UTC):     {}", now.as_string(&Format::UtcMillisDateTime),);
+		println!("week day (local):       {}", now.as_local_parts().week_day);
+		println!("year day (UTC):         {}", now.as_utc_parts().year_day);
 	}
 
 	#[test]

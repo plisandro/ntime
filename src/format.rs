@@ -115,7 +115,7 @@ impl Format {
 					hour = parts.hour,
 					mins = parts.minutes,
 					secs = parts.seconds,
-					offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
+					offset_sign = parts.gmt_offset_sign(),
 					offset_hours = parts.gmt_offset_hours,
 					offset_minutes = parts.gmt_offset_minutes,
 				)
@@ -146,7 +146,7 @@ impl Format {
 					mins = parts.minutes,
 					secs = parts.seconds,
 					msecs = parts.milliseconds,
-					offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
+					offset_sign = parts.gmt_offset_sign(),
 					offset_hours = parts.gmt_offset_hours,
 					offset_minutes = parts.gmt_offset_minutes,
 				)
@@ -179,7 +179,7 @@ impl Format {
 					secs = parts.seconds,
 					msecs = parts.milliseconds,
 					nsecs = parts.nanoseconds,
-					offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
+					offset_sign = parts.gmt_offset_sign(),
 					offset_hours = parts.gmt_offset_hours,
 					offset_minutes = parts.gmt_offset_minutes,
 				)
@@ -240,7 +240,7 @@ impl Format {
 					hour = parts.hour,
 					mins = parts.minutes,
 					secs = parts.seconds,
-					offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
+					offset_sign = parts.gmt_offset_sign(),
 					offset_hours = parts.gmt_offset_hours,
 					offset_minutes = parts.gmt_offset_minutes,
 				)
@@ -269,7 +269,7 @@ impl Format {
 					hour = parts.hour,
 					mins = parts.minutes,
 					secs = parts.seconds,
-					offset_sign = if parts.gmt_offset_negative { "-" } else { "+" },
+					offset_sign = parts.gmt_offset_sign(),
 					offset_hours = parts.gmt_offset_hours,
 					offset_minutes = parts.gmt_offset_minutes,
 				)

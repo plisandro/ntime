@@ -38,17 +38,21 @@ println!("current time as debug:              {:?}", now);
 println!("current time as string:             {}", now.to_string());
 println!("current time (local):               {}", now.as_string(&Format::LocalMillisDateTime));
 println!("current time (UTC):                 {}", now.as_string(&Format::UtcRFC7231));
+println!("week day (local):                   {}", now.as_local_parts().week_day);
+println!("year day (UTC):                     {}", now.as_utc_parts().year_day);
 ```
 ```
-current time, as nanos since epoch:  1774369621732000558
-current time as debug:               Timestamp { seconds: 1774369621, nanoseconds: 732000558 },
-current time as string:              2026-03-24 17:21:01 +0100
-current time (local):                2026-03-24 17:27:01.732 +0100
-current time (UTC):                  Tue, 24 Mar 2026 16:27:01 UTC
+current time, as nanos since epoch: 1774369621732000558
+current time as debug:              Timestamp { seconds: 1774369621, nanoseconds: 732000558 }
+current time as string:             2026-03-24 16:27:01 +0000
+current time (local):               2026-03-24 16:27:01.732 +0000
+current time (UTC):                 Tue, 24 Mar 2026 16:27:01 UTC
+week day (local):                   3
+year day (UTC):                     83
 ```
 
-It can also compute durations between timestamps. And it's _blazing_ fast, too - see the 
-[benchmarks] page for details - with lock time being dictated mostly by (g)libc calls.
+It can also compute durations between timestamps. And it's _blazing_ fast - see the 
+[benchmarks] page for details - with lock times being dictated mostly by (g)libc calls.
 
 ```rust
 let start = Timestamp::now();
@@ -61,8 +65,8 @@ wrote a serialized timestamp in 21ns.
 
 ## Limitations
 
-  * NanoTime is intended mainly to deal with precision timestamps. If you need date/time management
-    with full support for timezone and calendar operations, see [Chrono](https://docs.rs/chrono/latest/chrono/) instead.
+  * NanoTime is intended to efficiently deal with precision timestamps. If you need date/time management with full
+    support for timezone and calendar operations, consider using [Chrono](https://docs.rs/chrono/latest/chrono/) instead.
   * Windows support is partial, and under developement.
 
 ## Documentation

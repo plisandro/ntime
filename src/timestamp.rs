@@ -1,6 +1,3 @@
-mod format;
-mod parts;
-
 use core::ops::Sub;
 use std::cmp::{Ord, Ordering, PartialOrd};
 use std::fmt;
@@ -9,9 +6,8 @@ use std::time;
 use std::time::Duration;
 
 use crate::constant::{TIMEZONE_UTC, U128_MILLIS_IN_SECOND, U128_NANOS_IN_MILLI, U128_NANOS_IN_SECOND};
-use parts::TimestampParts;
-
-pub use format::Format;
+use crate::format::Format;
+use crate::parts::TimestampParts;
 
 /// Encapsulates a timestamp, as number of nanoseconds since UNIX epoch (1970-01-01 00:00 UTC).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -58,8 +54,9 @@ impl Timestamp {
 			month_day: day,
 			month: month,
 			year: year,
-			week_day: 0,
-			year_day: 0,
+			// week_day and year_day are unused when converting back to [`Timestamp`]
+			week_day: 1,
+			year_day: 1,
 			gmt_offset_negative: false,
 			gmt_offset_hours: 0,
 			gmt_offset_minutes: 0,
@@ -81,6 +78,11 @@ impl Timestamp {
 		Self::from_system_time(time::SystemTime::now())
 	}
 
+	/// Returs the number of seconds + nanoseconds since UNIX epoch.
+	pub fn epoch_offset(&self) -> (u64, u32) {
+		(self.seconds, self.nanoseconds)
+	}
+
 	/// Returns number of seconds since UNIX epoch.
 	pub fn as_secs(&self) -> u64 {
 		self.seconds
@@ -96,12 +98,14 @@ impl Timestamp {
 		(self.seconds as u128) * U128_NANOS_IN_SECOND + self.nanoseconds as u128
 	}
 
-	fn as_utc_parts(&self) -> TimestampParts<'_> {
-		TimestampParts::utc(self.seconds, self.nanoseconds)
+	/// Returns a [`TimestampParts`] for the timezone, as UTC.
+	pub fn as_utc_parts(&self) -> TimestampParts<'_> {
+		TimestampParts::utc(&self)
 	}
 
-	fn as_local_parts(&self) -> TimestampParts<'_> {
-		TimestampParts::local(self.seconds, self.nanoseconds)
+	/// Returns a [`TimestampParts`] for the timezone, in the local timezone.
+	pub fn as_local_parts(&self) -> TimestampParts<'_> {
+		TimestampParts::local(&self)
 	}
 
 	/// Returns a string representation for the timestamp, in a given [`Format`].
@@ -294,8 +298,8 @@ mod tests {
 				month_day: 8,
 				month: 3,
 				year: 2026,
-				week_day: 0,
-				year_day: 0,
+				week_day: 1,
+				year_day: 67,
 				gmt_offset_negative: false,
 				gmt_offset_hours: 0,
 				gmt_offset_minutes: 0,

@@ -17,7 +17,8 @@
 //!   * A UTC date & time: [`Timestamp::from_utc_date()`]
 //!   * From a timestamp in milliseconds/nanoseconds: [`Timestamp::new()`], [`Timestamp::from_secs()`], [`Timestamp::from_millis()`], [`Timestamp::from_nanos()`].
 //!
-//! [`Timestamp`]s can efficiently be converted into a text representation, with multiple formats supported.
+//! [`Timestamp`]s can efficiently be converted into a text representation, with multiple formats supported,
+//! and split into date + time [`TimestampParts`].
 //!
 //! [`Timestamp`] supports comparison, and a limited set of aritmetic operations (difference, for example), which
 //! return a [`std::time::Duration`]; this type is re-exported in the module's namespace for convenience.
@@ -54,7 +55,7 @@
 //! HTTP/1.1 (UTC):     Tue, 24 Mar 2026 16:27:01 UTC
 //! ```
 //!
-//! ## Timestamp arithmetics
+//! ## Timestamp Arithmetics
 //!
 //! ```rust
 //! use ntime::Timestamp;
@@ -66,6 +67,29 @@
 //! ```text
 //! a - b = 1157.334000444s
 //! ```
+//!
+//! ## Parts Decomposition
+//!
+//! ```rust
+//! use ntime::Timestamp;
+//!
+//! let now = Timestamp::now();
+//! let now_parts = now.as_utc_parts();
+//!
+//! println!(
+//!     "today is {day_name} the {month_day}th of {month_name} {year}, \
+//!     day {year_day} of the year in UTC",
+//!     day_name = now_parts.day_name(),
+//!     month_day = now_parts.month_day,
+//!     month_name = now_parts.month_name(),
+//!     year = now_parts.year,
+//!     year_day = now_parts.year_day
+//! );
+//! ```
+//! ```text
+//! today is Mon the 6th of Apr 2026, day 96 of the year in UTC
+//! ```
+//!
 //! ## Sleeping
 //!
 //! ```rust
@@ -75,7 +99,7 @@
 //! ntime::sleep_millis(1500);
 //! ```
 //!
-//! # Limitations and caveats
+//! # Limitations and Caveats
 //!
 //!   * As noted, NanoTime is not well suited for applications requiring calendar operations, and/or flexible timezone management.
 //!   * Windows support is currently partial, lacking string conversion support for local timezones.
@@ -86,15 +110,16 @@
 
 mod c_bindings;
 mod constant;
+mod format;
+mod parts;
 mod sleep;
 #[cfg(test)]
 mod test_helpers;
 mod timestamp;
 
-use std::time;
-
 // Public exported symbols.
+pub use format::Format;
+pub use parts::TimestampParts;
 pub use sleep::*;
-pub use time::Duration;
-pub use timestamp::Format;
+pub use std::time::Duration;
 pub use timestamp::Timestamp;
