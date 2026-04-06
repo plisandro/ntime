@@ -29,7 +29,7 @@ ntime = "0.3.0"
 
 ## Basic examples
 
-NanoTime can resolve timestamps, and serialize them in multiple formats.
+NanoTime can resolve timestamps, break them down in date+time parts, and serialize in multiple formats.
 
 ```rust
 let now = Timestamp::now();

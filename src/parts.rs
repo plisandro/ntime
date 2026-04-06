@@ -358,6 +358,30 @@ mod test {
 	}
 
 	#[test]
+	fn parts_to_utc() {
+		assert_eq!(
+			TimestampParts {
+				nanoseconds: 123456,
+				milliseconds: 320,
+				seconds: 15,
+				minutes: 22,
+				hour: 5,
+				month_day: 8,
+				month: 3,
+				year: 2026,
+				week_day: 1,
+				year_day: 67,
+				gmt_offset_negative: false,
+				gmt_offset_hours: 0,
+				gmt_offset_minutes: 0,
+				timezone: TIMEZONE_UTC,
+			}
+			.utc_to_timestamp(),
+			Timestamp::from_nanos(1772947335320123456)
+		);
+	}
+
+	#[test]
 	fn utc_to_and_from_parts() {
 		let ts = Timestamp::from_utc_date(2026, 03, 24, 18, 47, 31, 111, 222);
 		let parts = ts.as_utc_parts();
