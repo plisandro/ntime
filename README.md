@@ -20,11 +20,11 @@ NanoTime has no external Rust dependencies, and runs on all Unix and Windows pla
 
 ## Usage 
 
-Latest stable release is **v0.3.0**. To use it, add the `ntime` crate to your `Cargo.toml` file:
+Latest stable release is **v0.4.0**. To use it, add the `ntime` crate to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-ntime = "0.3.0"
+ntime = "0.4.0"
 ```
 
 ## Basic examples
@@ -79,7 +79,7 @@ wrote a serialized timestamp in 21ns.
 
 NanoTime is distrubuted under the [MIT license][mit].
 
-<img src="assets/Developed-By-a-Human-Not-By-AI-Badge-white.svg" alt="Courtesy of https://notbyai.fyi/" height="80px"/>
+<img src="assets/Developed-By-a-Human-Not-By-AI-Badge-white.svg" title="Courtesy of https://notbyai.fyi/" height="80px"/>
 
 [api-docs]: https://docs.rs/ntime
 [crates-io]: https://crates.io/crates/ntime
