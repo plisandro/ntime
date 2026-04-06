@@ -56,7 +56,6 @@ pub struct c_tm {
 unsafe extern "C" {
 	unsafe fn gmtime_r(ts: *const CTime, tm: *mut c_tm) -> *mut c_tm;
 	unsafe fn localtime_r(ts: *const CTime, tm: *mut c_tm) -> *mut c_tm;
-	unsafe fn timegm(tm: *mut c_tm) -> CTime;
 	#[cfg(test)]
 	// tzet() is only used to temporarily change the local timezone in tests
 	unsafe fn tzset();
@@ -69,7 +68,6 @@ unsafe extern "C" {
 unsafe extern "C" {
 	unsafe fn _gmtime64_s(tm: *mut c_tm, ts: *const CTime) -> c_int;
 	unsafe fn _localtime64_s(tm: *mut c_tm, ts: *const CTime) -> c_int;
-	unsafe fn _mkgmtime64(tm: *mut c_tm) -> CTime;
 	// Windows is stupid and doesn't return TZ information in tm structs, so...
 	unsafe fn _get_timezone(seconds: *mut s) -> CErrno;
 	unsafe fn _get_tzname(pReturnValue: *mut c_size_t, timeZoneName: *mut c_char, sizeInBytes: *mut c_size_t, index: *mut c_int) -> CErrno;
@@ -115,6 +113,7 @@ pub fn c_time_to_local_tm(ts: CTime) -> Option<c_tm> {
 		}
 		#[cfg(target_env = "msvc")]
 		{
+			// TODO: fill in timezone details
 			ok = _localtime64_s(tm.as_mut_ptr(), ts) == 0;
 		}
 	}
@@ -124,25 +123,6 @@ pub fn c_time_to_local_tm(ts: CTime) -> Option<c_tm> {
 
 	let tm = unsafe { tm.assume_init() };
 	Some(tm)
-}
-
-pub fn c_utc_tm_to_time(tm: &mut c_tm) -> CTime {
-	let ct: CTime;
-	let tm: *mut c_tm = tm;
-
-	// SAFETY: Calling (g)libc functions with properly initialized types.
-	unsafe {
-		#[cfg(not(target_env = "msvc"))]
-		{
-			ct = timegm(tm);
-		}
-		#[cfg(target_env = "msvc")]
-		{
-			ct = _mkgtime64(tm);
-		}
-	}
-
-	ct
 }
 
 #[cfg(test)]

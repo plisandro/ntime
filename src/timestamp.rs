@@ -43,6 +43,11 @@ impl Timestamp {
 		}
 	}
 
+	/// Creates a [`Timestamp`] from a given [`TimestampParts`].
+	pub fn from_parts(parts: &TimestampParts) -> Self {
+		parts.to_timestamp()
+	}
+
 	/// Creates a [`Timestamp`] from a given UTC date + time.
 	pub fn from_utc_date(year: u16, month: u8, day: u8, hour: u8, minutes: u8, secs: u8, millis: u16, nanos: u32) -> Self {
 		TimestampParts {
@@ -62,7 +67,12 @@ impl Timestamp {
 			gmt_offset_minutes: 0,
 			timezone: TIMEZONE_UTC,
 		}
-		.utc_to_timestamp()
+		.to_timestamp()
+	}
+
+	/// Returns an UNIX epoch [`Timestamp`] (1970-01-01 00:00 UTC)
+	pub fn epoch() -> Self {
+		Self::new(0, 0)
 	}
 
 	/// Creates a [`Timestamp`] from a given [`std::time::SystemTime`].
@@ -305,7 +315,7 @@ mod tests {
 				gmt_offset_minutes: 0,
 				timezone: TIMEZONE_UTC,
 			}
-			.utc_to_timestamp(),
+			.to_timestamp(),
 			Timestamp::from_nanos(1772947335320123456),
 		);
 	}

@@ -2,7 +2,7 @@
 //! It offers support for timestamp generation, arithmetics, comparsion and casting to various string
 //! representations, in either local or UTC timezones.
 //!
-//! NanoTime is optimized for performance - it has no external dependencies, and relies solely
+//! NanoTime is optimized for performance - it has no external dependencies, and relies
 //! on (g)libc to resolve date information from timestamps. As a result, it has also a limited
 //! scope; if you happen to need features such as date/time management, timezone conversion or
 //! calendar operations, you're likely better off using [Chrono](https://docs.rs/chrono/latest/chrono/) or similar.
@@ -16,6 +16,7 @@
 //!   * A standard [`std::time::SystemTime`]: [`Timestamp::from_system_time()`]
 //!   * A UTC date & time: [`Timestamp::from_utc_date()`]
 //!   * From a timestamp in milliseconds/nanoseconds: [`Timestamp::new()`], [`Timestamp::from_secs()`], [`Timestamp::from_millis()`], [`Timestamp::from_nanos()`].
+//!   * From a [`TimestampParts`] struct: [`Timestamp::from_parts()`]
 //!
 //! [`Timestamp`]s can efficiently be converted into a text representation, with multiple formats supported,
 //! and split into date + time [`TimestampParts`].
