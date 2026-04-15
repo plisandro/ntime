@@ -27,5 +27,9 @@ path = "src/lib.rs"
 [dependencies]
 # no external dependencies FTW
 
-[features]
-benchmark = []
+[dev-dependencies]
+divan = "0.1.21"
+
+[[bench]]
+name = "write"
+harness = false
