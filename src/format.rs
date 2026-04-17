@@ -317,6 +317,14 @@ impl Format {
 			_ => None,
 		}
 	}
+
+	/// Evaluates whether this [`Format`] is an numeric integer.
+	pub fn is_integer(&self) -> bool {
+		match self.as_integer(&Timestamp::epoch()) {
+			Some(_) => true,
+			None => false,
+		}
+	}
 }
 
 /* ----------------------- Tests ----------------------- */
@@ -385,5 +393,17 @@ mod test_format {
 		assert_eq!(Format::UtcTime.as_integer(&ts), None);
 		assert_eq!(Format::UtcRFC2822.as_integer(&ts), None);
 		assert_eq!(Format::UtcRFC7231.as_integer(&ts), None);
+	}
+
+	#[test]
+	fn fomat_is_integer() {
+		assert_eq!(Format::TimestampSeconds.is_integer(), true);
+		assert_eq!(Format::TimestampMilliseconds.is_integer(), true);
+		assert_eq!(Format::TimestampNanoseconds.is_integer(), true);
+		assert_eq!(Format::UtcDateTime.is_integer(), false);
+		assert_eq!(Format::UtcNanosDateTime.is_integer(), false);
+		assert_eq!(Format::UtcTime.is_integer(), false);
+		assert_eq!(Format::UtcRFC2822.is_integer(), false);
+		assert_eq!(Format::UtcRFC7231.is_integer(), false);
 	}
 }
