@@ -416,6 +416,15 @@ impl Format {
 			None => false,
 		}
 	}
+
+	/// Evaluates whether this [`Format`] is [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html).
+	pub fn is_rfc_3339(&self) -> bool {
+		match self {
+			Format::UtcRFC3339 | Format::UtcMillisRFC3339 | Format::UtcNanosRFC3339 => true,
+			Format::LocalRFC3339 | Format::LocalMillisRFC3339 | Format::LocalNanosRFC3339 => true,
+			_ => false,
+		}
+	}
 }
 
 /* ----------------------- Tests ----------------------- */
@@ -502,5 +511,20 @@ mod test_format {
 		assert_eq!(Format::UtcTime.is_integer(), false);
 		assert_eq!(Format::UtcRFC2822.is_integer(), false);
 		assert_eq!(Format::UtcRFC7231.is_integer(), false);
+	}
+
+	#[test]
+	fn fomat_is_rfc_3339() {
+		assert_eq!(Format::UtcDateTime.is_rfc_3339(), false);
+		assert_eq!(Format::UtcMillisDateTime.is_rfc_3339(), false);
+		assert_eq!(Format::LocalNanosDateTime.is_rfc_3339(), false);
+		assert_eq!(Format::LocalFileName.is_rfc_3339(), false);
+		assert_eq!(Format::UtcHTTP.is_rfc_3339(), false);
+		assert_eq!(Format::UtcRFC3339.is_rfc_3339(), true);
+		assert_eq!(Format::UtcMillisRFC3339.is_rfc_3339(), true);
+		assert_eq!(Format::UtcNanosRFC3339.is_rfc_3339(), true);
+		assert_eq!(Format::LocalRFC3339.is_rfc_3339(), true);
+		assert_eq!(Format::LocalMillisRFC3339.is_rfc_3339(), true);
+		assert_eq!(Format::LocalNanosRFC3339.is_rfc_3339(), true);
 	}
 }
