@@ -33,6 +33,8 @@ pub enum Format {
 	UtcHTTP,
 	/// [RFC 7231](https://www.rfc-editor.org/rfc/rfc3339.html) (HTTP/1.1), in UTC: `Mon, 02 Mar 2026 13:22:15 UTC`
 	UtcRFC7231,
+	/// Abridged datetime format for syslog [RFC 3164](https://www.rfc-editor.org/rfc/rfc3339.html), in UTC: `Mar  2 13:22:15`.
+	UtcRFC3164,
 
 	/// Compact datetime, in local timezone: `2026-03-02 15:22:15 +0200`
 	LocalDateTime,
@@ -62,6 +64,8 @@ pub enum Format {
 	LocalHTTP,
 	/// [RFC 7231](https://www.rfc-editor.org/rfc/rfc3339.html) (HTTP/1.1), in local timezone: `Mon, 02 Mar 2026 15:22:15 CET`
 	LocalRFC7231,
+	/// Abridged datetime format for syslog [RFC 3164](https://www.rfc-editor.org/rfc/rfc3339.html), in local timezone: `Mar  2 15:22:15`.
+	LocalRFC3164,
 
 	/// Seconds since UNIX epoch: `1772795501`
 	TimestampSeconds,
@@ -84,8 +88,11 @@ impl Format {
 			Self::UtcFileName => true,
 			Self::UtcRFC2822 => true,
 			Self::UtcRFC3339 => true,
+			Self::UtcMillisRFC3339 => true,
+			Self::UtcNanosRFC3339 => true,
 			Self::UtcHTTP => true,
 			Self::UtcRFC7231 => true,
+			Self::UtcRFC3164 => true,
 			Self::TimestampSeconds => true,
 			Self::TimestampMilliseconds => true,
 			_ => false,
@@ -361,6 +368,18 @@ impl Format {
 					timezone = parts.timezone,
 				)
 			}
+			Format::UtcRFC3164 | Format::LocalRFC3164 => {
+				let parts = get_parts();
+				write!(
+					out,
+					"{month_name} {day:>2} {hour:02}:{mins:02}:{secs:02}",
+					month_name = parts.month_name(),
+					day = parts.month_day,
+					hour = parts.hour,
+					mins = parts.minutes,
+					secs = parts.seconds,
+				)
+			}
 			Format::TimestampSeconds => write!(out, "{}", ts.as_secs()),
 			Format::TimestampMilliseconds => write!(out, "{}", ts.as_millis()),
 			Format::TimestampNanoseconds => write!(out, "{}", ts.as_nanos()),
@@ -433,6 +452,7 @@ mod test_format {
 		assert_eq!(Format::UtcNanosRFC3339.as_string(&ts), "2026-03-06T14:43:49.038023456Z");
 		assert_eq!(Format::UtcHTTP.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 UTC");
 		assert_eq!(Format::UtcRFC7231.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 UTC");
+		assert_eq!(Format::UtcRFC3164.as_string(&ts), "Mar  6 14:43:49");
 	}
 
 	#[test]
@@ -454,6 +474,7 @@ mod test_format {
 			assert_eq!(Format::LocalNanosRFC3339.as_string(&ts), "2026-03-06T11:43:49.038023456-0300");
 			assert_eq!(Format::LocalHTTP.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -03");
 			assert_eq!(Format::LocalRFC7231.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -03");
+			assert_eq!(Format::LocalRFC3164.as_string(&ts), "Mar  6 11:43:49");
 		});
 	}
 
