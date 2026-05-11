@@ -20,11 +20,11 @@ NanoTime has no external Rust dependencies, and runs on all Unix and Windows pla
 
 ## Usage 
 
-Latest stable release is **v0.4.0**. To use it, add the `ntime` crate to your `Cargo.toml` file:
+Latest stable release is **v0.5.0**. To use it, add the `ntime` crate to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-ntime = "0.4.0"
+ntime = "0.5.0"
 ```
 
 ## Basic examples
