@@ -31,5 +31,5 @@ path = "src/lib.rs"
 divan = "0.1.21"
 
 [[bench]]
-name = "write"
+name = "casting"
 harness = false
