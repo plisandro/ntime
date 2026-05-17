@@ -10,6 +10,7 @@
 </p>
 
 [![](https://img.shields.io/crates/v/ntime.svg)][crates-io]
+[![](https://github.com/plisandro/ntime/workflows/build/badge.svg)][build-status]
 [![](https://docs.rs/ntime/badge.svg)][api-docs]
 
 NanoTime is a lightweight, high performance Rust library for nanosecond-precision timestamps.
@@ -82,6 +83,7 @@ NanoTime is distrubuted under the [MIT license][mit].
 <img src="assets/Developed-By-a-Human-Not-By-AI-Badge-white.svg" title="Courtesy of https://notbyai.fyi/" height="80px"/>
 
 [api-docs]: https://docs.rs/ntime
+[build-status]: https://github.com/plisandro/ntime/actions?query=workflow%3Abuild+branch%3Amaster
 [crates-io]: https://crates.io/crates/ntime
 [CHANGELOG]: CHANGELOG.md
 [benchmarks]: assets/benchmarks.md
