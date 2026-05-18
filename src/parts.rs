@@ -106,7 +106,8 @@ impl<'i> TimestampParts<'i> {
 		}
 		#[cfg(target_env = "msvc")]
 		{
-			(timezone, gmt_offset_secs) = c_bindings::c_tz_info();
+			gmt_offset_secs = c_bindings::c_tz_gmt_offset();
+			timezone = (*c_bindings::MSVC_TZ_NAME).as_str();
 		}
 
 		let (gmt_offset_negative, gmt_offset_hours, gmt_offset_minutes) = Self::_gmt_offset_parts(gmt_offset_secs);

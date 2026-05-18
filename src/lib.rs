@@ -109,6 +109,8 @@
 #![deny(missing_docs)]
 #![allow(dead_code)]
 
+#[cfg_attr(target_env = "msvc", path = "c_bindings_win.rs")]
+#[cfg_attr(not(target_env = "msvc"), path = "c_bindings_unix.rs")]
 mod c_bindings;
 mod constant;
 mod format;

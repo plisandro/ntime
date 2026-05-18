@@ -1,22 +1,15 @@
 use core::ffi::CStr;
+use core::ffi::{c_char, c_int, c_long};
 use std::mem::MaybeUninit;
-use std::os::raw::{c_char, c_int};
 use std::ptr;
-
-#[cfg(not(target_env = "msvc"))]
-use std::os::raw::c_long;
 
 pub const NULL_C_CHAR: *mut c_char = ptr::null::<*mut c_char>() as *mut c_char;
 
 /* ----------------------- Bindings for C stdlib time functions ----------------------- */
 
 // time_t is platform-specific, so use the largest single-register type available
-pub type CTime = u64;
-#[cfg(target_env = "msvc")]
-pub type CErrno = c_char;
+pub type CTime = usize;
 
-// *nix timezone fields
-#[cfg(not(target_env = "msvc"))]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct c_tm {
@@ -33,24 +26,7 @@ pub struct c_tm {
 	pub tm_zone: *mut c_char,
 }
 
-// Windows MSVC timezone fields
-#[cfg(target_env = "msvc")]
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct c_tm {
-	pub tm_sec: c_int,
-	pub tm_min: c_int,
-	pub tm_hour: c_int,
-	pub tm_mday: c_int,
-	pub tm_mon: c_int,
-	pub tm_year: c_int,
-	pub tm_wday: c_int,
-	pub tm_yday: c_int,
-	pub tm_isdst: c_int,
-}
-
 // *nix C standard time functions
-#[cfg(not(target_env = "msvc"))]
 // SAFETY: Wrapper for standard (g)libc time functions. Callers must guarantee
 // the correct type and initialization for all passed parameters.
 unsafe extern "C" {
@@ -61,39 +37,16 @@ unsafe extern "C" {
 	unsafe fn tzset();
 }
 
-// Windows MSVC standard time functions
-#[cfg(target_env = "msvc")]
-// SAFETY: Wrapper for standard (g)libc time functions. Callers must guarantee
-// the correct type and initialization for all passed parameters.
-unsafe extern "C" {
-	unsafe fn _gmtime64_s(tm: *mut c_tm, ts: *const CTime) -> c_int;
-	unsafe fn _localtime64_s(tm: *mut c_tm, ts: *const CTime) -> c_int;
-	// Windows is stupid and doesn't return TZ information in tm structs, so...
-	unsafe fn _get_timezone(seconds: *mut s) -> CErrno;
-	unsafe fn _get_tzname(pReturnValue: *mut c_size_t, timeZoneName: *mut c_char, sizeInBytes: *mut c_size_t, index: *mut c_int) -> CErrno;
-	// _tzet() is only used to temporarily change the local timezone in tests
-	unsafe fn _tzset();
-}
-
 // Safe C function wrappers
 pub fn c_time_to_utc_tm(ts: CTime) -> Option<c_tm> {
-	let ok: bool;
 	let ts: *const CTime = &ts;
 	let mut tm = MaybeUninit::<c_tm>::uninit();
 
 	// SAFETY: Calling (g)libc functions with properly initialized types.
 	unsafe {
-		#[cfg(not(target_env = "msvc"))]
-		{
-			ok = !gmtime_r(ts, tm.as_mut_ptr()).is_null();
+		if gmtime_r(ts, tm.as_mut_ptr()).is_null() {
+			return None;
 		}
-		#[cfg(target_env = "msvc")]
-		{
-			ok = _gmtime64_s(tm.as_mut_ptr(), ts) == 0;
-		}
-	}
-	if !ok {
-		return None;
 	}
 
 	let tm = unsafe { tm.assume_init() };
@@ -101,24 +54,14 @@ pub fn c_time_to_utc_tm(ts: CTime) -> Option<c_tm> {
 }
 
 pub fn c_time_to_local_tm(ts: CTime) -> Option<c_tm> {
-	let ok: bool;
 	let ts: *const CTime = &ts;
 	let mut tm = MaybeUninit::<c_tm>::uninit();
 
 	// SAFETY: Calling (g)libc functions with properly initialized types.
 	unsafe {
-		#[cfg(not(target_env = "msvc"))]
-		{
-			ok = !localtime_r(ts, tm.as_mut_ptr()).is_null();
+		if localtime_r(ts, tm.as_mut_ptr()).is_null() {
+			return None;
 		}
-		#[cfg(target_env = "msvc")]
-		{
-			// TODO: fill in timezone details
-			ok = _localtime64_s(tm.as_mut_ptr(), ts) == 0;
-		}
-	}
-	if !ok {
-		return None;
 	}
 
 	let tm = unsafe { tm.assume_init() };
@@ -130,21 +73,8 @@ pub fn c_time_to_local_tm(ts: CTime) -> Option<c_tm> {
 pub fn c_reload_tz_info() {
 	// SAFETY: Calling a (g)libc functions without arguments nor return values.
 	unsafe {
-		#[cfg(not(target_env = "msvc"))]
-		{
-			tzset();
-		}
-		#[cfg(target_env = "msvc")]
-		{
-			_tzset();
-		}
+		tzset();
 	}
-}
-
-#[cfg(target_env = "msvc")]
-pub fn c_tz_info() -> (&string, i16) {
-	todo!("TZ information support for Windows is not yet implemented");
-	("UTC", 0)
 }
 
 /// Extracts a timezone string from a c_tm struct.
