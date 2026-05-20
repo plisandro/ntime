@@ -1,7 +1,7 @@
 [package]
 name = "ntime"
 description = "NanoTime is a lightweight, high performance Rust library for nanosecond-precision timestamps."
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Lisandro Pin <lisandrop@proton.me>"]
 categories = ["date-and-time"]
 license = "MIT"

@@ -21,11 +21,11 @@ NanoTime has no external Rust dependencies, and runs on all Unix and Windows pla
 
 ## Usage 
 
-Latest stable release is **v0.5.0**. To use it, add the `ntime` crate to your `Cargo.toml` file:
+Latest stable release is **v0.6.0**. To use it, add the `ntime` crate to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-ntime = "0.5.0"
+ntime = "0.6.0"
 ```
 
 ## Basic examples
@@ -68,7 +68,6 @@ wrote a serialized timestamp in 21ns.
 
   * NanoTime is intended to efficiently deal with precision timestamps. If you need date/time management with full
     support for timezone and calendar operations, consider using [Chrono](https://docs.rs/chrono/latest/chrono/) instead.
-  * Windows support is partial, and under developement.
 
 ## Documentation
 
