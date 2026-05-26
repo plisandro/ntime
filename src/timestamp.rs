@@ -88,6 +88,12 @@ impl<'i> Timestamp {
 		Self::from_system_time(time::SystemTime::now())
 	}
 
+	/// Updates a [`Timestamp`] in place, with the contents of another [`Timestamp`].
+	pub fn copy_from(&mut self, other: &Self) {
+		self.seconds = other.seconds;
+		self.nanoseconds = other.nanoseconds;
+	}
+
 	/// Returs the number of seconds + nanoseconds since UNIX epoch.
 	pub fn epoch_offset(&self) -> (u64, u32) {
 		(self.seconds, self.nanoseconds)
@@ -232,6 +238,17 @@ mod tests {
 		assert_eq!(Timestamp::from_nanos(1234) - Timestamp::from_nanos(1234), Duration::ZERO, "zero result");
 		assert_eq!(Timestamp::from_nanos(1234) - Timestamp::from_nanos(5768), Duration::ZERO, "underflow");
 		assert_eq!(Timestamp::from_nanos(5678) - Timestamp::from_nanos(1234), Duration::from_nanos(4444), "OK");
+	}
+
+	#[test]
+	fn copy_from() {
+		let mut ts_1 = Timestamp::new(1234, 888);
+		let ts_2 = Timestamp::new(5678, 999);
+		assert_ne!(ts_1, ts_2);
+
+		ts_1.copy_from(&ts_2);
+		assert_eq!(ts_1, ts_2);
+		assert_eq!(ts_1, Timestamp::new(5678, 999));
 	}
 
 	#[test]
