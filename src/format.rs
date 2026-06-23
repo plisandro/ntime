@@ -70,12 +70,51 @@ pub enum Format {
 	/// Seconds since UNIX epoch: `1772795501`
 	TimestampSeconds,
 	/// Milliseconds since UNIX epoch: `1772795501890`
-	TimestampMilliseconds, //
+	TimestampMilliseconds,
 	/// Nanoseconds since UNIX epoch: `1772795501890546`
 	TimestampNanoseconds,
 }
 
 impl Format {
+	/// Returns a string name for the [`Format`]
+	pub fn name(&self) -> &str {
+		match self {
+			Format::UtcDateTime => "compact datetime (UTC)",
+			Format::UtcMillisDateTime => "compact datetime with milliseconds (UTC)",
+			Format::UtcNanosDateTime => "compact datetime with nanoseconds (UTC)",
+			Format::UtcDate => "compact date (UTC)",
+			Format::UtcTime => "compact time (UTC)",
+			Format::UtcMillisTime => "compact time with milliseconds (UTC)",
+			Format::UtcNanosTime => "compact time with nanoseconds (UTC)",
+			Format::UtcFileName => "date+time filename (UTC)",
+			Format::UtcRFC2822 => "RFC 2822 (UTC)",
+			Format::UtcRFC3339 => "RFC 3339 (UTC)",
+			Format::UtcMillisRFC3339 => "RFC 3339 with milliseconds (UTC)",
+			Format::UtcNanosRFC3339 => "RFC 3339 with nanoseconds (UTC)",
+			Format::UtcHTTP | Format::UtcRFC7231 => "RFC 7231 (UTC)",
+			Format::UtcRFC3164 => "syslog RFC 3164 (UTC)",
+
+			Format::LocalDateTime => "compact datetime (local)",
+			Format::LocalMillisDateTime => "compact datetime with milliseconds (local)",
+			Format::LocalNanosDateTime => "compact datetime with nanoseconds (local)",
+			Format::LocalDate => "compact date (local)",
+			Format::LocalTime => "compact time (local)",
+			Format::LocalMillisTime => "compact time with milliseconds (local)",
+			Format::LocalNanosTime => "compact time with nanoseconds (local)",
+			Format::LocalFileName => "date+time filename (local)",
+			Format::LocalRFC2822 => "RFC 2822 (local)",
+			Format::LocalRFC3339 => "RFC 3339 (local)",
+			Format::LocalMillisRFC3339 => "RFC 3339 with milliseconds (local)",
+			Format::LocalNanosRFC3339 => "RFC 3339 with nanoseconds (local)",
+			Format::LocalHTTP | Format::LocalRFC7231 => "RFC 7231 (local)",
+			Format::LocalRFC3164 => "syslog RFC 3164 (local)",
+
+			Format::TimestampSeconds => "seconds since epoch",
+			Format::TimestampMilliseconds => "milliseconds since epoch",
+			Format::TimestampNanoseconds => "nanoseconds since epoch",
+		}
+	}
+
 	/// Evaluates if the given [`Format`] is in UTC timezone.
 	pub fn is_utc(&self) -> bool {
 		match &self {
@@ -386,6 +425,78 @@ impl Format {
 		}
 	}
 
+	/// Returns the string representation length for a [`Timestamp`] using this [`Format`]
+	pub fn string_len(&self, ts: &Timestamp) -> usize {
+		let count_digits = |n: u128| -> usize {
+			let mut n = n;
+			let mut res: usize = 1;
+
+			n /= 10;
+			while n != 0 {
+				res += 1;
+				n /= 10;
+			}
+
+			res
+		};
+
+		match self {
+			// fixed-size formats
+
+			// 2026-03-02 13:22:15
+			Format::UtcDateTime => 19,
+			// 2026-03-02 15:22:15 +0200
+			Format::LocalDateTime => 25,
+			// 2026-03-02 15:22:15.488
+			Format::UtcMillisDateTime => 23,
+			// 2026-03-02 15:22:15.488 +0200
+			Format::LocalMillisDateTime => 29,
+			// 2026-03-02 13:22:15.488728341
+			Format::UtcNanosDateTime => 29,
+			// 2026-03-02 13:22:15.488728341 +0200
+			Format::LocalNanosDateTime => 35,
+			// 2026-03-02_15-22-15
+			Format::UtcFileName | Format::LocalFileName => 19,
+			// 2025-03-02
+			Format::UtcDate | Format::LocalDate => 10,
+			// 15:22:15
+			Format::UtcTime | Format::LocalTime => 8,
+			// 15:22:15.488
+			Format::UtcMillisTime | Format::LocalMillisTime => 12,
+			// 15:22:15.488167982
+			Format::UtcNanosTime | Format::LocalNanosTime => 18,
+			// Mon, 02 Mar 2026 15:22:15 +0200
+			Format::UtcRFC2822 | Format::LocalRFC2822 => 31,
+			// 2026-03-02T13:22:15Z
+			Format::UtcRFC3339 => 20,
+			// 2026-03-02T13:22:15.488Z
+			Format::UtcMillisRFC3339 => 24,
+			// 2026-03-02T13:22:15.488167982Z
+			Format::UtcNanosRFC3339 => 30,
+			// 2026-03-02T15:22:15+0200
+			Format::LocalRFC3339 => 24,
+			// 2026-03-02T15:22:15.488+0200
+			Format::LocalMillisRFC3339 => 28,
+			// 2026-03-02T15:22:15.488728341+0200
+			Format::LocalNanosRFC3339 => 34,
+			// Mon, 02 Mar 2026 15:22:15 CET
+			Format::UtcRFC3164 | Format::LocalRFC3164 => 15,
+
+			// variable length formats
+
+			// Mon, 02 Mar 2026 15:22:15 UTC
+			Format::UtcHTTP | Format::UtcRFC7231 => 26 + ts.as_utc_parts().timezone.len(),
+			// Mon, 02 Mar 2026 15:22:15 CET
+			Format::LocalHTTP | Format::LocalRFC7231 => 26 + ts.as_local_parts().timezone.len(),
+			// an arbitrary sequence of digits
+			Format::TimestampSeconds => count_digits(ts.as_secs() as u128),
+			// an arbitrary sequence of digits
+			Format::TimestampMilliseconds => count_digits(ts.as_millis()),
+			// an arbitrary sequence of digits
+			Format::TimestampNanoseconds => count_digits(ts.as_nanos()),
+		}
+	}
+
 	/// Serializes a [`Timestamp`] into a [`String`].
 	pub fn as_string(&self, ts: &Timestamp) -> String {
 		let mut out = Vec::new();
@@ -484,6 +595,47 @@ mod test_format {
 			assert_eq!(Format::LocalHTTP.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -03");
 			assert_eq!(Format::LocalRFC7231.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -03");
 			assert_eq!(Format::LocalRFC3164.as_string(&ts), "Mar  6 11:43:49");
+		});
+	}
+
+	#[test]
+	fn timestamp_string_len() {
+		test_helpers::mocks::with_timezone("America/Montevideo", || {
+			let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
+
+			assert_eq!(Format::LocalDate.string_len(&ts), Format::LocalDate.as_string(&ts).len());
+			assert_eq!(Format::LocalDateTime.string_len(&ts), Format::LocalDateTime.as_string(&ts).len());
+			assert_eq!(Format::LocalFileName.string_len(&ts), Format::LocalFileName.as_string(&ts).len());
+			assert_eq!(Format::LocalHTTP.string_len(&ts), Format::LocalHTTP.as_string(&ts).len());
+			assert_eq!(Format::LocalMillisDateTime.string_len(&ts), Format::LocalMillisDateTime.as_string(&ts).len());
+			assert_eq!(Format::LocalMillisRFC3339.string_len(&ts), Format::LocalMillisRFC3339.as_string(&ts).len());
+			assert_eq!(Format::LocalMillisTime.string_len(&ts), Format::LocalMillisTime.as_string(&ts).len());
+			assert_eq!(Format::LocalNanosDateTime.string_len(&ts), Format::LocalNanosDateTime.as_string(&ts).len());
+			assert_eq!(Format::LocalNanosRFC3339.string_len(&ts), Format::LocalNanosRFC3339.as_string(&ts).len());
+			assert_eq!(Format::LocalNanosTime.string_len(&ts), Format::LocalNanosTime.as_string(&ts).len());
+			assert_eq!(Format::LocalRFC2822.string_len(&ts), Format::LocalRFC2822.as_string(&ts).len());
+			assert_eq!(Format::LocalRFC3164.string_len(&ts), Format::LocalRFC3164.as_string(&ts).len());
+			assert_eq!(Format::LocalRFC3339.string_len(&ts), Format::LocalRFC3339.as_string(&ts).len());
+			assert_eq!(Format::LocalRFC7231.string_len(&ts), Format::LocalRFC7231.as_string(&ts).len());
+			assert_eq!(Format::LocalTime.string_len(&ts), Format::LocalTime.as_string(&ts).len());
+			assert_eq!(Format::TimestampMilliseconds.string_len(&ts), Format::TimestampMilliseconds.as_string(&ts).len());
+			assert_eq!(Format::TimestampNanoseconds.string_len(&ts), Format::TimestampNanoseconds.as_string(&ts).len());
+			assert_eq!(Format::TimestampSeconds.string_len(&ts), Format::TimestampSeconds.as_string(&ts).len());
+			assert_eq!(Format::UtcDate.string_len(&ts), Format::UtcDate.as_string(&ts).len());
+			assert_eq!(Format::UtcDateTime.string_len(&ts), Format::UtcDateTime.as_string(&ts).len());
+			assert_eq!(Format::UtcFileName.string_len(&ts), Format::UtcFileName.as_string(&ts).len());
+			assert_eq!(Format::UtcHTTP.string_len(&ts), Format::UtcHTTP.as_string(&ts).len());
+			assert_eq!(Format::UtcMillisDateTime.string_len(&ts), Format::UtcMillisDateTime.as_string(&ts).len());
+			assert_eq!(Format::UtcMillisRFC3339.string_len(&ts), Format::UtcMillisRFC3339.as_string(&ts).len());
+			assert_eq!(Format::UtcMillisTime.string_len(&ts), Format::UtcMillisTime.as_string(&ts).len());
+			assert_eq!(Format::UtcNanosDateTime.string_len(&ts), Format::UtcNanosDateTime.as_string(&ts).len());
+			assert_eq!(Format::UtcNanosRFC3339.string_len(&ts), Format::UtcNanosRFC3339.as_string(&ts).len());
+			assert_eq!(Format::UtcNanosTime.string_len(&ts), Format::UtcNanosTime.as_string(&ts).len());
+			assert_eq!(Format::UtcRFC2822.string_len(&ts), Format::UtcRFC2822.as_string(&ts).len());
+			assert_eq!(Format::UtcRFC3164.string_len(&ts), Format::UtcRFC3164.as_string(&ts).len());
+			assert_eq!(Format::UtcRFC3339.string_len(&ts), Format::UtcRFC3339.as_string(&ts).len());
+			assert_eq!(Format::UtcRFC7231.string_len(&ts), Format::UtcRFC7231.as_string(&ts).len());
+			assert_eq!(Format::UtcTime.string_len(&ts), Format::UtcTime.as_string(&ts).len());
 		});
 	}
 
