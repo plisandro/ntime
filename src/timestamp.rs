@@ -130,7 +130,7 @@ impl<'i> Timestamp {
 	}
 
 	/// Returns the string representation length for the given [`Format`].
-	pub fn string_len<T: io::Write>(&self, format: &Format) -> usize {
+	pub fn string_len(&self, format: &Format) -> usize {
 		format.string_len(self)
 	}
 
