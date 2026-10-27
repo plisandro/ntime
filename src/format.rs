@@ -121,6 +121,7 @@ impl Format {
 			Self::UtcDateTime => true,
 			Self::UtcMillisDateTime => true,
 			Self::UtcNanosDateTime => true,
+			Self::UtcDate => true,
 			Self::UtcTime => true,
 			Self::UtcMillisTime => true,
 			Self::UtcNanosTime => true,
@@ -134,6 +135,7 @@ impl Format {
 			Self::UtcRFC3164 => true,
 			Self::TimestampSeconds => true,
 			Self::TimestampMilliseconds => true,
+			Self::TimestampNanoseconds => true,
 			_ => false,
 		}
 	}
