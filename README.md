@@ -12,7 +12,7 @@
 [![](https://docs.rs/ntime/badge.svg)][api-docs]
 
 NanoTime is a lightweight, high performance Rust library for nanosecond-precision timestamps.
-It offers support for timestamp generation, arithmetics, comparsion and casting to various string
+It offers support for timestamp generation, arithmetic, comparison and casting to various string
 representations, in either local or UTC timezones.
 
 NanoTime has no external Rust dependencies, and runs on all Unix and Windows platforms.
@@ -75,7 +75,7 @@ wrote a serialized timestamp in 21ns.
 
 ## License
 
-NanoTime is distrubuted under the [MIT license][mit].
+NanoTime is distributed under the [MIT license][mit].
 
 <img src="assets/Developed-By-a-Human-Not-By-AI-Badge-white.svg" title="Courtesy of https://notbyai.fyi/" height="80px"/>
 

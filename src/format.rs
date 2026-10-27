@@ -31,9 +31,9 @@ pub enum Format {
 	UtcNanosRFC3339,
 	/// An alias for [`Format::UtcRFC7231`].
 	UtcHTTP,
-	/// [RFC 7231](https://www.rfc-editor.org/rfc/rfc3339.html) (HTTP/1.1), in UTC: `Mon, 02 Mar 2026 13:22:15 UTC`
+	/// [RFC 7231](https://www.rfc-editor.org/rfc/rfc7231.html) (HTTP/1.1), in UTC: `Mon, 02 Mar 2026 13:22:15 UTC`
 	UtcRFC7231,
-	/// Abridged datetime format for syslog [RFC 3164](https://www.rfc-editor.org/rfc/rfc3339.html), in UTC: `Mar  2 13:22:15`.
+	/// Abridged datetime format for syslog [RFC 3164](https://www.rfc-editor.org/rfc/rfc3164.html), in UTC: `Mar  2 13:22:15`.
 	UtcRFC3164,
 
 	/// Compact datetime, in local timezone: `2026-03-02 15:22:15 +0200`
@@ -62,9 +62,9 @@ pub enum Format {
 	LocalNanosRFC3339,
 	/// An alias for [`Format::LocalRFC7231`].
 	LocalHTTP,
-	/// [RFC 7231](https://www.rfc-editor.org/rfc/rfc3339.html) (HTTP/1.1), in local timezone: `Mon, 02 Mar 2026 15:22:15 CET`
+	/// [RFC 7231](https://www.rfc-editor.org/rfc/rfc7231.html) (HTTP/1.1), in local timezone: `Mon, 02 Mar 2026 15:22:15 CET`
 	LocalRFC7231,
-	/// Abridged datetime format for syslog [RFC 3164](https://www.rfc-editor.org/rfc/rfc3339.html), in local timezone: `Mar  2 15:22:15`.
+	/// Abridged datetime format for syslog [RFC 3164](https://www.rfc-editor.org/rfc/rfc3164.html), in local timezone: `Mar  2 15:22:15`.
 	LocalRFC3164,
 
 	/// Seconds since UNIX epoch: `1772795501`

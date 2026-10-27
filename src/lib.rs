@@ -1,5 +1,5 @@
 //! NanoTime is a lightweight, high performance Rust library for nanosecond-precision timestamps.
-//! It offers support for timestamp generation, arithmetics, comparsion and casting to various string
+//! It offers support for timestamp generation, arithmetic, comparison and casting to various string
 //! representations, in either local or UTC timezones.
 //!
 //! NanoTime is optimized for performance - it has no external dependencies, and relies
@@ -21,7 +21,7 @@
 //! [`Timestamp`]s can efficiently be converted into a text representation, with multiple formats supported,
 //! and split into date + time [`TimestampParts`].
 //!
-//! [`Timestamp`] supports comparison, and a limited set of aritmetic operations (difference, for example), which
+//! [`Timestamp`] supports comparison, and a limited set of arithmetic operations (difference, for example), which
 //! return a [`std::time::Duration`]; this type is re-exported in the module's namespace for convenience.
 //!
 //! Finally, NanoTime supports a number of convenience tools such as [`sleep()`].
@@ -56,7 +56,7 @@
 //! HTTP/1.1 (UTC):     Tue, 24 Mar 2026 16:27:01 UTC
 //! ```
 //!
-//! ## Timestamp Arithmetics
+//! ## Timestamp Arithmetic
 //!
 //! ```rust
 //! use ntime::Timestamp;
@@ -103,7 +103,6 @@
 //! # Limitations and Caveats
 //!
 //!   * As noted, NanoTime is not well suited for applications requiring calendar operations, and/or flexible timezone management.
-//!   * Windows support is currently partial, lacking string conversion support for local timezones.
 //!
 
 #![deny(missing_docs)]

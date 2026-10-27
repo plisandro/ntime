@@ -4,7 +4,7 @@ A list of important changes for relevant `ntime` releases.
 
 ## Version 0.7.1 (2026-06-24)
 
-Implement `Tiemstamp::copy_from()` and `Timestamp::string_len()`.
+Implement `Timestamp::copy_from()` and `Timestamp::string_len()`.
 
 ## Version 0.6.0 (2026-05-21)
 
