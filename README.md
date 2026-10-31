@@ -14,7 +14,7 @@
   </br>
 </div>
 
-NanoTime is a lightweight, high performance Rust library for nanosecond-precision timestamps.
+NanoTime is a lightweight, [high performance][benchmarks] Rust library for nanosecond-precision timestamps.
 It offers support for timestamp generation, arithmetic, comparison and casting to various string
 representations, in either local or UTC timezones.
 
