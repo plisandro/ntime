@@ -170,7 +170,7 @@ impl<'i> TimestampParts<'i> {
 
 	/// Returns a short month name: `Mar`
 	pub fn month_name(&self) -> &str {
-		if self.week_day == 0 {
+		if self.month == 0 {
 			panic!("invalid month for {self:?}");
 		}
 		MONTH_NAMES[((self.month - 1) % U8_MONTHS_IN_YEAR) as usize]
