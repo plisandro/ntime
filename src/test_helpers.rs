@@ -2,12 +2,11 @@
 pub mod mocks {
 	use std::sync::Mutex;
 
-	const MOCK_TEST_LOCK: Mutex<()> = Mutex::new(());
+	static MOCK_TEST_LOCK: Mutex<()> = Mutex::new(());
 	const TIMEZONE_ENV_VAR: &str = "TZ";
 
 	pub fn with_timezone(mock_tz: &str, test_fn: fn()) {
-		let bind = MOCK_TEST_LOCK;
-		let _lock = bind.lock().unwrap();
+		let _lock = MOCK_TEST_LOCK.lock().unwrap();
 
 		#[cfg(target_env = "msvc")]
 		{
