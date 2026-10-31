@@ -252,7 +252,6 @@ impl<'i> TimestampParts<'i> {
 	}
 
 	/// Converts the parts structure back into a [`Timestamp`], much like glibc's timegm().
-	// TODO: return errors
 	pub fn to_timestamp(&self) -> Result<Timestamp, &'i str> {
 		if let Err(e) = self.validate_fields() {
 			return Err(e);

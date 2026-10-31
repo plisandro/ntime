@@ -10,7 +10,7 @@ use crate::format::Format;
 use crate::parts::TimestampParts;
 
 /// Encapsulates a timestamp, as number of nanoseconds since UNIX epoch (1970-01-01 00:00 UTC).
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Hash, Clone, PartialEq, Eq)]
 pub struct Timestamp {
 	seconds: u64,
 	nanoseconds: u32,
@@ -173,14 +173,14 @@ impl<'i> Timestamp {
 	}
 
 	/// Returns the difference between two timestamps as [`time::Duration`].
-	pub fn diff_as_duration(&self, other: &Self) -> Duration {
+	pub fn diff_as_duration(&self, other: &Self) -> Result<Duration, &'static str> {
 		let self_nanos = self.as_nanos();
 		let other_nanos = other.as_nanos();
 
-		if other_nanos >= self_nanos {
-			Duration::ZERO
+		if other_nanos > self_nanos {
+			Err("timestamp difference underflow")
 		} else {
-			Duration::from_nanos((self_nanos - other_nanos) as u64)
+			Ok(Duration::from_nanos((self_nanos - other_nanos) as u64))
 		}
 	}
 }
@@ -204,7 +204,7 @@ impl Ord for Timestamp {
 }
 
 impl Sub for Timestamp {
-	type Output = Duration;
+	type Output = Result<Duration, &'static str>;
 
 	fn sub(self, other: Self) -> Self::Output {
 		self.diff_as_duration(&other)
@@ -241,9 +241,9 @@ mod tests {
 
 	#[test]
 	fn operators() {
-		assert_eq!(Timestamp::from_nanos(1234) - Timestamp::from_nanos(1234), Duration::ZERO, "zero result");
-		assert_eq!(Timestamp::from_nanos(1234) - Timestamp::from_nanos(5768), Duration::ZERO, "underflow");
-		assert_eq!(Timestamp::from_nanos(5678) - Timestamp::from_nanos(1234), Duration::from_nanos(4444), "OK");
+		assert_eq!(Timestamp::from_nanos(1234) - Timestamp::from_nanos(1234), Ok(Duration::ZERO));
+		assert_eq!(Timestamp::from_nanos(1234) - Timestamp::from_nanos(5768), Err("timestamp difference underflow"));
+		assert_eq!(Timestamp::from_nanos(5678) - Timestamp::from_nanos(1234), Ok(Duration::from_nanos(4444)));
 	}
 
 	#[test]
