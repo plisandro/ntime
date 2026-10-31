@@ -1,15 +1,18 @@
-# NanoTime
-
-<p>
-    <picture>
-      <img src="https://raw.githubusercontent.com/plisandro/ntime/master/assets/nanotime_title_horizontal.svg" width="400px" />
-    </picture>
-    <br>
-</p>
-
-[![](https://img.shields.io/crates/v/ntime.svg)][crates-io]
-[![](https://github.com/plisandro/ntime/workflows/build/badge.svg)][build-status]
-[![](https://docs.rs/ntime/badge.svg)][api-docs]
+<div align="center">
+  <p>
+      <picture>
+        <img src="https://raw.githubusercontent.com/plisandro/ntime/master/assets/nanotime_title_horizontal.svg" width="400px" />
+      </picture>
+      <br>
+  </p>
+  </br>
+  <p>
+      <a href="https://crates.io/crates/ntime"><img src="https://img.shields.io/crates/v/ntime.svg" alt="ntime crate" /></a>
+       <a href="https://github.com/plisandro/ntime/actions"><img src="https://github.com/plisandro/ntime/workflows/build/badge.svg" alt="Build status" /></a>
+      <a href="https://docs.rs/ntime/latest/ntime/"><img src="https://docs.rs/ntime/badge.svg" alt="API docs" /></a>
+  </p>
+  </br>
+</div>
 
 NanoTime is a lightweight, high performance Rust library for nanosecond-precision timestamps.
 It offers support for timestamp generation, arithmetic, comparison and casting to various string
@@ -28,9 +31,11 @@ ntime = "0.7.1"
 
 ## Basic examples
 
-NanoTime can resolve timestamps, break them down in date+time parts, and serialize in multiple formats.
+NanoTime can resolve timestamps, break them down in date+time parts, and serialize into multiple formats.
 
 ```rust
+use ntime::Timestamp;
+
 let now = Timestamp::now();
 println!("current time, as nanos since epoch: {}", now.as_nanos());
 println!("current time as debug:              {:?}", now);
@@ -54,6 +59,8 @@ It can also compute durations between timestamps. And it's _blazing_ fast - see 
 [benchmarks] page for details - with lock times being dictated mostly by (g)libc calls.
 
 ```rust
+use ntime::{Format, Timestamp};
+
 let start = Timestamp::now();
 start.write(&mut io::empty(), &Format::UtcMillisDateTime).expect("oh no the write failed");
 println!("wrote a serialized timestamp in {elapsed:?}", elapsed = Timestamp::now() - start);
