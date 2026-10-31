@@ -209,7 +209,7 @@ impl<'i> TimestampParts<'i> {
 		if self.hour >= U8_HOURS_IN_DAY {
 			return Err("invalid hour field");
 		}
-		if self.month < 1 || self.month >= U8_MONTHS_IN_YEAR {
+		if self.month < 1 || self.month > U8_MONTHS_IN_YEAR {
 			return Err("invalid month field");
 		}
 		if self.year < U16_UNIX_EPOCH_YEAR {
@@ -228,7 +228,7 @@ impl<'i> TimestampParts<'i> {
 		if self.gmt_offset_hours >= U8_HOURS_IN_DAY {
 			return Err("invalid gmt_offset_hours field");
 		}
-		if self.gmt_offset_minutes > U8_MINUTES_IN_HOUR {
+		if self.gmt_offset_minutes >= U8_MINUTES_IN_HOUR {
 			return Err("invalid gmt_offset_minutes field");
 		}
 		// no checks for self.timezone
@@ -245,7 +245,7 @@ impl<'i> TimestampParts<'i> {
 		// ensure the provided day of the year matches with other fields
 		let expected_year_day = self.year_day();
 		if self.year_day != expected_year_day {
-			return Err("year_day field doesn't match year + month + month_day");
+			return Err("year_day doesn't match year + month + month_day");
 		}
 
 		Ok(())
@@ -359,7 +359,126 @@ mod test {
 	}
 
 	#[test]
-	fn validation() {
+	fn parts_field_validation() {
+		let mut parts = TimestampParts::epoch();
+
+		// rely on the order fields are checkeds so we don't build a new TimestampParts every time
+		parts.nanoseconds = 0;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.nanoseconds = 999999;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.nanoseconds = 1000000;
+		assert_eq!(parts.validate_fields(), Err("invalid nanoseconds field"));
+		parts.nanoseconds = 10037;
+
+		parts.milliseconds = 0;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.milliseconds = 999;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.milliseconds = 1000;
+		assert_eq!(parts.validate_fields(), Err("invalid milliseconds field"));
+		parts.milliseconds = 2196;
+		assert_eq!(parts.validate_fields(), Err("invalid milliseconds field"));
+		parts.milliseconds = 761;
+
+		parts.seconds = 0;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.seconds = 59;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.seconds = 60;
+		assert_eq!(parts.validate_fields(), Err("invalid seconds field"));
+		parts.seconds = 77;
+		assert_eq!(parts.validate_fields(), Err("invalid seconds field"));
+		parts.seconds = 19;
+
+		parts.minutes = 0;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.minutes = 59;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.minutes = 60;
+		assert_eq!(parts.validate_fields(), Err("invalid minutes field"));
+		parts.minutes = 77;
+		assert_eq!(parts.validate_fields(), Err("invalid minutes field"));
+		parts.minutes = 58;
+
+		parts.hour = 0;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.hour = 2;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.hour = 24;
+		assert_eq!(parts.validate_fields(), Err("invalid hour field"));
+		parts.hour = 22;
+
+		parts.month = 0;
+		assert_eq!(parts.validate_fields(), Err("invalid month field"));
+		parts.month = 1;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.month = 12;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.month = 15;
+		assert_eq!(parts.validate_fields(), Err("invalid month field"));
+		parts.month = 2;
+
+		parts.year = 1969;
+		assert_eq!(parts.validate_fields(), Err("invalid year field"));
+		parts.year = 2026;
+
+		parts.month_day = 0;
+		assert_eq!(parts.validate_fields(), Err("invalid month_day field"));
+		parts.month_day = 1;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.month_day = 44;
+		assert_eq!(parts.validate_fields(), Err("invalid month_day field"));
+		// 2026 is a common year, so...
+		parts.month_day = 29;
+		assert_eq!(parts.validate_fields(), Err("invalid month_day field"));
+		parts.month_day = 6;
+
+		parts.week_day = 0;
+		assert_eq!(parts.validate_fields(), Err("invalid week_day field"));
+		parts.week_day = 1;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.week_day = 7;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.week_day = 8;
+		assert_eq!(parts.validate_fields(), Err("invalid week_day field"));
+		parts.week_day = 6;
+
+		parts.year_day = 0;
+		assert_eq!(parts.validate_fields(), Err("invalid year_day field"));
+		parts.year_day = 1;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.year_day = 365;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.year_day = 366;
+		assert_eq!(parts.validate_fields(), Err("invalid year_day field"));
+		parts.year_day = 390;
+		assert_eq!(parts.validate_fields(), Err("invalid year_day field"));
+		parts.year_day = 37;
+
+		parts.gmt_offset_hours = 0;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.gmt_offset_hours = 23;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.gmt_offset_hours = 24;
+		assert_eq!(parts.validate_fields(), Err("invalid gmt_offset_hours field"));
+		parts.gmt_offset_hours = 3;
+
+		parts.gmt_offset_minutes = 0;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.gmt_offset_minutes = 59;
+		assert_eq!(parts.validate_fields(), Ok(()));
+		parts.gmt_offset_minutes = 60;
+		assert_eq!(parts.validate_fields(), Err("invalid gmt_offset_minutes field"));
+		parts.gmt_offset_minutes = 79;
+		assert_eq!(parts.validate_fields(), Err("invalid gmt_offset_minutes field"));
+		parts.gmt_offset_minutes = 45;
+
+		assert_eq!(parts.validate_fields(), Ok(()));
+	}
+
+	#[test]
+	fn parts_validation() {
 		let mut parts = TimestampParts::epoch();
 
 		// rely on the order fields are checkeds so we don't build a new TimestampParts every time
@@ -383,8 +502,6 @@ mod test {
 		assert_eq!(parts.validate(), Err("invalid hour field"));
 		parts.hour = 22;
 
-		parts.month = 0;
-		assert_eq!(parts.validate(), Err("invalid month field"));
 		parts.month = 15;
 		assert_eq!(parts.validate(), Err("invalid month field"));
 		parts.month = 2;
@@ -393,27 +510,19 @@ mod test {
 		assert_eq!(parts.validate(), Err("invalid year field"));
 		parts.year = 2026;
 
-		parts.month_day = 0;
-		assert_eq!(parts.validate(), Err("invalid month_day field"));
-		parts.month_day = 44;
-		assert_eq!(parts.validate(), Err("invalid month_day field"));
 		// 2026 is a common year, so...
 		parts.month_day = 29;
 		assert_eq!(parts.validate(), Err("invalid month_day field"));
 		parts.month_day = 6;
 
-		parts.week_day = 0;
-		assert_eq!(parts.validate(), Err("invalid week_day field"));
 		parts.week_day = 9;
 		assert_eq!(parts.validate(), Err("invalid week_day field"));
 		parts.week_day = 6;
 
-		parts.year_day = 0;
-		assert_eq!(parts.validate(), Err("invalid year_day field"));
 		parts.year_day = 390;
 		assert_eq!(parts.validate(), Err("invalid year_day field"));
 		parts.year_day = 12;
-		assert_eq!(parts.validate(), Err("year_day field doesn't match year + month + month_day"));
+		assert_eq!(parts.validate(), Err("year_day doesn't match year + month + month_day"));
 		parts.year_day = 37;
 
 		parts.gmt_offset_hours = 25;
