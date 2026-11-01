@@ -3,7 +3,7 @@ use super::Timestamp;
 use crate::c_bindings;
 use crate::constant::{
 	DAY_NAMES, DAYS_IN_MONTH_COMMON_YEAR, DAYS_IN_MONTH_LEAP_YEAR, MONTH_NAMES, MONTH_TO_DAYS_COMMON_YEAR, MONTH_TO_DAYS_LEAP_YEAR, TIMEZONE_UTC, U8_DAYS_IN_WEEK, U8_HOURS_IN_DAY, U8_MINUTES_IN_HOUR,
-	U8_MONTHS_IN_YEAR, U8_SECONDS_IN_MINUTE, U16_DAYS_IN_COMMON_YEAR, U16_DAYS_IN_LEAP_YEAR, U16_MILLIS_IN_SECOND, U16_SECONDS_IN_HOUR, U16_SECONDS_IN_MINUTE, U16_UNIX_EPOCH_YEAR, U32_NANOS_IN_MILLI,
+	U8_MONTHS_IN_YEAR, U8_SECONDS_IN_MINUTE, U16_DAYS_IN_COMMON_YEAR, U16_DAYS_IN_LEAP_YEAR, U16_MILLIS_IN_SECOND, U16_UNIX_EPOCH_YEAR, U32_NANOS_IN_MILLI, U32_SECONDS_IN_HOUR, U32_SECONDS_IN_MINUTE,
 	U64_LEAP_YEARS_BEFORE_EPOCH, U64_SECONDS_IN_COMMON_YEAR, U64_SECONDS_IN_DAY, U64_SECONDS_IN_HOUR, U64_SECONDS_IN_MINUTE,
 };
 
@@ -97,7 +97,7 @@ impl<'i> TimestampParts<'i> {
 			None => panic!("failed to parse local parts for timestamp={seconds}s"),
 		};
 
-		let gmt_offset_secs: i16;
+		let gmt_offset_secs: i32;
 		let timezone: &str;
 		#[cfg(not(target_env = "msvc"))]
 		{
@@ -131,20 +131,20 @@ impl<'i> TimestampParts<'i> {
 	}
 
 	/// Converts a GMT offset in signed seconds to (is_negative, hours, minutes).
-	fn _gmt_offset_parts(gmt_offset_secs: i16) -> (bool, u8, u8) {
-		let secs: u16;
+	fn _gmt_offset_parts(gmt_offset_secs: i32) -> (bool, u8, u8) {
+		let secs: u32;
 		let negative: bool;
 
 		if gmt_offset_secs >= 0 {
 			negative = false;
-			secs = gmt_offset_secs as u16;
+			secs = gmt_offset_secs as u32;
 		} else {
 			negative = true;
-			secs = -gmt_offset_secs as u16;
+			secs = -gmt_offset_secs as u32;
 		}
 
-		let hours = (secs / U16_SECONDS_IN_HOUR) as u8;
-		let mins = ((secs % U16_SECONDS_IN_HOUR) / U16_SECONDS_IN_MINUTE) as u8;
+		let hours = (secs / U32_SECONDS_IN_HOUR) as u8;
+		let mins = ((secs % U32_SECONDS_IN_HOUR) / U32_SECONDS_IN_MINUTE) as u8;
 
 		(negative, hours, mins)
 	}
@@ -293,6 +293,9 @@ impl<'i> TimestampParts<'i> {
 #[cfg(test)]
 mod test {
 	use super::*;
+
+	use crate::format::Format;
+	use crate::test_helpers;
 
 	#[test]
 	fn gmt_offset_parts() {
@@ -592,5 +595,41 @@ mod test {
 
 		let from_parts: Timestamp = parts.to_timestamp().expect("invalid TimestampParts casted from Timestamp");
 		assert_eq!(ts, from_parts);
+	}
+
+	#[test]
+	fn local_offset() {
+		test_helpers::mocks::with_timezone("America/Montevideo", || {
+			// GMT -03:00
+			let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
+			assert_eq!(ts.as_string(&Format::LocalMillisDateTime), "2026-03-06 11:43:49.038 -0300");
+
+			let parts = ts.as_local_parts();
+			assert_eq!(parts.gmt_offset_negative, true);
+			assert_eq!(parts.gmt_offset_hours, 3);
+			assert_eq!(parts.gmt_offset_minutes, 0);
+		});
+
+		test_helpers::mocks::with_timezone("Pacific/Samoa", || {
+			// GMT -11:00
+			let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
+			assert_eq!(ts.as_string(&Format::LocalMillisDateTime), "2026-03-06 03:43:49.038 -1100");
+
+			let parts = ts.as_local_parts();
+			assert_eq!(parts.gmt_offset_negative, true);
+			assert_eq!(parts.gmt_offset_hours, 11);
+			assert_eq!(parts.gmt_offset_minutes, 0);
+		});
+
+		test_helpers::mocks::with_timezone("Pacific/Kanton", || {
+			// GMT +13:00
+			let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
+			assert_eq!(ts.as_string(&Format::LocalMillisDateTime), "2026-03-07 03:43:49.038 +1300");
+
+			let parts = ts.as_local_parts();
+			assert_eq!(parts.gmt_offset_negative, false);
+			assert_eq!(parts.gmt_offset_hours, 13);
+			assert_eq!(parts.gmt_offset_minutes, 0);
+		});
 	}
 }

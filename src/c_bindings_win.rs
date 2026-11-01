@@ -87,7 +87,7 @@ pub fn c_reload_tz_info() {
 }
 
 /// Resolves the current timezone GMT offset.
-pub fn c_tz_gmt_offset() -> i16 {
+pub fn c_tz_gmt_offset() -> i32 {
 	let mut gmt_delta: c_long = 0;
 
 	// SAFETY: Calling MSVC functions with properly initialized types.
@@ -101,7 +101,7 @@ pub fn c_tz_gmt_offset() -> i16 {
 
 	// _get_timezone() returns (UTC - local) time, as seconds,
 	// which is the exact opposite of GMT offset >:(
-	((-1) * gmt_delta) as i16
+	((-1) * gmt_delta) as i32
 }
 
 // TODO: return IANA timezone names instead of Windows'.
