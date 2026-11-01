@@ -7,7 +7,7 @@ Basic benchmark tests, intended to gauge performance progress across versions, l
 
 All figures below were collected on 16-core AMD Ryzen 9 5950X system with 64GB of DDR4 memory.
 
-## Version 0.8.0 (2026-05-11)
+## Version 0.8.0 (2026-11-01)
 
 ```
 Timer precision: 20 ns
