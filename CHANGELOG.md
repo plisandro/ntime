@@ -2,6 +2,11 @@
 
 A list of important changes for relevant `ntime` releases.
 
+## Version 0.8.0 (2026-11-01)
+
+  - Multiple bugfixes.
+  - `Timestamp` subtraction returns `Err` on underflow.
+
 ## Version 0.7.1 (2026-06-24)
 
 Implement `Timestamp::copy_from()` and `Timestamp::string_len()`.

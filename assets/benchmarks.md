@@ -7,6 +7,30 @@ Basic benchmark tests, intended to gauge performance progress across versions, l
 
 All figures below were collected on 16-core AMD Ryzen 9 5950X system with 64GB of DDR4 memory.
 
+## Version 0.8.0 (2026-05-11)
+
+```
+Timer precision: 20 ns
+casting                      fastest       │ slowest       │ median        │ mean          │ samples │ iters
+├─ as_integer                              │               │               │               │         │
+│  ╰─ as_integer             14.51 µs      │ 20.9 µs       │ 14.52 µs      │ 14.77 µs      │ 100     │ 100
+│                            688.7 Mitem/s │ 478.2 Mitem/s │ 688.2 Mitem/s │ 676.7 Mitem/s │         │
+├─ to_string                               │               │               │               │         │
+│  ├─ local_to_string        2.45 ms       │ 3.131 ms      │ 2.479 ms      │ 2.51 ms       │ 100     │ 100
+│  │                         4.08 Mitem/s  │ 3.193 Mitem/s │ 4.033 Mitem/s │ 3.982 Mitem/s │         │
+│  ├─ nanoseconds_to_string  315.3 µs      │ 404.3 µs      │ 320 µs        │ 321.6 µs      │ 100     │ 100
+│  │                         31.71 Mitem/s │ 24.73 Mitem/s │ 31.24 Mitem/s │ 31.08 Mitem/s │         │
+│  ╰─ utc_to_string          1.833 ms      │ 1.929 ms      │ 1.844 ms      │ 1.848 ms      │ 100     │ 100
+│                            5.455 Mitem/s │ 5.183 Mitem/s │ 5.421 Mitem/s │ 5.41 Mitem/s  │         │
+╰─ writer                                  │               │               │               │         │
+   ├─ local                  439.5 µs      │ 483 µs        │ 452.9 µs      │ 453 µs        │ 100     │ 100
+   │                         22.75 Mitem/s │ 20.7 Mitem/s  │ 22.07 Mitem/s │ 22.07 Mitem/s │         │
+   ├─ nanoseconds            14.21 µs      │ 18.2 µs       │ 14.21 µs      │ 14.29 µs      │ 100     │ 100
+   │                         703.2 Mitem/s │ 549.1 Mitem/s │ 703.2 Mitem/s │ 699.4 Mitem/s │         │
+   ╰─ utc                    171.7 µs      │ 212.7 µs      │ 174.1 µs      │ 175.4 µs      │ 100     │ 100
+                             58.23 Mitem/s │ 47 Mitem/s    │ 57.42 Mitem/s │ 57 Mitem/s    │         │
+```
+
 ## Version 0.5.0 (2026-05-11)
 
 ```
