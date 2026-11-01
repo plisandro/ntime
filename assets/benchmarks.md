@@ -3,7 +3,9 @@
 ## Integration test benchmarks
 
 Basic benchmark tests, intended to gauge performance progress across versions, launched with
-`cargo bench --profile=release`.
+`cargo bench --profile=release`. Note that, unless specified, methods serializing into
+`std::io::Write` are benchmarked using `std::io::Empty`, which will yield better results
+than real-world sinks.
 
 All figures below were collected on 16-core AMD Ryzen 9 5950X system with 64GB of DDR4 memory.
 
@@ -11,24 +13,36 @@ All figures below were collected on 16-core AMD Ryzen 9 5950X system with 64GB o
 
 ```
 Timer precision: 20 ns
-casting                      fastest       │ slowest       │ median        │ mean          │ samples │ iters
-├─ as_integer                              │               │               │               │         │
-│  ╰─ as_integer             14.51 µs      │ 20.9 µs       │ 14.52 µs      │ 14.77 µs      │ 100     │ 100
-│                            688.7 Mitem/s │ 478.2 Mitem/s │ 688.2 Mitem/s │ 676.7 Mitem/s │         │
-├─ to_string                               │               │               │               │         │
-│  ├─ local_to_string        2.45 ms       │ 3.131 ms      │ 2.479 ms      │ 2.51 ms       │ 100     │ 100
-│  │                         4.08 Mitem/s  │ 3.193 Mitem/s │ 4.033 Mitem/s │ 3.982 Mitem/s │         │
-│  ├─ nanoseconds_to_string  315.3 µs      │ 404.3 µs      │ 320 µs        │ 321.6 µs      │ 100     │ 100
-│  │                         31.71 Mitem/s │ 24.73 Mitem/s │ 31.24 Mitem/s │ 31.08 Mitem/s │         │
-│  ╰─ utc_to_string          1.833 ms      │ 1.929 ms      │ 1.844 ms      │ 1.848 ms      │ 100     │ 100
-│                            5.455 Mitem/s │ 5.183 Mitem/s │ 5.421 Mitem/s │ 5.41 Mitem/s  │         │
-╰─ writer                                  │               │               │               │         │
-   ├─ local                  439.5 µs      │ 483 µs        │ 452.9 µs      │ 453 µs        │ 100     │ 100
-   │                         22.75 Mitem/s │ 20.7 Mitem/s  │ 22.07 Mitem/s │ 22.07 Mitem/s │         │
-   ├─ nanoseconds            14.21 µs      │ 18.2 µs       │ 14.21 µs      │ 14.29 µs      │ 100     │ 100
-   │                         703.2 Mitem/s │ 549.1 Mitem/s │ 703.2 Mitem/s │ 699.4 Mitem/s │         │
-   ╰─ utc                    171.7 µs      │ 212.7 µs      │ 174.1 µs      │ 175.4 µs      │ 100     │ 100
-                             58.23 Mitem/s │ 47 Mitem/s    │ 57.42 Mitem/s │ 57 Mitem/s    │         │
+casting               fastest       │ slowest       │ median        │ mean          │ samples │ iters
+├─ as_integer                       │               │               │               │         │
+│  ├─ milliseconds    47.55 µs      │ 54.44 µs      │ 47.79 µs      │ 48.14 µs      │ 100     │ 100
+│  │                  210.2 Mitem/s │ 183.6 Mitem/s │ 209.2 Mitem/s │ 207.7 Mitem/s │         │
+│  ├─ nanoseconds     45.79 µs      │ 54.92 µs      │ 45.8 µs       │ 47.44 µs      │ 100     │ 100
+│  │                  218.3 Mitem/s │ 182 Mitem/s   │ 218.2 Mitem/s │ 210.7 Mitem/s │         │
+│  ╰─ seconds         45.79 µs      │ 66 µs         │ 45.8 µs       │ 46.2 µs       │ 100     │ 100
+│                     218.3 Mitem/s │ 151.4 Mitem/s │ 218.2 Mitem/s │ 216.4 Mitem/s │         │
+├─ to_string                        │               │               │               │         │
+│  ├─ local           2.428 ms      │ 3.166 ms      │ 2.466 ms      │ 2.49 ms       │ 100     │ 100
+│  │                  4.118 Mitem/s │ 3.157 Mitem/s │ 4.055 Mitem/s │ 4.014 Mitem/s │         │
+│  ├─ nanoseconds     318 µs        │ 385.7 µs      │ 327.5 µs      │ 327.6 µs      │ 100     │ 100
+│  │                  31.44 Mitem/s │ 25.92 Mitem/s │ 30.53 Mitem/s │ 30.51 Mitem/s │         │
+│  ╰─ utc             1.814 ms      │ 2.01 ms       │ 1.827 ms      │ 1.834 ms      │ 100     │ 100
+│                     5.512 Mitem/s │ 4.974 Mitem/s │ 5.47 Mitem/s  │ 5.451 Mitem/s │         │
+╰─ write                            │               │               │               │         │
+   ├─ io_empty                      │               │               │               │         │
+   │  ├─ local        436.3 µs      │ 455.1 µs      │ 442.1 µs      │ 442.7 µs      │ 100     │ 100
+   │  │               22.91 Mitem/s │ 21.96 Mitem/s │ 22.61 Mitem/s │ 22.58 Mitem/s │         │
+   │  ├─ nanoseconds  14.28 µs      │ 18.16 µs      │ 14.29 µs      │ 14.35 µs      │ 100     │ 100
+   │  │               699.8 Mitem/s │ 550.3 Mitem/s │ 699.3 Mitem/s │ 696.4 Mitem/s │         │
+   │  ╰─ utc          173.5 µs      │ 181.3 µs      │ 175.7 µs      │ 175.9 µs      │ 100     │ 100
+   │                  57.61 Mitem/s │ 55.15 Mitem/s │ 56.9 Mitem/s  │ 56.82 Mitem/s │         │
+   ╰─ mem_buffer                    │               │               │               │         │
+      ├─ local        1.896 ms      │ 2.003 ms      │ 1.94 ms       │ 1.938 ms      │ 100     │ 100
+      │               5.272 Mitem/s │ 4.991 Mitem/s │ 5.153 Mitem/s │ 5.159 Mitem/s │         │
+      ├─ nanoseconds  202.2 µs      │ 222.8 µs      │ 206.6 µs      │ 207 µs        │ 100     │ 100
+      │               49.44 Mitem/s │ 44.87 Mitem/s │ 48.38 Mitem/s │ 48.28 Mitem/s │         │
+      ╰─ utc          1.208 ms      │ 1.454 ms      │ 1.226 ms      │ 1.235 ms      │ 100     │ 100
+                      8.275 Mitem/s │ 6.877 Mitem/s │ 8.153 Mitem/s │ 8.093 Mitem/s │         │
 ```
 
 ## Version 0.5.0 (2026-05-11)

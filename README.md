@@ -59,14 +59,15 @@ It can also compute durations between timestamps. And it's _blazing_ fast - see 
 [benchmarks] page for details - with lock times being dictated mostly by (g)libc calls.
 
 ```rust
+use std::io;
 use ntime::{Format, Timestamp};
 
 let start = Timestamp::now();
 start.write(&mut io::empty(), &Format::UtcMillisDateTime).expect("oh no the write failed");
-println!("wrote a serialized timestamp in {elapsed:?}", elapsed = Timestamp::now() - start);
+println!("wrote a timestamp to Empty in {elapsed:?}", elapsed = (Timestamp::now() - start).unwrap());
 ```
 ```
-wrote a serialized timestamp in 21ns.
+wrote a timestamp to Empty in 2.34µs
 ```
 
 ## Limitations

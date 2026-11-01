@@ -63,10 +63,12 @@
 //!
 //! let a = Timestamp::from_utc_date(2026, 03, 24, 17, 44, 48, 123, 456).expect("invalid parameters");
 //! let b = Timestamp::from_utc_date(2026, 03, 24, 17, 25, 30, 789, 012).expect("invalid parameters");
-//! dbg!(a - b);
+//! _ = dbg!(a - b);
 //! ```
 //! ```text
-//! a - b = 1157.334000444s
+//! a - b = Ok(
+//!     1157.334000444s,
+//! )
 //! ```
 //!
 //! ## Parts Decomposition
