@@ -178,10 +178,14 @@ impl<'i> Timestamp {
 		let other_nanos = other.as_nanos();
 
 		if other_nanos > self_nanos {
-			Err("timestamp difference underflow")
-		} else {
-			Ok(Duration::from_nanos((self_nanos - other_nanos) as u64))
+			return Err("timestamp difference underflow");
 		}
+
+		let delta = self_nanos - other_nanos;
+		let secs = (delta / U128_NANOS_IN_SECOND) as u64;
+		let nanos = (delta % U128_NANOS_IN_SECOND) as u32;
+
+		Ok(Duration::new(secs, nanos))
 	}
 }
 
