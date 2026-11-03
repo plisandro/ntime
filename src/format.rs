@@ -54,11 +54,11 @@ pub enum Format {
 	LocalFileName,
 	/// [RFC 2822](https://www.rfc-editor.org/rfc/rfc2822.html) (Internet Message Format), in local timezone: `Mon, 02 Mar 2026 15:22:15 +0200`
 	LocalRFC2822,
-	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF), in local timezone: `2026-03-02T15:22:15+0200`
+	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF), in local timezone: `2026-03-02T15:22:15+02:00`
 	LocalRFC3339,
-	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with millisecond precision, in local timezone: `2026-03-02T15:22:15.488+0200`
+	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with millisecond precision, in local timezone: `2026-03-02T15:22:15.488+02:00`
 	LocalMillisRFC3339,
-	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with nanosecond precision, in local timezone: `2026-03-02T15:22:15.488728341+0200`
+	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with nanosecond precision, in local timezone: `2026-03-02T15:22:15.488728341+02:00`
 	LocalNanosRFC3339,
 	/// An alias for [`Format::LocalRFC7231`].
 	LocalHTTP,
@@ -347,7 +347,7 @@ impl Format {
 				let parts = ts.as_local_parts();
 				write!(
 					out,
-					"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}{offset_sign}{offset_hours:02}{offset_minutes:02}",
+					"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}{offset_sign}{offset_hours:02}:{offset_minutes:02}",
 					year = parts.year,
 					month = parts.month,
 					day = parts.month_day,
@@ -363,7 +363,7 @@ impl Format {
 				let parts = ts.as_local_parts();
 				write!(
 					out,
-					"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}.{msecs:03}{offset_sign}{offset_hours:02}{offset_minutes:02}",
+					"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}.{msecs:03}{offset_sign}{offset_hours:02}:{offset_minutes:02}",
 					year = parts.year,
 					month = parts.month,
 					day = parts.month_day,
@@ -380,7 +380,7 @@ impl Format {
 				let parts = ts.as_local_parts();
 				write!(
 					out,
-					"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}{offset_sign}{offset_hours:02}{offset_minutes:02}",
+					"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}{offset_sign}{offset_hours:02}:{offset_minutes:02}",
 					year = parts.year,
 					month = parts.month,
 					day = parts.month_day,
@@ -475,12 +475,12 @@ impl Format {
 			Format::UtcMillisRFC3339 => 24,
 			// 2026-03-02T13:22:15.488167982Z
 			Format::UtcNanosRFC3339 => 30,
-			// 2026-03-02T15:22:15+0200
-			Format::LocalRFC3339 => 24,
-			// 2026-03-02T15:22:15.488+0200
-			Format::LocalMillisRFC3339 => 28,
-			// 2026-03-02T15:22:15.488728341+0200
-			Format::LocalNanosRFC3339 => 34,
+			// 2026-03-02T15:22:15+02:00
+			Format::LocalRFC3339 => 25,
+			// 2026-03-02T15:22:15.488+02:00
+			Format::LocalMillisRFC3339 => 29,
+			// 2026-03-02T15:22:15.488728341+02:00
+			Format::LocalNanosRFC3339 => 35,
 			// Mon, 02 Mar 2026 15:22:15 CET
 			Format::UtcRFC3164 | Format::LocalRFC3164 => 15,
 
@@ -591,9 +591,9 @@ mod test_format {
 			assert_eq!(Format::LocalMillisTime.as_string(&ts), "11:43:49.038");
 			assert_eq!(Format::LocalNanosTime.as_string(&ts), "11:43:49.038023456");
 			assert_eq!(Format::LocalRFC2822.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -0300");
-			assert_eq!(Format::LocalRFC3339.as_string(&ts), "2026-03-06T11:43:49-0300");
-			assert_eq!(Format::LocalMillisRFC3339.as_string(&ts), "2026-03-06T11:43:49.038-0300");
-			assert_eq!(Format::LocalNanosRFC3339.as_string(&ts), "2026-03-06T11:43:49.038023456-0300");
+			assert_eq!(Format::LocalRFC3339.as_string(&ts), "2026-03-06T11:43:49-03:00");
+			assert_eq!(Format::LocalMillisRFC3339.as_string(&ts), "2026-03-06T11:43:49.038-03:00");
+			assert_eq!(Format::LocalNanosRFC3339.as_string(&ts), "2026-03-06T11:43:49.038023456-03:00");
 			assert_eq!(Format::LocalHTTP.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -03");
 			assert_eq!(Format::LocalRFC7231.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -03");
 			assert_eq!(Format::LocalRFC3164.as_string(&ts), "Mar  6 11:43:49");
