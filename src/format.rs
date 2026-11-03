@@ -29,10 +29,6 @@ pub enum Format {
 	UtcMillisRFC3339,
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with nanosecond precision, in UTC: `2026-03-02T13:22:15.488167982Z`
 	UtcNanosRFC3339,
-	/// An alias for [`Format::UtcRFC7231`].
-	UtcHTTP,
-	/// [RFC 7231](https://www.rfc-editor.org/rfc/rfc7231.html) (HTTP/1.1), in UTC: `Mon, 02 Mar 2026 13:22:15 UTC`
-	UtcRFC7231,
 	/// Abridged datetime format for syslog [RFC 3164](https://www.rfc-editor.org/rfc/rfc3164.html), in UTC: `Mar  2 13:22:15`.
 	UtcRFC3164,
 
@@ -60,12 +56,13 @@ pub enum Format {
 	LocalMillisRFC3339,
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with nanosecond precision, in local timezone: `2026-03-02T15:22:15.488728341+02:00`
 	LocalNanosRFC3339,
-	/// An alias for [`Format::LocalRFC7231`].
-	LocalHTTP,
-	/// [RFC 7231](https://www.rfc-editor.org/rfc/rfc7231.html) (HTTP/1.1), in local timezone: `Mon, 02 Mar 2026 15:22:15 CET`
-	LocalRFC7231,
 	/// Abridged datetime format for syslog [RFC 3164](https://www.rfc-editor.org/rfc/rfc3164.html), in local timezone: `Mar  2 15:22:15`.
 	LocalRFC3164,
+
+	/// An alias for [`Format::RFC7231`].
+	HTTP,
+	/// [RFC 7231](https://www.rfc-editor.org/rfc/rfc7231.html) (HTTP/1.1), in UTC: `Mon, 02 Mar 2026 13:22:15 GMT`
+	RFC7231,
 
 	/// Seconds since UNIX epoch: `1772795501`
 	TimestampSeconds,
@@ -91,7 +88,6 @@ impl Format {
 			Format::UtcRFC3339 => "RFC 3339 (UTC)",
 			Format::UtcMillisRFC3339 => "RFC 3339 with milliseconds (UTC)",
 			Format::UtcNanosRFC3339 => "RFC 3339 with nanoseconds (UTC)",
-			Format::UtcHTTP | Format::UtcRFC7231 => "RFC 7231 (UTC)",
 			Format::UtcRFC3164 => "syslog RFC 3164 (UTC)",
 
 			Format::LocalDateTime => "compact datetime (local)",
@@ -106,8 +102,9 @@ impl Format {
 			Format::LocalRFC3339 => "RFC 3339 (local)",
 			Format::LocalMillisRFC3339 => "RFC 3339 with milliseconds (local)",
 			Format::LocalNanosRFC3339 => "RFC 3339 with nanoseconds (local)",
-			Format::LocalHTTP | Format::LocalRFC7231 => "RFC 7231 (local)",
 			Format::LocalRFC3164 => "syslog RFC 3164 (local)",
+
+			Format::HTTP | Format::RFC7231 => "RFC 7231 (GMT)",
 
 			Format::TimestampSeconds => "seconds since epoch",
 			Format::TimestampMilliseconds => "milliseconds since epoch",
@@ -130,9 +127,9 @@ impl Format {
 			Self::UtcRFC3339 => true,
 			Self::UtcMillisRFC3339 => true,
 			Self::UtcNanosRFC3339 => true,
-			Self::UtcHTTP => true,
-			Self::UtcRFC7231 => true,
 			Self::UtcRFC3164 => true,
+			Self::HTTP => true,
+			Self::RFC7231 => true,
 			Self::TimestampSeconds => true,
 			Self::TimestampMilliseconds => true,
 			Self::TimestampNanoseconds => true,
@@ -394,21 +391,6 @@ impl Format {
 					offset_minutes = parts.gmt_offset_minutes,
 				)
 			}
-			Format::UtcHTTP | Format::UtcRFC7231 | Format::LocalHTTP | Format::LocalRFC7231 => {
-				let parts = get_parts();
-				write!(
-					out,
-					"{day_name}, {day:02} {month_name} {year} {hour:02}:{mins:02}:{secs:02} {timezone}",
-					day_name = parts.day_name(),
-					day = parts.month_day,
-					month_name = parts.month_name(),
-					year = parts.year,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-					timezone = parts.timezone,
-				)
-			}
 			Format::UtcRFC3164 | Format::LocalRFC3164 => {
 				let parts = get_parts();
 				write!(
@@ -416,6 +398,20 @@ impl Format {
 					"{month_name} {day:>2} {hour:02}:{mins:02}:{secs:02}",
 					month_name = parts.month_name(),
 					day = parts.month_day,
+					hour = parts.hour,
+					mins = parts.minutes,
+					secs = parts.seconds,
+				)
+			}
+			Format::HTTP | Format::RFC7231 => {
+				let parts = get_parts();
+				write!(
+					out,
+					"{day_name}, {day:02} {month_name} {year} {hour:02}:{mins:02}:{secs:02} GMT",
+					day_name = parts.day_name(),
+					day = parts.month_day,
+					month_name = parts.month_name(),
+					year = parts.year,
 					hour = parts.hour,
 					mins = parts.minutes,
 					secs = parts.seconds,
@@ -483,13 +479,11 @@ impl Format {
 			Format::LocalNanosRFC3339 => 35,
 			// Mon, 02 Mar 2026 15:22:15 CET
 			Format::UtcRFC3164 | Format::LocalRFC3164 => 15,
+			// Mon, 02 Mar 2026 15:22:15 GMT
+			Format::HTTP | Format::RFC7231 => 29,
 
 			// variable length formats
 
-			// Mon, 02 Mar 2026 15:22:15 UTC
-			Format::UtcHTTP | Format::UtcRFC7231 => 26 + ts.as_utc_parts().timezone.len(),
-			// Mon, 02 Mar 2026 15:22:15 CET
-			Format::LocalHTTP | Format::LocalRFC7231 => 26 + ts.as_local_parts().timezone.len(),
 			// an arbitrary sequence of digits
 			Format::TimestampSeconds => count_digits(ts.as_secs() as u128),
 			// an arbitrary sequence of digits
@@ -572,9 +566,9 @@ mod test_format {
 		assert_eq!(Format::UtcRFC3339.as_string(&ts), "2026-03-06T14:43:49Z");
 		assert_eq!(Format::UtcMillisRFC3339.as_string(&ts), "2026-03-06T14:43:49.038Z");
 		assert_eq!(Format::UtcNanosRFC3339.as_string(&ts), "2026-03-06T14:43:49.038023456Z");
-		assert_eq!(Format::UtcHTTP.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 UTC");
-		assert_eq!(Format::UtcRFC7231.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 UTC");
 		assert_eq!(Format::UtcRFC3164.as_string(&ts), "Mar  6 14:43:49");
+		assert_eq!(Format::HTTP.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 GMT");
+		assert_eq!(Format::RFC7231.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 GMT");
 	}
 
 	#[test]
@@ -594,8 +588,6 @@ mod test_format {
 			assert_eq!(Format::LocalRFC3339.as_string(&ts), "2026-03-06T11:43:49-03:00");
 			assert_eq!(Format::LocalMillisRFC3339.as_string(&ts), "2026-03-06T11:43:49.038-03:00");
 			assert_eq!(Format::LocalNanosRFC3339.as_string(&ts), "2026-03-06T11:43:49.038023456-03:00");
-			assert_eq!(Format::LocalHTTP.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -03");
-			assert_eq!(Format::LocalRFC7231.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -03");
 			assert_eq!(Format::LocalRFC3164.as_string(&ts), "Mar  6 11:43:49");
 		});
 	}
@@ -608,7 +600,6 @@ mod test_format {
 			assert_eq!(Format::LocalDate.string_len(&ts), Format::LocalDate.as_string(&ts).len());
 			assert_eq!(Format::LocalDateTime.string_len(&ts), Format::LocalDateTime.as_string(&ts).len());
 			assert_eq!(Format::LocalFileName.string_len(&ts), Format::LocalFileName.as_string(&ts).len());
-			assert_eq!(Format::LocalHTTP.string_len(&ts), Format::LocalHTTP.as_string(&ts).len());
 			assert_eq!(Format::LocalMillisDateTime.string_len(&ts), Format::LocalMillisDateTime.as_string(&ts).len());
 			assert_eq!(Format::LocalMillisRFC3339.string_len(&ts), Format::LocalMillisRFC3339.as_string(&ts).len());
 			assert_eq!(Format::LocalMillisTime.string_len(&ts), Format::LocalMillisTime.as_string(&ts).len());
@@ -618,15 +609,10 @@ mod test_format {
 			assert_eq!(Format::LocalRFC2822.string_len(&ts), Format::LocalRFC2822.as_string(&ts).len());
 			assert_eq!(Format::LocalRFC3164.string_len(&ts), Format::LocalRFC3164.as_string(&ts).len());
 			assert_eq!(Format::LocalRFC3339.string_len(&ts), Format::LocalRFC3339.as_string(&ts).len());
-			assert_eq!(Format::LocalRFC7231.string_len(&ts), Format::LocalRFC7231.as_string(&ts).len());
 			assert_eq!(Format::LocalTime.string_len(&ts), Format::LocalTime.as_string(&ts).len());
-			assert_eq!(Format::TimestampMilliseconds.string_len(&ts), Format::TimestampMilliseconds.as_string(&ts).len());
-			assert_eq!(Format::TimestampNanoseconds.string_len(&ts), Format::TimestampNanoseconds.as_string(&ts).len());
-			assert_eq!(Format::TimestampSeconds.string_len(&ts), Format::TimestampSeconds.as_string(&ts).len());
 			assert_eq!(Format::UtcDate.string_len(&ts), Format::UtcDate.as_string(&ts).len());
 			assert_eq!(Format::UtcDateTime.string_len(&ts), Format::UtcDateTime.as_string(&ts).len());
 			assert_eq!(Format::UtcFileName.string_len(&ts), Format::UtcFileName.as_string(&ts).len());
-			assert_eq!(Format::UtcHTTP.string_len(&ts), Format::UtcHTTP.as_string(&ts).len());
 			assert_eq!(Format::UtcMillisDateTime.string_len(&ts), Format::UtcMillisDateTime.as_string(&ts).len());
 			assert_eq!(Format::UtcMillisRFC3339.string_len(&ts), Format::UtcMillisRFC3339.as_string(&ts).len());
 			assert_eq!(Format::UtcMillisTime.string_len(&ts), Format::UtcMillisTime.as_string(&ts).len());
@@ -636,8 +622,12 @@ mod test_format {
 			assert_eq!(Format::UtcRFC2822.string_len(&ts), Format::UtcRFC2822.as_string(&ts).len());
 			assert_eq!(Format::UtcRFC3164.string_len(&ts), Format::UtcRFC3164.as_string(&ts).len());
 			assert_eq!(Format::UtcRFC3339.string_len(&ts), Format::UtcRFC3339.as_string(&ts).len());
-			assert_eq!(Format::UtcRFC7231.string_len(&ts), Format::UtcRFC7231.as_string(&ts).len());
 			assert_eq!(Format::UtcTime.string_len(&ts), Format::UtcTime.as_string(&ts).len());
+			assert_eq!(Format::HTTP.string_len(&ts), Format::HTTP.as_string(&ts).len());
+			assert_eq!(Format::RFC7231.string_len(&ts), Format::RFC7231.as_string(&ts).len());
+			assert_eq!(Format::TimestampMilliseconds.string_len(&ts), Format::TimestampMilliseconds.as_string(&ts).len());
+			assert_eq!(Format::TimestampNanoseconds.string_len(&ts), Format::TimestampNanoseconds.as_string(&ts).len());
+			assert_eq!(Format::TimestampSeconds.string_len(&ts), Format::TimestampSeconds.as_string(&ts).len());
 		});
 	}
 
@@ -652,7 +642,8 @@ mod test_format {
 		assert_eq!(Format::UtcNanosDateTime.as_integer(&ts), None);
 		assert_eq!(Format::UtcTime.as_integer(&ts), None);
 		assert_eq!(Format::UtcRFC2822.as_integer(&ts), None);
-		assert_eq!(Format::UtcRFC7231.as_integer(&ts), None);
+		assert_eq!(Format::HTTP.as_integer(&ts), None);
+		assert_eq!(Format::RFC7231.as_integer(&ts), None);
 	}
 
 	#[test]
@@ -664,7 +655,8 @@ mod test_format {
 		assert_eq!(Format::UtcNanosDateTime.is_integer(), false);
 		assert_eq!(Format::UtcTime.is_integer(), false);
 		assert_eq!(Format::UtcRFC2822.is_integer(), false);
-		assert_eq!(Format::UtcRFC7231.is_integer(), false);
+		assert_eq!(Format::HTTP.is_integer(), false);
+		assert_eq!(Format::RFC7231.is_integer(), false);
 	}
 
 	#[test]
@@ -673,7 +665,8 @@ mod test_format {
 		assert_eq!(Format::UtcMillisDateTime.is_rfc_3339(), false);
 		assert_eq!(Format::LocalNanosDateTime.is_rfc_3339(), false);
 		assert_eq!(Format::LocalFileName.is_rfc_3339(), false);
-		assert_eq!(Format::UtcHTTP.is_rfc_3339(), false);
+		assert_eq!(Format::HTTP.is_rfc_3339(), false);
+		assert_eq!(Format::RFC7231.is_rfc_3339(), false);
 		assert_eq!(Format::UtcRFC3339.is_rfc_3339(), true);
 		assert_eq!(Format::UtcMillisRFC3339.is_rfc_3339(), true);
 		assert_eq!(Format::UtcNanosRFC3339.is_rfc_3339(), true);

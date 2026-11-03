@@ -41,7 +41,7 @@ println!("current time, as nanos since epoch: {}", now.as_nanos());
 println!("current time as debug:              {:?}", now);
 println!("current time as string:             {}", now.to_string());
 println!("current time (local):               {}", now.as_string(&Format::LocalMillisDateTime));
-println!("current time (UTC):                 {}", now.as_string(&Format::UtcRFC7231));
+println!("current time (GMT):                 {}", now.as_string(&Format::RFC7231));
 println!("week day (local):                   {}", now.as_local_parts().week_day);
 println!("year day (UTC):                     {}", now.as_utc_parts().year_day);
 ```
@@ -50,7 +50,7 @@ current time, as nanos since epoch: 1774369621732000558
 current time as debug:              Timestamp { seconds: 1774369621, nanoseconds: 732000558 }
 current time as string:             2026-03-24 16:27:01 +0000
 current time (local):               2026-03-24 16:27:01.732 +0000
-current time (UTC):                 Tue, 24 Mar 2026 16:27:01 UTC
+current time (GMT):                 Tue, 24 Mar 2026 16:27:01 GMT
 week day (local):                   3
 year day (UTC):                     83
 ```

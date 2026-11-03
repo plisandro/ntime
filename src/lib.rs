@@ -48,12 +48,12 @@
 //! let now = Timestamp::now();
 //! println!("nanos since epoch: {}", now.as_nanos());
 //! println!("to_string:         {}", now.to_string());
-//! println!("HTTP/1.1 (UTC):    {}", now.as_string(&Format::UtcRFC7231));
+//! println!("HTTP/1.1:          {}", now.as_string(&Format::RFC7231));
 //! ```
 //! ```text
 //! nanos since epoch:  1774369621732000558
 //! to_string:          2026-03-24 17:21:01 +0100
-//! HTTP/1.1 (UTC):     Tue, 24 Mar 2026 16:27:01 UTC
+//! HTTP/1.1:           Tue, 24 Mar 2026 16:27:01 GMT
 //! ```
 //!
 //! ## Timestamp Arithmetic
