@@ -8,8 +8,8 @@ pub const NULL_C_CHAR: *mut c_char = ptr::null::<*mut c_char>() as *mut c_char;
 
 /* ----------------------- Bindings for C stdlib time functions ----------------------- */
 
-// time_t is platform-specific, so use the largest single-register type available
-pub type CTime = usize;
+// time_t should be able to store a timestamp (64-bit) on all supported platforms.
+pub type CTime = u64;
 // size_t is platform-specific, so use the largest single-register type available
 // TODO: replace by core::ffi::c_size_t once stable.
 pub type CSize = usize;
