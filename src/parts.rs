@@ -279,7 +279,10 @@ impl<'i> TimestampParts<'i> {
 		if self.gmt_offset_negative {
 			secs += gmt_offset_secs
 		} else {
-			secs -= gmt_offset_secs
+			secs = match u64::checked_sub(secs, gmt_offset_secs) {
+				Some(d) => d,
+				None => return Err("timestamp underflow while applying GMT offset"),
+			};
 		};
 
 		let nanos = self.nanoseconds + ((self.milliseconds as u32) * U32_NANOS_IN_MILLI);
@@ -536,6 +539,28 @@ mod test {
 		parts.gmt_offset_minutes = 45;
 
 		assert_eq!(parts.validate(), Ok(()));
+	}
+
+	#[test]
+	fn parts_to_timestamp_underflow() {
+		let parts = TimestampParts {
+			nanoseconds: 111,
+			milliseconds: 222,
+			seconds: 35,
+			minutes: 0,
+			hour: 0,
+			month_day: 1,
+			month: 1,
+			year: 1970,
+			week_day: 1,
+			year_day: 1,
+			gmt_offset_negative: false,
+			gmt_offset_hours: 4,
+			gmt_offset_minutes: 0,
+			timezone: "Asia/Baku",
+		};
+
+		assert_eq!(parts.to_timestamp(), Err("timestamp underflow while applying GMT offset"));
 	}
 
 	#[test]
