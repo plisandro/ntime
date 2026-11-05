@@ -2,260 +2,289 @@ use std::io;
 
 use crate::Timestamp;
 
-/// Defines a format for [`Timestamp`] string serialization.
+/// Supported timezones for [`Format`] settings.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum FormatTimezone {
+	/// Local timezone.
+	Local,
+	/// UTC/GMT.
+	UTC,
+}
+
+/// Supported precisions for [`Format`] settings.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum FormatPrecision {
+	/// Seconds: `15`.
+	Seconds,
+	/// Milliseconds: `15.488`.
+	Milliseconds,
+	/// Nanoseconds: `15.488167982`.
+	Nanoseconds,
+}
+
+/// Supported formats for [`Timestamp`] string serialization.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Format {
-	/// Compact datetime, in UTC: `2026-03-02 13:22:15`
-	UtcDateTime,
-	/// Compact datetime with milliseconds, in UTC: `2026-03-02 13:22:15.488`
-	UtcMillisDateTime,
-	/// Compact datetime with nanoseconds, in UTC: `2026-03-02 13:22:15.488728341`
-	UtcNanosDateTime,
-	/// Compact date, in UTC: `2025-03-02`
-	UtcDate,
-	/// Compact time, in UTC: `13:22:15`
-	UtcTime,
-	/// Compact time with milliseconds, in UTC: `13:22:15.488`
-	UtcMillisTime,
-	/// Compact time with nanoseconds, in UTC: `13:22:15.488167982`
-	UtcNanosTime,
-	/// Date/time format suitable to append to filenames. in UTC: `2026-03-02_13-22-15`
-	UtcFileName,
-	/// [RFC 2822](https://www.rfc-editor.org/rfc/rfc2822.html) (Internet Message Format), in UTC: `Mon, 02 Mar 2026 13:22:15 +0000`
-	UtcRFC2822,
-	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF), in UTC: `2026-03-02T13:22:15Z`
-	UtcRFC3339,
-	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with millisecond precision, in UTC: `2026-03-02T13:22:15.488Z`
-	UtcMillisRFC3339,
-	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with nanosecond precision, in UTC: `2026-03-02T13:22:15.488167982Z`
-	UtcNanosRFC3339,
-	/// Abridged datetime format for syslog [RFC 3164](https://www.rfc-editor.org/rfc/rfc3164.html), in UTC: `Mar  2 13:22:15`
-	UtcRFC3164,
-	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), in UTC: `2026-03-02T13:22:15Z`
-	UtcISO8601,
-	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), with millisecond precision, in UTC: `2026-03-02T13:22:15.488Z`
-	UtcMillisISO8601,
-	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), with nanosecond precision, in UTC: `2026-03-02T13:22:15.488167982Z`
-	UtcNanosISO8601,
+	/// Compact datetime.
+	///
+	///   * UTC: `2026-03-02 13:22:15`
+	///   * UTC, with milliseconds: `2026-03-02 13:22:15.488`
+	///   * UTC, with nanoseconds: `2026-03-02 13:22:15.488728341`
+	///   * Local: `2026-03-02 15:22:15 +0200`
+	///   * Local, with milliseconds: `2026-03-02 15:22:15.488 +0200`
+	///   * Local, with nanoseconds: `2026-03-02 13:22:15.488728341 +0200`
+	DateTime(FormatTimezone, FormatPrecision),
 
-	/// Compact datetime, in local timezone: `2026-03-02 15:22:15 +0200`
-	LocalDateTime,
-	/// Compact datetime with milliseconds, in local timezone: `2026-03-02 15:22:15.488 +0200`
-	LocalMillisDateTime,
-	/// Compact datetime with nanoseconds, in local timezone: `2026-03-02 13:22:15.488728341 +0200`
-	LocalNanosDateTime,
-	/// Compact date, in local timezone: `2025-03-02`
-	LocalDate,
-	/// Compact time, in local timezone: `15:22:15`
-	LocalTime,
-	/// Compact time with milliseconds, in local timezone: `15:22:15.488`
-	LocalMillisTime,
-	/// Compact time with nanoseconds, in local timezone: `15:22:15.488167982`
-	LocalNanosTime,
-	/// Date/time format suitable to append to filenames. in local timezone: `2026-03-02_15-22-15`
-	LocalFileName,
-	/// [RFC 2822](https://www.rfc-editor.org/rfc/rfc2822.html) (Internet Message Format), in local timezone: `Mon, 02 Mar 2026 15:22:15 +0200`
-	LocalRFC2822,
-	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF), in local timezone: `2026-03-02T15:22:15+02:00`
-	LocalRFC3339,
-	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with millisecond precision, in local timezone: `2026-03-02T15:22:15.488+02:00`
-	LocalMillisRFC3339,
-	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with nanosecond precision, in local timezone: `2026-03-02T15:22:15.488728341+02:00`
-	LocalNanosRFC3339,
-	/// Abridged datetime format for syslog [RFC 3164](https://www.rfc-editor.org/rfc/rfc3164.html), in local timezone: `Mar  2 15:22:15`
-	LocalRFC3164,
-	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), in local timezone: `2026-03-02T15:22:15+02:00`
-	LocalISO8601,
-	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), with millisecond precision, in local timezone: `2026-03-02T15:22:15.488+02:00`
-	LocalMillisISO8601,
-	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), with nanosecond precision, in local timezone: `2026-03-02T15:22:15.488728341+02:00`
-	LocalNanosISO8601,
+	/// Compact date, in UTC/local: `2025-03-02`
+	Date(FormatTimezone),
+
+	/// Compact time.
+	///
+	///   * UTC/local: `13:22:15`
+	///   * UTC/local, with milliseconds: `13:22:15.488`
+	///   * UTC/local, with nanoseconds: `13:22:15.488167982`
+	Time(FormatTimezone, FormatPrecision),
+
+	/// Date/time format suitable to append to filenames. in UTC/local: `2026-03-02_13-22-15`
+	FileName(FormatTimezone),
+
+	/// [RFC 2822](https://www.rfc-editor.org/rfc/rfc2822.html) (Internet Message Format).
+	///
+	///   * UTC: `Mon, 02 Mar 2026 13:22:15 +0000`
+	///   * Local: `Mon, 02 Mar 2026 15:22:15 +0200`
+	RFC2822(FormatTimezone),
+
+	/// Abridged datetime format for syslog [RFC 3164](https://www.rfc-editor.org/rfc/rfc3164.html), in UTC/local: `Mar  2 13:22:15`
+	RFC3164(FormatTimezone),
+
+	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF).
+	///
+	///   * UTC: `2026-03-02T13:22:15Z`
+	///   * UTC, with milliseconds: `2026-03-02T13:22:15.488Z`
+	///   * UTC, with nanoseconds: `2026-03-02T13:22:15.488167982Z`
+	///   * Local: `2026-03-02T15:22:15+02:00`
+	///   * Local, with milliseconds: `2026-03-02T15:22:15.488+02:00`
+	///   * Local, with nanoseconds: `2026-03-02T15:22:15.488728341+02:00`
+	RFC3339(FormatTimezone, FormatPrecision),
+
+	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html).
+	///
+	///   * UTC: `2026-03-02T13:22:15Z`
+	///   * UTC, with milliseconds: `2026-03-02T13:22:15.488Z`
+	///   * UTC, with nanoseconds: `2026-03-02T13:22:15.488167982Z`
+	///   * Local: `2026-03-02T15:22:15+02:00`
+	///   * Local, with milliseconds: `2026-03-02T15:22:15.488+02:00`
+	///   * Local, with nanoseconds:`2026-03-02T15:22:15.488728341+02:00`
+	ISO8601(FormatTimezone, FormatPrecision),
 
 	/// An alias for [`Format::RFC7231`].
 	HTTP,
 	/// [RFC 7231](https://www.rfc-editor.org/rfc/rfc7231.html) (HTTP/1.1), in UTC: `Mon, 02 Mar 2026 13:22:15 GMT`
 	RFC7231,
 
-	/// Seconds since UNIX epoch: `1772795501`
-	TimestampSeconds,
-	/// Milliseconds since UNIX epoch: `1772795501890`
-	TimestampMilliseconds,
-	/// Nanoseconds since UNIX epoch: `1772795501890546`
-	TimestampNanoseconds,
+	/// Timestamp, as time since Unix epoch.
+	///
+	///   * Seconds: `1772795501`
+	///   * Milliseconds: `1772795501890`
+	///   * Nanoseconds: `1772795501890546113`
+	Timestamp(FormatPrecision),
 }
 
 impl Format {
+	/// Returns a default formatting (['DateTime`] in [`UTC`][FormatTimezone::UTC], with [millisecond][FormatPrecision::Milliseconds] precision.
+	pub fn default() -> Self {
+		Self::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds)
+	}
+
 	/// Returns a string name for the [`Format`]
-	pub fn name(&self) -> &str {
+	pub fn name(&self) -> &'static str {
 		match self {
-			Format::UtcDateTime => "compact datetime (UTC)",
-			Format::UtcMillisDateTime => "compact datetime with milliseconds (UTC)",
-			Format::UtcNanosDateTime => "compact datetime with nanoseconds (UTC)",
-			Format::UtcDate => "compact date (UTC)",
-			Format::UtcTime => "compact time (UTC)",
-			Format::UtcMillisTime => "compact time with milliseconds (UTC)",
-			Format::UtcNanosTime => "compact time with nanoseconds (UTC)",
-			Format::UtcFileName => "date+time filename (UTC)",
-			Format::UtcRFC2822 => "RFC 2822 (UTC)",
-			Format::UtcRFC3339 => "RFC 3339 (UTC)",
-			Format::UtcMillisRFC3339 => "RFC 3339 with milliseconds (UTC)",
-			Format::UtcNanosRFC3339 => "RFC 3339 with nanoseconds (UTC)",
-			Format::UtcRFC3164 => "syslog RFC 3164 (UTC)",
-			Format::UtcISO8601 => "ISO 8601 (UTC)",
-			Format::UtcMillisISO8601 => "ISO 8601 with milliseconds (UTC)",
-			Format::UtcNanosISO8601 => "ISO 8601 with nanoseconds (UTC)",
+			Self::DateTime(tz, pr) => match tz {
+				FormatTimezone::UTC => match pr {
+					FormatPrecision::Seconds => "compact datetime (UTC)",
+					FormatPrecision::Milliseconds => "compact datetime with milliseconds (UTC)",
+					FormatPrecision::Nanoseconds => "compact datetime with nanoseconds (UTC)",
+				},
+				FormatTimezone::Local => match pr {
+					FormatPrecision::Seconds => "compact datetime (local)",
+					FormatPrecision::Milliseconds => "compact datetime with milliseconds (local)",
+					FormatPrecision::Nanoseconds => "compact datetime with nanoseconds (local)",
+				},
+			},
+			Self::Date(tz) => match tz {
+				FormatTimezone::UTC => "compact date (UTC)",
+				FormatTimezone::Local => "compact date (local)",
+			},
+			Self::Time(tz, pr) => match tz {
+				FormatTimezone::UTC => match pr {
+					FormatPrecision::Seconds => "compact time (UTC)",
+					FormatPrecision::Milliseconds => "compact time with milliseconds (UTC)",
+					FormatPrecision::Nanoseconds => "compact time with nanoseconds (UTC)",
+				},
+				FormatTimezone::Local => match pr {
+					FormatPrecision::Seconds => "compact time (local)",
+					FormatPrecision::Milliseconds => "compact time with milliseconds (local)",
+					FormatPrecision::Nanoseconds => "compact time with nanoseconds (local)",
+				},
+			},
+			Self::FileName(tz) => match tz {
+				FormatTimezone::UTC => "date+time filename (UTC)",
+				FormatTimezone::Local => "date+time filename (local)",
+			},
+			Self::RFC2822(tz) => match tz {
+				FormatTimezone::UTC => "RFC 2822 (UTC)",
+				FormatTimezone::Local => "RFC 2822 (local)",
+			},
+			Self::RFC3339(tz, pr) => match tz {
+				FormatTimezone::UTC => match pr {
+					FormatPrecision::Seconds => "RFC 3339 (UTC)",
+					FormatPrecision::Milliseconds => "RFC 3339 with milliseconds (UTC)",
+					FormatPrecision::Nanoseconds => "RFC 3339 with nanoseconds (UTC)",
+				},
+				FormatTimezone::Local => match pr {
+					FormatPrecision::Seconds => "RFC 3339 (local)",
+					FormatPrecision::Milliseconds => "RFC 3339 with milliseconds (local)",
+					FormatPrecision::Nanoseconds => "RFC 3339 with nanoseconds (local)",
+				},
+			},
+			Self::RFC3164(tz) => match tz {
+				FormatTimezone::UTC => "syslog RFC 3164 (UTC)",
+				FormatTimezone::Local => "syslog RFC 3164 (local)",
+			},
+			Self::ISO8601(tz, pr) => match tz {
+				FormatTimezone::UTC => match pr {
+					FormatPrecision::Seconds => "ISO 8601 (UTC)",
+					FormatPrecision::Milliseconds => "ISO 8601 with milliseconds (UTC)",
+					FormatPrecision::Nanoseconds => "ISO 8601 with nanoseconds (UTC)",
+				},
+				FormatTimezone::Local => match pr {
+					FormatPrecision::Seconds => "ISO 8601 (local)",
+					FormatPrecision::Milliseconds => "ISO 8601 with milliseconds (local)",
+					FormatPrecision::Nanoseconds => "ISO 8601 with nanoseconds (local)",
+				},
+			},
 
-			Format::LocalDateTime => "compact datetime (local)",
-			Format::LocalMillisDateTime => "compact datetime with milliseconds (local)",
-			Format::LocalNanosDateTime => "compact datetime with nanoseconds (local)",
-			Format::LocalDate => "compact date (local)",
-			Format::LocalTime => "compact time (local)",
-			Format::LocalMillisTime => "compact time with milliseconds (local)",
-			Format::LocalNanosTime => "compact time with nanoseconds (local)",
-			Format::LocalFileName => "date+time filename (local)",
-			Format::LocalRFC2822 => "RFC 2822 (local)",
-			Format::LocalRFC3339 => "RFC 3339 (local)",
-			Format::LocalMillisRFC3339 => "RFC 3339 with milliseconds (local)",
-			Format::LocalNanosRFC3339 => "RFC 3339 with nanoseconds (local)",
-			Format::LocalRFC3164 => "syslog RFC 3164 (local)",
-			Format::LocalISO8601 => "ISO 8601 (local)",
-			Format::LocalMillisISO8601 => "ISO 8601 with milliseconds (local)",
-			Format::LocalNanosISO8601 => "ISO 8601 with nanoseconds (local)",
+			Self::HTTP | Self::RFC7231 => "RFC 7231 (GMT)",
 
-			Format::HTTP | Format::RFC7231 => "RFC 7231 (GMT)",
-
-			Format::TimestampSeconds => "seconds since epoch",
-			Format::TimestampMilliseconds => "milliseconds since epoch",
-			Format::TimestampNanoseconds => "nanoseconds since epoch",
+			Self::Timestamp(pr) => match pr {
+				FormatPrecision::Seconds => "seconds since epoch",
+				FormatPrecision::Milliseconds => "milliseconds since epoch",
+				FormatPrecision::Nanoseconds => "nanoseconds since epoch",
+			},
 		}
 	}
 
 	/// Evaluates if the given [`Format`] is in UTC timezone.
 	pub fn is_utc(&self) -> bool {
-		matches!(&self, |Self::UtcDateTime| Self::UtcMillisDateTime
-			| Self::UtcNanosDateTime
-			| Self::UtcDate
-			| Self::UtcTime
-			| Self::UtcMillisTime
-			| Self::UtcNanosTime
-			| Self::UtcFileName
-			| Self::UtcRFC2822
-			| Self::UtcRFC3339
-			| Self::UtcMillisRFC3339
-			| Self::UtcNanosRFC3339
-			| Self::UtcRFC3164
-			| Self::UtcISO8601
-			| Self::UtcMillisISO8601
-			| Self::UtcNanosISO8601
-			| Self::HTTP
-			| Self::RFC7231
-			| Self::TimestampSeconds
-			| Self::TimestampMilliseconds
-			| Self::TimestampNanoseconds)
+		match self {
+			Self::DateTime(tz, _) => tz == &FormatTimezone::UTC,
+			Self::Date(tz) => tz == &FormatTimezone::UTC,
+			Self::Time(tz, _) => tz == &FormatTimezone::UTC,
+			Self::FileName(tz) => tz == &FormatTimezone::UTC,
+			Self::RFC2822(tz) => tz == &FormatTimezone::UTC,
+			Self::RFC3339(tz, _) => tz == &FormatTimezone::UTC,
+			Self::RFC3164(tz) => tz == &FormatTimezone::UTC,
+			Self::ISO8601(tz, _) => tz == &FormatTimezone::UTC,
+			Self::HTTP | Self::RFC7231 => true,
+			Self::Timestamp(_) => true,
+		}
 	}
 
 	/// Serializes a [`Timestamp`] as string, into a given [`std::io::Write`].
 	pub fn write<T: io::Write>(&self, out: &mut T, ts: &Timestamp) -> io::Result<()> {
-		let get_parts = || {
-			if self.is_utc() { ts.as_utc_parts() } else { ts.as_local_parts() }
-		};
-
 		match self {
-			Format::UtcDateTime => {
-				let parts = ts.as_utc_parts();
-				write!(
-					out,
-					"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}",
-					year = parts.year,
-					month = parts.month,
-					day = parts.month_day,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-				)
-			}
-			Format::LocalDateTime => {
-				let parts = ts.as_local_parts();
-				write!(
-					out,
-					"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02} {offset_sign}{offset_hours:02}{offset_minutes:02}",
-					year = parts.year,
-					month = parts.month,
-					day = parts.month_day,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-					offset_sign = parts.gmt_offset_sign(),
-					offset_hours = parts.gmt_offset_hours,
-					offset_minutes = parts.gmt_offset_minutes,
-				)
-			}
-			Format::UtcMillisDateTime => {
-				let parts = ts.as_utc_parts();
-				write!(
-					out,
-					"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03}",
-					year = parts.year,
-					month = parts.month,
-					day = parts.month_day,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-					msecs = parts.milliseconds,
-				)
-			}
-			Format::LocalMillisDateTime => {
-				let parts = ts.as_local_parts();
-				write!(
-					out,
-					"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03} {offset_sign}{offset_hours:02}{offset_minutes:02}",
-					year = parts.year,
-					month = parts.month,
-					day = parts.month_day,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-					msecs = parts.milliseconds,
-					offset_sign = parts.gmt_offset_sign(),
-					offset_hours = parts.gmt_offset_hours,
-					offset_minutes = parts.gmt_offset_minutes,
-				)
-			}
-			Format::UtcNanosDateTime => {
-				let parts = ts.as_utc_parts();
-				write!(
-					out,
-					"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}",
-					year = parts.year,
-					month = parts.month,
-					day = parts.month_day,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-					msecs = parts.milliseconds,
-					nsecs = parts.nanoseconds,
-				)
-			}
-			Format::LocalNanosDateTime => {
-				let parts = ts.as_local_parts();
-				write!(
-					out,
-					"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06} {offset_sign}{offset_hours:02}{offset_minutes:02}",
-					year = parts.year,
-					month = parts.month,
-					day = parts.month_day,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-					msecs = parts.milliseconds,
-					nsecs = parts.nanoseconds,
-					offset_sign = parts.gmt_offset_sign(),
-					offset_hours = parts.gmt_offset_hours,
-					offset_minutes = parts.gmt_offset_minutes,
-				)
-			}
-			Format::UtcFileName | Format::LocalFileName => {
-				let parts = get_parts();
+			Self::DateTime(tz, pr) => match tz {
+				FormatTimezone::UTC => {
+					let parts = ts.as_utc_parts();
+					match pr {
+						FormatPrecision::Seconds => write!(
+							out,
+							"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}",
+							year = parts.year,
+							month = parts.month,
+							day = parts.month_day,
+							hour = parts.hour,
+							mins = parts.minutes,
+							secs = parts.seconds,
+						),
+						FormatPrecision::Milliseconds => write!(
+							out,
+							"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03}",
+							year = parts.year,
+							month = parts.month,
+							day = parts.month_day,
+							hour = parts.hour,
+							mins = parts.minutes,
+							secs = parts.seconds,
+							msecs = parts.milliseconds,
+						),
+						FormatPrecision::Nanoseconds => write!(
+							out,
+							"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}",
+							year = parts.year,
+							month = parts.month,
+							day = parts.month_day,
+							hour = parts.hour,
+							mins = parts.minutes,
+							secs = parts.seconds,
+							msecs = parts.milliseconds,
+							nsecs = parts.nanoseconds,
+						),
+					}
+				}
+				FormatTimezone::Local => {
+					let parts = ts.as_local_parts();
+					match pr {
+						FormatPrecision::Seconds => write!(
+							out,
+							"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02} {offset_sign}{offset_hours:02}{offset_minutes:02}",
+							year = parts.year,
+							month = parts.month,
+							day = parts.month_day,
+							hour = parts.hour,
+							mins = parts.minutes,
+							secs = parts.seconds,
+							offset_sign = parts.gmt_offset_sign(),
+							offset_hours = parts.gmt_offset_hours,
+							offset_minutes = parts.gmt_offset_minutes,
+						),
+						FormatPrecision::Milliseconds => write!(
+							out,
+							"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03} {offset_sign}{offset_hours:02}{offset_minutes:02}",
+							year = parts.year,
+							month = parts.month,
+							day = parts.month_day,
+							hour = parts.hour,
+							mins = parts.minutes,
+							secs = parts.seconds,
+							msecs = parts.milliseconds,
+							offset_sign = parts.gmt_offset_sign(),
+							offset_hours = parts.gmt_offset_hours,
+							offset_minutes = parts.gmt_offset_minutes,
+						),
+						FormatPrecision::Nanoseconds => write!(
+							out,
+							"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06} {offset_sign}{offset_hours:02}{offset_minutes:02}",
+							year = parts.year,
+							month = parts.month,
+							day = parts.month_day,
+							hour = parts.hour,
+							mins = parts.minutes,
+							secs = parts.seconds,
+							msecs = parts.milliseconds,
+							nsecs = parts.nanoseconds,
+							offset_sign = parts.gmt_offset_sign(),
+							offset_hours = parts.gmt_offset_hours,
+							offset_minutes = parts.gmt_offset_minutes,
+						),
+					}
+				}
+			},
+			Format::FileName(tz) => {
+				let parts = match tz {
+					FormatTimezone::UTC => ts.as_utc_parts(),
+					FormatTimezone::Local => ts.as_local_parts(),
+				};
 				write!(
 					out,
 					"{year}-{month:02}-{day:02}_{hour:02}-{mins:02}-{secs:02}",
@@ -267,39 +296,44 @@ impl Format {
 					secs = parts.seconds,
 				)
 			}
-			Format::UtcDate | Format::LocalDate => {
-				let parts = get_parts();
+			Format::Date(tz) => {
+				let parts = match tz {
+					FormatTimezone::UTC => ts.as_utc_parts(),
+					FormatTimezone::Local => ts.as_local_parts(),
+				};
 				write!(out, "{year}-{month:02}-{day:02}", year = parts.year, month = parts.month, day = parts.month_day)
 			}
-			Format::UtcTime | Format::LocalTime => {
-				let parts = get_parts();
-				write!(out, "{hour:02}:{mins:02}:{secs:02}", hour = parts.hour, mins = parts.minutes, secs = parts.seconds)
+			Self::Time(tz, pr) => {
+				let parts = match tz {
+					FormatTimezone::UTC => ts.as_utc_parts(),
+					FormatTimezone::Local => ts.as_local_parts(),
+				};
+				match pr {
+					FormatPrecision::Seconds => write!(out, "{hour:02}:{mins:02}:{secs:02}", hour = parts.hour, mins = parts.minutes, secs = parts.seconds),
+					FormatPrecision::Milliseconds => write!(
+						out,
+						"{hour:02}:{mins:02}:{secs:02}.{msecs:03}",
+						hour = parts.hour,
+						mins = parts.minutes,
+						secs = parts.seconds,
+						msecs = parts.milliseconds,
+					),
+					FormatPrecision::Nanoseconds => write!(
+						out,
+						"{hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}",
+						hour = parts.hour,
+						mins = parts.minutes,
+						secs = parts.seconds,
+						msecs = parts.milliseconds,
+						nsecs = parts.nanoseconds,
+					),
+				}
 			}
-			Format::UtcMillisTime | Format::LocalMillisTime => {
-				let parts = get_parts();
-				write!(
-					out,
-					"{hour:02}:{mins:02}:{secs:02}.{msecs:03}",
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-					msecs = parts.milliseconds,
-				)
-			}
-			Format::UtcNanosTime | Format::LocalNanosTime => {
-				let parts = get_parts();
-				write!(
-					out,
-					"{hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}",
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-					msecs = parts.milliseconds,
-					nsecs = parts.nanoseconds,
-				)
-			}
-			Format::UtcRFC2822 | Format::LocalRFC2822 => {
-				let parts = get_parts();
+			Self::RFC2822(tz) => {
+				let parts = match tz {
+					FormatTimezone::UTC => ts.as_utc_parts(),
+					FormatTimezone::Local => ts.as_local_parts(),
+				};
 				write!(
 					out,
 					"{day_name}, {day:02} {month_name} {year} {hour:02}:{mins:02}:{secs:02} {offset_sign}{offset_hours:02}{offset_minutes:02}",
@@ -315,101 +349,98 @@ impl Format {
 					offset_minutes = parts.gmt_offset_minutes,
 				)
 			}
-			Format::UtcRFC3339 | Format::UtcISO8601 => {
-				let parts = ts.as_utc_parts();
-				write!(
-					out,
-					"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}Z",
-					year = parts.year,
-					month = parts.month,
-					day = parts.month_day,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-				)
-			}
-			Format::UtcMillisRFC3339 | Format::UtcMillisISO8601 => {
-				let parts = ts.as_utc_parts();
-				write!(
-					out,
-					"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}.{msecs:03}Z",
-					year = parts.year,
-					month = parts.month,
-					day = parts.month_day,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-					msecs = parts.milliseconds,
-				)
-			}
-			Format::UtcNanosRFC3339 | Format::UtcNanosISO8601 => {
-				let parts = ts.as_utc_parts();
-				write!(
-					out,
-					"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}Z",
-					year = parts.year,
-					month = parts.month,
-					day = parts.month_day,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-					msecs = parts.milliseconds,
-					nsecs = parts.nanoseconds,
-				)
-			}
-			Format::LocalRFC3339 | Format::LocalISO8601 => {
-				let parts = ts.as_local_parts();
-				write!(
-					out,
-					"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}{offset_sign}{offset_hours:02}:{offset_minutes:02}",
-					year = parts.year,
-					month = parts.month,
-					day = parts.month_day,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-					offset_sign = parts.gmt_offset_sign(),
-					offset_hours = parts.gmt_offset_hours,
-					offset_minutes = parts.gmt_offset_minutes,
-				)
-			}
-			Format::LocalMillisRFC3339 | Format::LocalMillisISO8601 => {
-				let parts = ts.as_local_parts();
-				write!(
-					out,
-					"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}.{msecs:03}{offset_sign}{offset_hours:02}:{offset_minutes:02}",
-					year = parts.year,
-					month = parts.month,
-					day = parts.month_day,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-					msecs = parts.milliseconds,
-					offset_sign = parts.gmt_offset_sign(),
-					offset_hours = parts.gmt_offset_hours,
-					offset_minutes = parts.gmt_offset_minutes,
-				)
-			}
-			Format::LocalNanosRFC3339 | Format::LocalNanosISO8601 => {
-				let parts = ts.as_local_parts();
-				write!(
-					out,
-					"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}{offset_sign}{offset_hours:02}:{offset_minutes:02}",
-					year = parts.year,
-					month = parts.month,
-					day = parts.month_day,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-					msecs = parts.milliseconds,
-					nsecs = parts.nanoseconds,
-					offset_sign = parts.gmt_offset_sign(),
-					offset_hours = parts.gmt_offset_hours,
-					offset_minutes = parts.gmt_offset_minutes,
-				)
-			}
-			Format::UtcRFC3164 | Format::LocalRFC3164 => {
-				let parts = get_parts();
+			Self::RFC3339(tz, pr) | Self::ISO8601(tz, pr) => match tz {
+				FormatTimezone::UTC => {
+					let parts = ts.as_utc_parts();
+					match pr {
+						FormatPrecision::Seconds => write!(
+							out,
+							"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}Z",
+							year = parts.year,
+							month = parts.month,
+							day = parts.month_day,
+							hour = parts.hour,
+							mins = parts.minutes,
+							secs = parts.seconds,
+						),
+						FormatPrecision::Milliseconds => write!(
+							out,
+							"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}.{msecs:03}Z",
+							year = parts.year,
+							month = parts.month,
+							day = parts.month_day,
+							hour = parts.hour,
+							mins = parts.minutes,
+							secs = parts.seconds,
+							msecs = parts.milliseconds,
+						),
+						FormatPrecision::Nanoseconds => write!(
+							out,
+							"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}Z",
+							year = parts.year,
+							month = parts.month,
+							day = parts.month_day,
+							hour = parts.hour,
+							mins = parts.minutes,
+							secs = parts.seconds,
+							msecs = parts.milliseconds,
+							nsecs = parts.nanoseconds,
+						),
+					}
+				}
+				FormatTimezone::Local => {
+					let parts = ts.as_local_parts();
+					match pr {
+						FormatPrecision::Seconds => write!(
+							out,
+							"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}{offset_sign}{offset_hours:02}:{offset_minutes:02}",
+							year = parts.year,
+							month = parts.month,
+							day = parts.month_day,
+							hour = parts.hour,
+							mins = parts.minutes,
+							secs = parts.seconds,
+							offset_sign = parts.gmt_offset_sign(),
+							offset_hours = parts.gmt_offset_hours,
+							offset_minutes = parts.gmt_offset_minutes,
+						),
+						FormatPrecision::Milliseconds => write!(
+							out,
+							"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}.{msecs:03}{offset_sign}{offset_hours:02}:{offset_minutes:02}",
+							year = parts.year,
+							month = parts.month,
+							day = parts.month_day,
+							hour = parts.hour,
+							mins = parts.minutes,
+							secs = parts.seconds,
+							msecs = parts.milliseconds,
+							offset_sign = parts.gmt_offset_sign(),
+							offset_hours = parts.gmt_offset_hours,
+							offset_minutes = parts.gmt_offset_minutes,
+						),
+						FormatPrecision::Nanoseconds => write!(
+							out,
+							"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}{offset_sign}{offset_hours:02}:{offset_minutes:02}",
+							year = parts.year,
+							month = parts.month,
+							day = parts.month_day,
+							hour = parts.hour,
+							mins = parts.minutes,
+							secs = parts.seconds,
+							msecs = parts.milliseconds,
+							nsecs = parts.nanoseconds,
+							offset_sign = parts.gmt_offset_sign(),
+							offset_hours = parts.gmt_offset_hours,
+							offset_minutes = parts.gmt_offset_minutes,
+						),
+					}
+				}
+			},
+			Self::RFC3164(tz) => {
+				let parts = match tz {
+					FormatTimezone::UTC => ts.as_utc_parts(),
+					FormatTimezone::Local => ts.as_local_parts(),
+				};
 				write!(
 					out,
 					"{month_name} {day:>2} {hour:02}:{mins:02}:{secs:02}",
@@ -421,7 +452,7 @@ impl Format {
 				)
 			}
 			Format::HTTP | Format::RFC7231 => {
-				let parts = get_parts();
+				let parts = ts.as_utc_parts();
 				write!(
 					out,
 					"{day_name}, {day:02} {month_name} {year} {hour:02}:{mins:02}:{secs:02} GMT",
@@ -434,9 +465,11 @@ impl Format {
 					secs = parts.seconds,
 				)
 			}
-			Format::TimestampSeconds => write!(out, "{}", ts.as_secs()),
-			Format::TimestampMilliseconds => write!(out, "{}", ts.as_millis()),
-			Format::TimestampNanoseconds => write!(out, "{}", ts.as_nanos()),
+			Self::Timestamp(ps) => match ps {
+				FormatPrecision::Seconds => write!(out, "{}", ts.as_secs()),
+				FormatPrecision::Milliseconds => write!(out, "{}", ts.as_millis()),
+				FormatPrecision::Nanoseconds => write!(out, "{}", ts.as_nanos()),
+			},
 		}
 	}
 
@@ -457,56 +490,69 @@ impl Format {
 
 		match self {
 			// fixed-size formats
-
-			// 2026-03-02 13:22:15
-			Format::UtcDateTime => 19,
-			// 2026-03-02 15:22:15 +0200
-			Format::LocalDateTime => 25,
-			// 2026-03-02 15:22:15.488
-			Format::UtcMillisDateTime => 23,
-			// 2026-03-02 15:22:15.488 +0200
-			Format::LocalMillisDateTime => 29,
-			// 2026-03-02 13:22:15.488728341
-			Format::UtcNanosDateTime => 29,
-			// 2026-03-02 13:22:15.488728341 +0200
-			Format::LocalNanosDateTime => 35,
+			Self::DateTime(tz, pr) => match tz {
+				FormatTimezone::UTC => match pr {
+					// 2026-03-02 13:22:15
+					FormatPrecision::Seconds => 19,
+					// 2026-03-02 15:22:15.488
+					FormatPrecision::Milliseconds => 23,
+					// 2026-03-02 13:22:15.488728341
+					FormatPrecision::Nanoseconds => 29,
+				},
+				FormatTimezone::Local => match pr {
+					// 2026-03-02 15:22:15 +0200
+					FormatPrecision::Seconds => 25,
+					// 2026-03-02 15:22:15.488 +0200
+					FormatPrecision::Milliseconds => 29,
+					// 2026-03-02 13:22:15.488728341 +0200
+					FormatPrecision::Nanoseconds => 35,
+				},
+			},
 			// 2026-03-02_15-22-15
-			Format::UtcFileName | Format::LocalFileName => 19,
+			Self::FileName(_) => 19,
 			// 2025-03-02
-			Format::UtcDate | Format::LocalDate => 10,
-			// 15:22:15
-			Format::UtcTime | Format::LocalTime => 8,
-			// 15:22:15.488
-			Format::UtcMillisTime | Format::LocalMillisTime => 12,
-			// 15:22:15.488167982
-			Format::UtcNanosTime | Format::LocalNanosTime => 18,
+			Self::Date(_) => 10,
+			Self::Time(_, pr) => match pr {
+				// 15:22:15
+				FormatPrecision::Seconds => 8,
+				// 15:22:15.488
+				FormatPrecision::Milliseconds => 12,
+				// 15:22:15.488167982
+				FormatPrecision::Nanoseconds => 18,
+			},
 			// Mon, 02 Mar 2026 15:22:15 +0200
-			Format::UtcRFC2822 | Format::LocalRFC2822 => 31,
-			// 2026-03-02T13:22:15Z
-			Format::UtcRFC3339 | Format::UtcISO8601 => 20,
-			// 2026-03-02T13:22:15.488Z
-			Format::UtcMillisRFC3339 | Format::UtcMillisISO8601 => 24,
-			// 2026-03-02T13:22:15.488167982Z
-			Format::UtcNanosRFC3339 | Format::UtcNanosISO8601 => 30,
-			// 2026-03-02T15:22:15+02:00
-			Format::LocalRFC3339 | Format::LocalISO8601 => 25,
-			// 2026-03-02T15:22:15.488+02:00
-			Format::LocalMillisRFC3339 | Format::LocalMillisISO8601 => 29,
-			// 2026-03-02T15:22:15.488728341+02:00
-			Format::LocalNanosRFC3339 | Format::LocalNanosISO8601 => 35,
+			Self::RFC2822(_) => 31,
+			Self::RFC3339(tz, pr) | Self::ISO8601(tz, pr) => match tz {
+				FormatTimezone::UTC => match pr {
+					// 2026-03-02T13:22:15Z
+					FormatPrecision::Seconds => 20,
+					// 2026-03-02T13:22:15.488Z
+					FormatPrecision::Milliseconds => 24,
+					// 2026-03-02T13:22:15.488167982Z
+					FormatPrecision::Nanoseconds => 30,
+				},
+				FormatTimezone::Local => match pr {
+					// 2026-03-02T15:22:15+02:00
+					FormatPrecision::Seconds => 25,
+					// 2026-03-02T15:22:15.488+02:00
+					FormatPrecision::Milliseconds => 29,
+					// 2026-03-02T15:22:15.488728341+02:00
+					FormatPrecision::Nanoseconds => 35,
+				},
+			},
 			// Mon, 02 Mar 2026 15:22:15 CET
-			Format::UtcRFC3164 | Format::LocalRFC3164 => 15,
+			Self::RFC3164(_) => 15,
 			// Mon, 02 Mar 2026 15:22:15 GMT
-			Format::HTTP | Format::RFC7231 => 29,
+			Self::HTTP | Self::RFC7231 => 29,
 
 			// variable length formats
 
 			// an arbitrary sequence of digits
-			Format::TimestampSeconds => count_digits(ts.as_secs() as u128),
-			// an arbitrary sequence of digits
-			Format::TimestampMilliseconds => count_digits(ts.as_millis()),
-			// an arbitrary sequence of digits
-			Format::TimestampNanoseconds => count_digits(ts.as_nanos()),
+			Self::Timestamp(pr) => match pr {
+				FormatPrecision::Seconds => count_digits(ts.as_secs() as u128),
+				FormatPrecision::Milliseconds => count_digits(ts.as_millis()),
+				FormatPrecision::Nanoseconds => count_digits(ts.as_nanos()),
+			},
 		}
 	}
 
@@ -526,9 +572,11 @@ impl Format {
 	/// Serializes a [`Timestamp`] into am integer, if the format supports it.
 	pub fn as_integer(&self, ts: &Timestamp) -> Option<u128> {
 		match self {
-			Format::TimestampSeconds => Some(ts.as_secs() as u128),
-			Format::TimestampMilliseconds => Some(ts.as_millis()),
-			Format::TimestampNanoseconds => Some(ts.as_nanos()),
+			Format::Timestamp(pr) => match pr {
+				FormatPrecision::Seconds => Some(ts.as_secs() as u128),
+				FormatPrecision::Milliseconds => Some(ts.as_millis()),
+				FormatPrecision::Nanoseconds => Some(ts.as_nanos()),
+			},
 			_ => None,
 		}
 	}
@@ -538,15 +586,6 @@ impl Format {
 		match self.as_integer(&Timestamp::epoch()) {
 			Some(_) => true,
 			None => false,
-		}
-	}
-
-	/// Evaluates whether this [`Format`] is [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html).
-	pub fn is_rfc_3339(&self) -> bool {
-		match self {
-			Format::UtcRFC3339 | Format::UtcMillisRFC3339 | Format::UtcNanosRFC3339 => true,
-			Format::LocalRFC3339 | Format::LocalMillisRFC3339 | Format::LocalNanosRFC3339 => true,
-			_ => false,
 		}
 	}
 }
@@ -562,31 +601,31 @@ mod test_format {
 	fn timestamp_as_number_string() {
 		let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
 
-		assert_eq!(Format::TimestampSeconds.as_string(&ts), "1772808229");
-		assert_eq!(Format::TimestampMilliseconds.as_string(&ts), "1772808229038");
-		assert_eq!(Format::TimestampNanoseconds.as_string(&ts), "1772808229038023456");
+		assert_eq!(Format::Timestamp(FormatPrecision::Seconds).as_string(&ts), "1772808229");
+		assert_eq!(Format::Timestamp(FormatPrecision::Milliseconds).as_string(&ts), "1772808229038");
+		assert_eq!(Format::Timestamp(FormatPrecision::Nanoseconds).as_string(&ts), "1772808229038023456");
 	}
 
 	#[test]
 	fn timestamp_as_utc_string() {
 		let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
 
-		assert_eq!(Format::UtcDateTime.as_string(&ts), "2026-03-06 14:43:49");
-		assert_eq!(Format::UtcMillisDateTime.as_string(&ts), "2026-03-06 14:43:49.038");
-		assert_eq!(Format::UtcNanosDateTime.as_string(&ts), "2026-03-06 14:43:49.038023456");
-		assert_eq!(Format::UtcFileName.as_string(&ts), "2026-03-06_14-43-49");
-		assert_eq!(Format::UtcDate.as_string(&ts), "2026-03-06");
-		assert_eq!(Format::UtcTime.as_string(&ts), "14:43:49");
-		assert_eq!(Format::UtcMillisTime.as_string(&ts), "14:43:49.038");
-		assert_eq!(Format::UtcNanosTime.as_string(&ts), "14:43:49.038023456");
-		assert_eq!(Format::UtcRFC2822.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 +0000");
-		assert_eq!(Format::UtcRFC3339.as_string(&ts), "2026-03-06T14:43:49Z");
-		assert_eq!(Format::UtcMillisRFC3339.as_string(&ts), "2026-03-06T14:43:49.038Z");
-		assert_eq!(Format::UtcNanosRFC3339.as_string(&ts), "2026-03-06T14:43:49.038023456Z");
-		assert_eq!(Format::UtcISO8601.as_string(&ts), "2026-03-06T14:43:49Z");
-		assert_eq!(Format::UtcMillisISO8601.as_string(&ts), "2026-03-06T14:43:49.038Z");
-		assert_eq!(Format::UtcNanosISO8601.as_string(&ts), "2026-03-06T14:43:49.038023456Z");
-		assert_eq!(Format::UtcRFC3164.as_string(&ts), "Mar  6 14:43:49");
+		assert_eq!(Format::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds).as_string(&ts), "2026-03-06 14:43:49");
+		assert_eq!(Format::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds).as_string(&ts), "2026-03-06 14:43:49.038");
+		assert_eq!(Format::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds).as_string(&ts), "2026-03-06 14:43:49.038023456");
+		assert_eq!(Format::FileName(FormatTimezone::UTC).as_string(&ts), "2026-03-06_14-43-49");
+		assert_eq!(Format::Date(FormatTimezone::UTC).as_string(&ts), "2026-03-06");
+		assert_eq!(Format::Time(FormatTimezone::UTC, FormatPrecision::Seconds).as_string(&ts), "14:43:49");
+		assert_eq!(Format::Time(FormatTimezone::UTC, FormatPrecision::Milliseconds).as_string(&ts), "14:43:49.038");
+		assert_eq!(Format::Time(FormatTimezone::UTC, FormatPrecision::Nanoseconds).as_string(&ts), "14:43:49.038023456");
+		assert_eq!(Format::RFC2822(FormatTimezone::UTC).as_string(&ts), "Fri, 06 Mar 2026 14:43:49 +0000");
+		assert_eq!(Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Seconds).as_string(&ts), "2026-03-06T14:43:49Z");
+		assert_eq!(Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Milliseconds).as_string(&ts), "2026-03-06T14:43:49.038Z");
+		assert_eq!(Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Nanoseconds).as_string(&ts), "2026-03-06T14:43:49.038023456Z");
+		assert_eq!(Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Seconds).as_string(&ts), "2026-03-06T14:43:49Z");
+		assert_eq!(Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Milliseconds).as_string(&ts), "2026-03-06T14:43:49.038Z");
+		assert_eq!(Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Nanoseconds).as_string(&ts), "2026-03-06T14:43:49.038023456Z");
+		assert_eq!(Format::RFC3164(FormatTimezone::UTC).as_string(&ts), "Mar  6 14:43:49");
 		assert_eq!(Format::HTTP.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 GMT");
 		assert_eq!(Format::RFC7231.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 GMT");
 	}
@@ -596,22 +635,31 @@ mod test_format {
 		test_helpers::mocks::with_timezone("America/Montevideo", || {
 			let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
 
-			assert_eq!(Format::LocalDateTime.as_string(&ts), "2026-03-06 11:43:49 -0300");
-			assert_eq!(Format::LocalMillisDateTime.as_string(&ts), "2026-03-06 11:43:49.038 -0300");
-			assert_eq!(Format::LocalNanosDateTime.as_string(&ts), "2026-03-06 11:43:49.038023456 -0300");
-			assert_eq!(Format::LocalFileName.as_string(&ts), "2026-03-06_11-43-49");
-			assert_eq!(Format::LocalDate.as_string(&ts), "2026-03-06");
-			assert_eq!(Format::LocalTime.as_string(&ts), "11:43:49");
-			assert_eq!(Format::LocalMillisTime.as_string(&ts), "11:43:49.038");
-			assert_eq!(Format::LocalNanosTime.as_string(&ts), "11:43:49.038023456");
-			assert_eq!(Format::LocalRFC2822.as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -0300");
-			assert_eq!(Format::LocalRFC3339.as_string(&ts), "2026-03-06T11:43:49-03:00");
-			assert_eq!(Format::LocalMillisRFC3339.as_string(&ts), "2026-03-06T11:43:49.038-03:00");
-			assert_eq!(Format::LocalNanosRFC3339.as_string(&ts), "2026-03-06T11:43:49.038023456-03:00");
-			assert_eq!(Format::LocalISO8601.as_string(&ts), "2026-03-06T11:43:49-03:00");
-			assert_eq!(Format::LocalMillisISO8601.as_string(&ts), "2026-03-06T11:43:49.038-03:00");
-			assert_eq!(Format::LocalNanosISO8601.as_string(&ts), "2026-03-06T11:43:49.038023456-03:00");
-			assert_eq!(Format::LocalRFC3164.as_string(&ts), "Mar  6 11:43:49");
+			assert_eq!(Format::DateTime(FormatTimezone::Local, FormatPrecision::Seconds).as_string(&ts), "2026-03-06 11:43:49 -0300");
+			assert_eq!(Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds).as_string(&ts), "2026-03-06 11:43:49.038 -0300");
+			assert_eq!(
+				Format::DateTime(FormatTimezone::Local, FormatPrecision::Nanoseconds).as_string(&ts),
+				"2026-03-06 11:43:49.038023456 -0300"
+			);
+			assert_eq!(Format::FileName(FormatTimezone::Local).as_string(&ts), "2026-03-06_11-43-49");
+			assert_eq!(Format::Date(FormatTimezone::Local).as_string(&ts), "2026-03-06");
+			assert_eq!(Format::Time(FormatTimezone::Local, FormatPrecision::Seconds).as_string(&ts), "11:43:49");
+			assert_eq!(Format::Time(FormatTimezone::Local, FormatPrecision::Milliseconds).as_string(&ts), "11:43:49.038");
+			assert_eq!(Format::Time(FormatTimezone::Local, FormatPrecision::Nanoseconds).as_string(&ts), "11:43:49.038023456");
+			assert_eq!(Format::RFC2822(FormatTimezone::Local).as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -0300");
+			assert_eq!(Format::RFC3339(FormatTimezone::Local, FormatPrecision::Seconds).as_string(&ts), "2026-03-06T11:43:49-03:00");
+			assert_eq!(Format::RFC3339(FormatTimezone::Local, FormatPrecision::Milliseconds).as_string(&ts), "2026-03-06T11:43:49.038-03:00");
+			assert_eq!(
+				Format::RFC3339(FormatTimezone::Local, FormatPrecision::Nanoseconds).as_string(&ts),
+				"2026-03-06T11:43:49.038023456-03:00"
+			);
+			assert_eq!(Format::ISO8601(FormatTimezone::Local, FormatPrecision::Seconds).as_string(&ts), "2026-03-06T11:43:49-03:00");
+			assert_eq!(Format::ISO8601(FormatTimezone::Local, FormatPrecision::Milliseconds).as_string(&ts), "2026-03-06T11:43:49.038-03:00");
+			assert_eq!(
+				Format::ISO8601(FormatTimezone::Local, FormatPrecision::Nanoseconds).as_string(&ts),
+				"2026-03-06T11:43:49.038023456-03:00"
+			);
+			assert_eq!(Format::RFC3164(FormatTimezone::Local).as_string(&ts), "Mar  6 11:43:49");
 		});
 	}
 
@@ -620,89 +668,77 @@ mod test_format {
 		test_helpers::mocks::with_timezone("America/Montevideo", || {
 			let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
 
-			assert_eq!(Format::LocalDate.string_len(&ts), Format::LocalDate.as_string(&ts).len());
-			assert_eq!(Format::LocalDateTime.string_len(&ts), Format::LocalDateTime.as_string(&ts).len());
-			assert_eq!(Format::LocalFileName.string_len(&ts), Format::LocalFileName.as_string(&ts).len());
-			assert_eq!(Format::LocalMillisDateTime.string_len(&ts), Format::LocalMillisDateTime.as_string(&ts).len());
-			assert_eq!(Format::LocalMillisRFC3339.string_len(&ts), Format::LocalMillisRFC3339.as_string(&ts).len());
-			assert_eq!(Format::LocalMillisISO8601.string_len(&ts), Format::LocalMillisISO8601.as_string(&ts).len());
-			assert_eq!(Format::LocalMillisTime.string_len(&ts), Format::LocalMillisTime.as_string(&ts).len());
-			assert_eq!(Format::LocalNanosDateTime.string_len(&ts), Format::LocalNanosDateTime.as_string(&ts).len());
-			assert_eq!(Format::LocalNanosRFC3339.string_len(&ts), Format::LocalNanosRFC3339.as_string(&ts).len());
-			assert_eq!(Format::LocalNanosISO8601.string_len(&ts), Format::LocalNanosISO8601.as_string(&ts).len());
-			assert_eq!(Format::LocalNanosTime.string_len(&ts), Format::LocalNanosTime.as_string(&ts).len());
-			assert_eq!(Format::LocalRFC2822.string_len(&ts), Format::LocalRFC2822.as_string(&ts).len());
-			assert_eq!(Format::LocalRFC3164.string_len(&ts), Format::LocalRFC3164.as_string(&ts).len());
-			assert_eq!(Format::LocalRFC3339.string_len(&ts), Format::LocalRFC3339.as_string(&ts).len());
-			assert_eq!(Format::LocalISO8601.string_len(&ts), Format::LocalISO8601.as_string(&ts).len());
-			assert_eq!(Format::LocalTime.string_len(&ts), Format::LocalTime.as_string(&ts).len());
-			assert_eq!(Format::UtcDate.string_len(&ts), Format::UtcDate.as_string(&ts).len());
-			assert_eq!(Format::UtcDateTime.string_len(&ts), Format::UtcDateTime.as_string(&ts).len());
-			assert_eq!(Format::UtcFileName.string_len(&ts), Format::UtcFileName.as_string(&ts).len());
-			assert_eq!(Format::UtcMillisDateTime.string_len(&ts), Format::UtcMillisDateTime.as_string(&ts).len());
-			assert_eq!(Format::UtcMillisRFC3339.string_len(&ts), Format::UtcMillisRFC3339.as_string(&ts).len());
-			assert_eq!(Format::UtcMillisISO8601.string_len(&ts), Format::UtcMillisISO8601.as_string(&ts).len());
-			assert_eq!(Format::UtcMillisTime.string_len(&ts), Format::UtcMillisTime.as_string(&ts).len());
-			assert_eq!(Format::UtcNanosDateTime.string_len(&ts), Format::UtcNanosDateTime.as_string(&ts).len());
-			assert_eq!(Format::UtcNanosRFC3339.string_len(&ts), Format::UtcNanosRFC3339.as_string(&ts).len());
-			assert_eq!(Format::UtcNanosISO8601.string_len(&ts), Format::UtcNanosISO8601.as_string(&ts).len());
-			assert_eq!(Format::UtcNanosTime.string_len(&ts), Format::UtcNanosTime.as_string(&ts).len());
-			assert_eq!(Format::UtcRFC2822.string_len(&ts), Format::UtcRFC2822.as_string(&ts).len());
-			assert_eq!(Format::UtcRFC3164.string_len(&ts), Format::UtcRFC3164.as_string(&ts).len());
-			assert_eq!(Format::UtcRFC3339.string_len(&ts), Format::UtcRFC3339.as_string(&ts).len());
-			assert_eq!(Format::UtcISO8601.string_len(&ts), Format::UtcISO8601.as_string(&ts).len());
-			assert_eq!(Format::UtcTime.string_len(&ts), Format::UtcTime.as_string(&ts).len());
-			assert_eq!(Format::HTTP.string_len(&ts), Format::HTTP.as_string(&ts).len());
-			assert_eq!(Format::RFC7231.string_len(&ts), Format::RFC7231.as_string(&ts).len());
-			assert_eq!(Format::TimestampMilliseconds.string_len(&ts), Format::TimestampMilliseconds.as_string(&ts).len());
-			assert_eq!(Format::TimestampNanoseconds.string_len(&ts), Format::TimestampNanoseconds.as_string(&ts).len());
-			assert_eq!(Format::TimestampSeconds.string_len(&ts), Format::TimestampSeconds.as_string(&ts).len());
-		});
+			for format in [
+				Format::Date(FormatTimezone::Local),
+				Format::Date(FormatTimezone::UTC),
+				Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds),
+				Format::DateTime(FormatTimezone::Local, FormatPrecision::Nanoseconds),
+				Format::DateTime(FormatTimezone::Local, FormatPrecision::Seconds),
+				Format::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds),
+				Format::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
+				Format::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds),
+				Format::FileName(FormatTimezone::Local),
+				Format::FileName(FormatTimezone::UTC),
+				Format::HTTP,
+				Format::ISO8601(FormatTimezone::Local, FormatPrecision::Milliseconds),
+				Format::ISO8601(FormatTimezone::Local, FormatPrecision::Nanoseconds),
+				Format::ISO8601(FormatTimezone::Local, FormatPrecision::Seconds),
+				Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Milliseconds),
+				Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
+				Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Seconds),
+				Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Seconds),
+				Format::RFC2822(FormatTimezone::Local),
+				Format::RFC2822(FormatTimezone::UTC),
+				Format::RFC3164(FormatTimezone::UTC),
+				Format::RFC3339(FormatTimezone::Local, FormatPrecision::Milliseconds),
+				Format::RFC3339(FormatTimezone::Local, FormatPrecision::Nanoseconds),
+				Format::RFC3339(FormatTimezone::Local, FormatPrecision::Seconds),
+				Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Milliseconds),
+				Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
+				Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Seconds),
+				Format::RFC7231,
+				Format::Time(FormatTimezone::Local, FormatPrecision::Milliseconds),
+				Format::Time(FormatTimezone::Local, FormatPrecision::Nanoseconds),
+				Format::Time(FormatTimezone::Local, FormatPrecision::Seconds),
+				Format::Time(FormatTimezone::UTC, FormatPrecision::Milliseconds),
+				Format::Time(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
+				Format::Time(FormatTimezone::UTC, FormatPrecision::Seconds),
+				Format::Timestamp(FormatPrecision::Milliseconds),
+				Format::Timestamp(FormatPrecision::Nanoseconds),
+				Format::Timestamp(FormatPrecision::Seconds),
+			] {
+				assert_eq!(format.string_len(&ts), format.as_string(&ts).len());
+			}
+		})
 	}
 
 	#[test]
 	fn timestamp_as_integer() {
 		let ts = Timestamp::from_utc_date(2026, 01, 29, 07, 43, 19, 134, 943903).expect("invalid parts");
 
-		assert_eq!(Format::TimestampSeconds.as_integer(&ts), Some(1769672599 as u128));
-		assert_eq!(Format::TimestampMilliseconds.as_integer(&ts), Some(1769672599134 as u128));
-		assert_eq!(Format::TimestampNanoseconds.as_integer(&ts), Some(1769672599134943903 as u128));
-		assert_eq!(Format::UtcDateTime.as_integer(&ts), None);
-		assert_eq!(Format::UtcNanosDateTime.as_integer(&ts), None);
-		assert_eq!(Format::UtcTime.as_integer(&ts), None);
-		assert_eq!(Format::UtcRFC2822.as_integer(&ts), None);
-		assert_eq!(Format::LocalNanosISO8601.as_integer(&ts), None);
+		assert_eq!(Format::Timestamp(FormatPrecision::Seconds).as_integer(&ts), Some(1769672599 as u128));
+		assert_eq!(Format::Timestamp(FormatPrecision::Milliseconds).as_integer(&ts), Some(1769672599134 as u128));
+		assert_eq!(Format::Timestamp(FormatPrecision::Nanoseconds).as_integer(&ts), Some(1769672599134943903 as u128));
+		assert_eq!(Format::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds).as_integer(&ts), None);
+		assert_eq!(Format::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds).as_integer(&ts), None);
+		assert_eq!(Format::Time(FormatTimezone::UTC, FormatPrecision::Seconds).as_integer(&ts), None);
+		assert_eq!(Format::RFC2822(FormatTimezone::UTC).as_integer(&ts), None);
+		assert_eq!(Format::ISO8601(FormatTimezone::Local, FormatPrecision::Nanoseconds).as_integer(&ts), None);
 		assert_eq!(Format::HTTP.as_integer(&ts), None);
 		assert_eq!(Format::RFC7231.as_integer(&ts), None);
 	}
 
 	#[test]
 	fn fomat_is_integer() {
-		assert_eq!(Format::TimestampSeconds.is_integer(), true);
-		assert_eq!(Format::TimestampMilliseconds.is_integer(), true);
-		assert_eq!(Format::TimestampNanoseconds.is_integer(), true);
-		assert_eq!(Format::UtcDateTime.is_integer(), false);
-		assert_eq!(Format::UtcNanosDateTime.is_integer(), false);
-		assert_eq!(Format::UtcTime.is_integer(), false);
-		assert_eq!(Format::UtcRFC2822.is_integer(), false);
-		assert_eq!(Format::UtcMillisISO8601.is_integer(), false);
+		assert_eq!(Format::Timestamp(FormatPrecision::Seconds).is_integer(), true);
+		assert_eq!(Format::Timestamp(FormatPrecision::Milliseconds).is_integer(), true);
+		assert_eq!(Format::Timestamp(FormatPrecision::Nanoseconds).is_integer(), true);
+		assert_eq!(Format::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds).is_integer(), false);
+		assert_eq!(Format::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds).is_integer(), false);
+		assert_eq!(Format::Time(FormatTimezone::UTC, FormatPrecision::Seconds).is_integer(), false);
+		assert_eq!(Format::RFC2822(FormatTimezone::UTC).is_integer(), false);
+		assert_eq!(Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Milliseconds).is_integer(), false);
 		assert_eq!(Format::HTTP.is_integer(), false);
 		assert_eq!(Format::RFC7231.is_integer(), false);
-	}
-
-	#[test]
-	fn fomat_is_rfc_3339() {
-		assert_eq!(Format::UtcDateTime.is_rfc_3339(), false);
-		assert_eq!(Format::UtcMillisDateTime.is_rfc_3339(), false);
-		assert_eq!(Format::LocalNanosDateTime.is_rfc_3339(), false);
-		assert_eq!(Format::LocalFileName.is_rfc_3339(), false);
-		assert_eq!(Format::HTTP.is_rfc_3339(), false);
-		assert_eq!(Format::RFC7231.is_rfc_3339(), false);
-		assert_eq!(Format::UtcRFC3339.is_rfc_3339(), true);
-		assert_eq!(Format::UtcMillisRFC3339.is_rfc_3339(), true);
-		assert_eq!(Format::UtcNanosRFC3339.is_rfc_3339(), true);
-		assert_eq!(Format::LocalRFC3339.is_rfc_3339(), true);
-		assert_eq!(Format::LocalMillisRFC3339.is_rfc_3339(), true);
-		assert_eq!(Format::LocalNanosRFC3339.is_rfc_3339(), true);
 	}
 }

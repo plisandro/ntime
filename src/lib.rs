@@ -122,7 +122,7 @@ mod test_helpers;
 mod timestamp;
 
 // Public exported symbols.
-pub use format::Format;
+pub use format::{Format, FormatPrecision, FormatTimezone};
 pub use parts::TimestampParts;
 pub use sleep::*;
 pub use std::time::Duration;
