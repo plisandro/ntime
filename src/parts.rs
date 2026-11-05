@@ -297,7 +297,7 @@ impl<'i> TimestampParts<'i> {
 mod test {
 	use super::*;
 
-	use crate::format::Format;
+	use crate::format::{Format, FormatPrecision, FormatTimezone};
 	use crate::test_helpers;
 
 	#[test]
@@ -627,8 +627,7 @@ mod test {
 		test_helpers::mocks::with_timezone("America/Montevideo", || {
 			// GMT -03:00
 			let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
-			assert_eq!(ts.as_string(&Format::LocalMillisDateTime), "2026-03-06 11:43:49.038 -0300");
-
+			assert_eq!(ts.as_string(&Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds)), "2026-03-06 11:43:49.038 -0300");
 			let parts = ts.as_local_parts();
 			assert_eq!(parts.gmt_offset_negative, true);
 			assert_eq!(parts.gmt_offset_hours, 3);
@@ -638,7 +637,7 @@ mod test {
 		test_helpers::mocks::with_timezone("Pacific/Samoa", || {
 			// GMT -11:00
 			let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
-			assert_eq!(ts.as_string(&Format::LocalMillisDateTime), "2026-03-06 03:43:49.038 -1100");
+			assert_eq!(ts.as_string(&Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds)), "2026-03-06 03:43:49.038 -1100");
 
 			let parts = ts.as_local_parts();
 			assert_eq!(parts.gmt_offset_negative, true);
@@ -649,7 +648,7 @@ mod test {
 		test_helpers::mocks::with_timezone("Pacific/Kanton", || {
 			// GMT +13:00
 			let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
-			assert_eq!(ts.as_string(&Format::LocalMillisDateTime), "2026-03-07 03:43:49.038 +1300");
+			assert_eq!(ts.as_string(&Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds)), "2026-03-07 03:43:49.038 +1300");
 
 			let parts = ts.as_local_parts();
 			assert_eq!(parts.gmt_offset_negative, false);

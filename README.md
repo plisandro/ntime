@@ -34,13 +34,13 @@ ntime = "0.8.0"
 NanoTime can resolve timestamps, break them down in date+time parts, and serialize into multiple formats.
 
 ```rust
-use ntime::Timestamp;
+use ntime::{Format, FormatPrecision, FormatTimezone, Timestamp};
 
 let now = Timestamp::now();
 println!("current time, as nanos since epoch: {}", now.as_nanos());
 println!("current time as debug:              {:?}", now);
 println!("current time as string:             {}", now.to_string());
-println!("current time (local):               {}", now.as_string(&Format::LocalMillisDateTime));
+println!("current time (local):               {}", now.as_string(&Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds)));
 println!("current time (GMT):                 {}", now.as_string(&Format::RFC7231));
 println!("week day (local):                   {}", now.as_local_parts().week_day);
 println!("year day (UTC):                     {}", now.as_utc_parts().year_day);
@@ -63,7 +63,7 @@ use std::io;
 use ntime::{Format, Timestamp};
 
 let start = Timestamp::now();
-start.write(&mut io::empty(), &Format::UtcMillisDateTime).expect("oh no the write failed");
+start.write(&mut io::empty(), &Format::default()).expect("oh no the write failed");
 println!("wrote a timestamp to Empty in {elapsed:?}", elapsed = (Timestamp::now() - start).unwrap());
 ```
 ```
