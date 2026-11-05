@@ -3,7 +3,7 @@
 //! representations, in either local or UTC timezones.
 //!
 //! NanoTime is optimized for performance - it has no external dependencies, and relies
-//! on (g)libc to resolve date information from timestamps. As a result, it has also a limited
+//! on (g)libc to resolve local date information from timestamps. As a result, it has also a limited
 //! scope; if you happen to need features such as date/time management, timezone conversion or
 //! calendar operations, you're likely better off using [Chrono](https://docs.rs/chrono/latest/chrono/) or similar.
 //!
@@ -18,7 +18,7 @@
 //!   * From a timestamp in milliseconds/nanoseconds: [`Timestamp::new()`], [`Timestamp::from_secs()`], [`Timestamp::from_millis()`], [`Timestamp::from_nanos()`].
 //!   * From a [`TimestampParts`] struct: [`Timestamp::from_parts()`]
 //!
-//! [`Timestamp`]s can efficiently be converted into a text representation, with multiple formats supported,
+//! [`Timestamp`]s can efficiently be converted into a text representation, with multiple [`Format`]s supported,
 //! and split into date + time [`TimestampParts`].
 //!
 //! [`Timestamp`] supports comparison, and a limited set of arithmetic operations (difference, for example), which
@@ -43,17 +43,27 @@
 //! ## String conversion and casting
 //!
 //! ```rust
-//! use ntime::{Format, Timestamp};
+//! use ntime::{Format, FormatPrecision, FormatTimezone, Timestamp};
 //!
 //! let now = Timestamp::now();
 //! println!("nanos since epoch: {}", now.as_nanos());
-//! println!("to_string:         {}", now.to_string());
+//! println!("debug:             {:?}", now);
+//! println!("to_string():       {}", now.to_string());
+//! println!("local time:        {}", now.as_string(&Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds)));
+//! println!("UTC time:          {}", now.as_string(&Format::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds)));
 //! println!("HTTP/1.1:          {}", now.as_string(&Format::RFC7231));
+//! println!("local week day     {}", now.as_local_parts().week_day);
+//! println!("UTC year day       {}", now.as_utc_parts().year_day);
 //! ```
 //! ```text
-//! nanos since epoch:  1774369621732000558
-//! to_string:          2026-03-24 17:21:01 +0100
-//! HTTP/1.1:           Tue, 24 Mar 2026 16:27:01 GMT
+//! nanos since epoch: 1774369621732000558
+//! debug:             Timestamp { seconds: 1774369621, nanoseconds: 732000558 }
+//! to_string():       2026-03-24 16:27:01 +0000
+//! local time:        2026-03-24 17:27:01.732 +0100
+//! UTC time:          2026-03-24 16:27:01.732000558 +0000
+//! HTTP/1.1:          Tue, 24 Mar 2026 16:27:01 GMT
+//! local week day:    3
+//! UTC year day:      83
 //! ```
 //!
 //! ## Timestamp Arithmetic
@@ -122,7 +132,7 @@ mod test_helpers;
 mod timestamp;
 
 // Public exported symbols.
-pub use format::Format;
+pub use format::{Format, FormatPrecision, FormatTimezone};
 pub use parts::TimestampParts;
 pub use sleep::*;
 pub use std::time::Duration;
