@@ -53,7 +53,7 @@ mod write {
 		#[inline]
 		fn run(bench: Bencher, format: &Format) {
 			let now = Timestamp::now();
-			// buffer is given more more than enough capacity to host all timestamp formats, in order to avoid resizes.
+			// buffer is given more than enough capacity to host all timestamp formats, in order to avoid resizes.
 			let mut buffer: Vec<u8> = Vec::with_capacity(128);
 
 			bench

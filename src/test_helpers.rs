@@ -24,7 +24,7 @@ pub mod mocks {
 				Err(_) => "".into(),
 			};
 
-			// SAFETY: setting timezone environemt variable on a testing context, with
+			// SAFETY: setting timezone environment variable on a testing context, with
 			// a mutex lock to ensure only one thread does at a time.
 			unsafe {
 				env::set_var(TIMEZONE_ENV_VAR, mock_tz);
@@ -33,7 +33,7 @@ pub mod mocks {
 
 			let res = panic::catch_unwind(test_fn);
 
-			// SAFETY: setting timezone environemt variable on a testing context, with
+			// SAFETY: setting timezone environment variable on a testing context, with
 			// a mutex lock to ensure only one thread does at a time.
 			unsafe {
 				env::set_var(TIMEZONE_ENV_VAR, orig_tz);

@@ -8,7 +8,7 @@ pub const MONTH_TO_DAYS_LEAP_YEAR: [u16; 12] = [0, 31, 60, 91, 121, 152, 182, 21
 pub const TIMEZONE_UTC: &str = "UTC";
 
 /* ----------------------- Dumb conversion constants ----------------------- */
-// these *really* help redability
+// these *really* help readability
 
 pub const U8_DAYS_IN_WEEK: u8 = 7;
 pub const U8_MONTHS_IN_YEAR: u8 = 12;

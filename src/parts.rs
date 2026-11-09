@@ -26,7 +26,7 @@ pub struct TimestampParts<'l> {
 	pub month: u8,
 	/// Year.
 	pub year: u16,
-	/// Day of the week, begining from Sunday (1-7)
+	/// Day of the week, beginning from Sunday (1-7)
 	pub week_day: u8,
 	/// Day of the year (1-366)
 	pub year_day: u16,
@@ -155,7 +155,7 @@ impl<'i> TimestampParts<'i> {
 		month_to_days + (self.month_day as u16)
 	}
 
-	/// Returns a sign string for the timezone GTM offset (either `+` or `-`).
+	/// Returns a sign string for the timezone GMT offset (either `+` or `-`).
 	pub fn gmt_offset_sign(&self) -> &'i str {
 		if self.gmt_offset_negative { "-" } else { "+" }
 	}
@@ -367,7 +367,7 @@ mod test {
 	fn parts_field_validation() {
 		let mut parts = TimestampParts::epoch();
 
-		// rely on the order fields are checkeds so we don't build a new TimestampParts every time
+		// rely on the order fields are checked so we don't build a new TimestampParts every time
 		parts.nanoseconds = 0;
 		assert_eq!(parts.validate_fields(), Ok(()));
 		parts.nanoseconds = 999999;
@@ -486,7 +486,7 @@ mod test {
 	fn parts_validation() {
 		let mut parts = TimestampParts::epoch();
 
-		// rely on the order fields are checkeds so we don't build a new TimestampParts every time
+		// rely on the order fields are checked so we don't build a new TimestampParts every time
 		parts.nanoseconds = 1000037;
 		assert_eq!(parts.validate(), Err("invalid nanoseconds field"));
 		parts.nanoseconds = 10037;

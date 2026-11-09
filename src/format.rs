@@ -677,7 +677,7 @@ mod test_format {
 	}
 
 	#[test]
-	fn fomat_is_integer() {
+	fn format_is_integer() {
 		assert_eq!(Format::TimestampSeconds.is_integer(), true);
 		assert_eq!(Format::TimestampMilliseconds.is_integer(), true);
 		assert_eq!(Format::TimestampNanoseconds.is_integer(), true);
@@ -691,7 +691,7 @@ mod test_format {
 	}
 
 	#[test]
-	fn fomat_is_rfc_3339() {
+	fn format_is_rfc_3339() {
 		assert_eq!(Format::UtcDateTime.is_rfc_3339(), false);
 		assert_eq!(Format::UtcMillisDateTime.is_rfc_3339(), false);
 		assert_eq!(Format::LocalNanosDateTime.is_rfc_3339(), false);

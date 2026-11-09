@@ -33,7 +33,7 @@ unsafe extern "C" {
 	unsafe fn gmtime_r(ts: *const CTime, tm: *mut c_tm) -> *mut c_tm;
 	unsafe fn localtime_r(ts: *const CTime, tm: *mut c_tm) -> *mut c_tm;
 	#[cfg(test)]
-	// tzet() is only used to temporarily change the local timezone in tests
+	// tzset() is only used to temporarily change the local timezone in tests
 	unsafe fn tzset();
 }
 
@@ -79,7 +79,7 @@ pub fn c_reload_tz_info() {
 
 /// Extracts a timezone string from a c_tm struct.
 pub fn c_timezone_from_tm<'f>(tm: &c_tm) -> &'f str {
-	// SAFETY: Parsing a C pointer which is guaranteed to be intialized by (g)libc functions.
+	// SAFETY: Parsing a C pointer which is guaranteed to be initialized by (g)libc functions.
 	let c_timezone = unsafe { CStr::from_ptr(tm.tm_zone).to_str() };
 
 	match c_timezone {

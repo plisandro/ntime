@@ -35,7 +35,7 @@ pub struct c_tm {
 }
 
 // Windows MSVC standard time functions
-// SAFETY: Wrapper for standard MSCV time functions. Callers must guarantee
+// SAFETY: Wrapper for standard MSVC time functions. Callers must guarantee
 // the correct type and initialization for all passed parameters.
 unsafe extern "C" {
 	unsafe fn _gmtime64_s(tm: *mut c_tm, ts: *const CTime) -> c_int;
@@ -66,7 +66,7 @@ pub fn c_time_to_local_tm(ts: CTime) -> Option<c_tm> {
 	let ts: *const CTime = &ts;
 	let mut tm = MaybeUninit::<c_tm>::uninit();
 
-	// SAFETY: Calling MSCV functions with properly initialized types.
+	// SAFETY: Calling MSVC functions with properly initialized types.
 	unsafe {
 		if _localtime64_s(tm.as_mut_ptr(), ts) != 0 {
 			return None;

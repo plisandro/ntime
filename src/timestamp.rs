@@ -94,7 +94,7 @@ impl<'i> Timestamp {
 		self.nanoseconds = other.nanoseconds;
 	}
 
-	/// Returs the number of seconds + nanoseconds since UNIX epoch.
+	/// Returns the number of seconds + nanoseconds since UNIX epoch.
 	pub fn epoch_offset(&self) -> (u64, u32) {
 		(self.seconds, self.nanoseconds)
 	}
