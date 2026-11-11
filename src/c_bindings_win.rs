@@ -77,14 +77,16 @@ pub fn c_time_to_local_tm(ts: CTime) -> Option<c_tm> {
 	Some(tm)
 }
 
-#[cfg(test)]
+/*
 /// Forces a libc reload of timezone information. Used only for testing.
+#[cfg(test)]
 pub fn c_reload_tz_info() {
 	// SAFETY: Calling MSVC functions without arguments nor return values.
 	unsafe {
 		_tzset();
 	}
 }
+*/
 
 /// Resolves the current timezone GMT offset.
 pub fn c_tz_gmt_offset() -> i32 {

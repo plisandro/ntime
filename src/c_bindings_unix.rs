@@ -1,9 +1,6 @@
 use core::ffi::CStr;
 use core::ffi::{c_char, c_int, c_long};
 use std::mem::MaybeUninit;
-use std::ptr;
-
-pub const NULL_C_CHAR: *mut c_char = ptr::null::<*mut c_char>() as *mut c_char;
 
 /* ----------------------- Bindings for C stdlib time functions ----------------------- */
 
