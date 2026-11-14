@@ -5,7 +5,7 @@ use std::io;
 use std::time;
 use std::time::Duration;
 
-use crate::constant::{TIMEZONE_UTC, U128_MILLIS_IN_SECOND, U128_NANOS_IN_MILLI, U128_NANOS_IN_SECOND};
+use crate::constant::{TIMEZONE_UTC, U64_SECONDS_IN_DAY, U128_MILLIS_IN_SECOND, U128_NANOS_IN_MILLI, U128_NANOS_IN_SECOND};
 use crate::format::Format;
 use crate::parts::TimestampParts;
 
@@ -97,6 +97,11 @@ impl<'i> Timestamp {
 	/// Returns the number of seconds + nanoseconds since UNIX epoch.
 	pub fn epoch_offset(&self) -> (u64, u32) {
 		(self.seconds, self.nanoseconds)
+	}
+
+	/// Returns the number of days since UNIX epoch.
+	pub fn days_since_epoch(&self) -> u64 {
+		self.seconds / U64_SECONDS_IN_DAY
 	}
 
 	/// Returns number of seconds since UNIX epoch.
@@ -259,6 +264,15 @@ mod tests {
 		ts_1.copy_from(&ts_2);
 		assert_eq!(ts_1, ts_2);
 		assert_eq!(ts_1, Timestamp::new(5678, 999));
+	}
+
+	#[test]
+	fn days_since_epoch() {
+		assert_eq!(Timestamp::epoch().days_since_epoch(), 0);
+		assert_eq!(Timestamp::from_utc_date(1980, 07, 19, 18, 15, 0, 0, 0).unwrap().days_since_epoch(), 3852);
+		assert_eq!(Timestamp::new(1772457020, 789).days_since_epoch(), 20514);
+		assert_eq!(Timestamp::from_secs(1772457213).days_since_epoch(), 20514);
+		assert_eq!(Timestamp::from_millis(1772457213123).days_since_epoch(), 20514);
 	}
 
 	#[test]
