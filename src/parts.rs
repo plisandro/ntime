@@ -3,8 +3,9 @@ use super::Timestamp;
 use crate::c_bindings;
 use crate::constant::{
 	DAY_NAMES, DAYS_IN_MONTH_COMMON_YEAR, DAYS_IN_MONTH_LEAP_YEAR, MONTH_NAMES, MONTH_TO_DAYS_COMMON_YEAR, MONTH_TO_DAYS_LEAP_YEAR, TIMEZONE_UTC, U8_DAYS_IN_WEEK, U8_HOURS_IN_DAY, U8_MINUTES_IN_HOUR,
-	U8_MONTHS_IN_YEAR, U8_SECONDS_IN_MINUTE, U16_DAYS_IN_COMMON_YEAR, U16_DAYS_IN_LEAP_YEAR, U16_MILLIS_IN_SECOND, U32_NANOS_IN_MILLI, U32_SECONDS_IN_HOUR, U32_SECONDS_IN_MINUTE,
-	U64_LEAP_YEARS_BEFORE_EPOCH, U64_MAX_YEAR, U64_SECONDS_IN_COMMON_YEAR, U64_SECONDS_IN_DAY, U64_SECONDS_IN_HOUR, U64_SECONDS_IN_MINUTE, U64_UNIX_EPOCH_SHIFT_IN_DAYS, U64_UNIX_EPOCH_YEAR,
+	U8_MONTHS_IN_YEAR, U8_SECONDS_IN_MINUTE, U16_DAYS_IN_COMMON_YEAR, U16_DAYS_IN_LEAP_YEAR, U16_MILLIS_IN_SECOND, U32_NANOS_IN_MILLI, U32_SECONDS_IN_HOUR, U32_SECONDS_IN_MINUTE, U64_DAYS_IN_4_YEARS,
+	U64_DAYS_IN_400_YEAR_CYCLE, U64_LEAP_YEARS_BEFORE_EPOCH, U64_MAX_YEAR, U64_SECONDS_IN_COMMON_YEAR, U64_SECONDS_IN_DAY, U64_SECONDS_IN_HOUR, U64_SECONDS_IN_MINUTE, U64_UNIX_EPOCH_SHIFT_IN_DAYS,
+	U64_UNIX_EPOCH_YEAR,
 };
 
 /// A decomposition of a [`Timestamp`] into date + time parts, for a given timezone.
@@ -63,7 +64,8 @@ impl<'i> TimestampParts<'i> {
 
 	/// Resolves whether a given year is a leap year.
 	fn _is_leap_year(year: u64) -> bool {
-		// Implements an short-circuit version of the Drepper-Neri-Schneider algorithm: https://github.com/gcc-mirror/gcc/commit/86a0df1a6c7fe4a835620b868e76ea78d42d6620
+		// Implements an short-circuit version of the Drepper-Neri-Schneider algorithm:
+		// https://github.com/gcc-mirror/gcc/commit/86a0df1a6c7fe4a835620b868e76ea78d42d6620 .
 		// Relies on the fact that most compilers will optimize "mod 25" without divisions.
 		(year & 3 == 0) && (year % 25 != 0 || year & 15 == 0)
 	}
@@ -79,8 +81,8 @@ impl<'i> TimestampParts<'i> {
 
 		// Implements Ben Joffe's Fast Time of Day algorithm.
 		// See https://www.benjoffe.com/fast-time-of-day for details.
-		const M_MUL: u64 = ((1 << 32) / 60 + 1) << 32;
-		const H_MUL: u64 = ((1 << 32) / 3600 + 1) << 32;
+		const M_MUL: u64 = ((1 << 32) / U64_SECONDS_IN_MINUTE + 1) << 32;
+		const H_MUL: u64 = ((1 << 32) / U64_SECONDS_IN_HOUR + 1) << 32;
 		let hprd: u128 = (day_total_seconds as u128).wrapping_mul(H_MUL as u128);
 		let mlow = day_total_seconds.wrapping_mul(M_MUL);
 		let hlow = hprd as u64;
@@ -100,17 +102,18 @@ impl<'i> TimestampParts<'i> {
 
 		// Implements Ben Joffe's Julian Map algorithm, based on the work of Neri-Schneider et all. Good stuff!
 		// See https://www.benjoffe.com/fast-date for details.
-		let days = days_since_epoch + U64_UNIX_EPOCH_SHIFT_IN_DAYS + 306;
+		// Note that year 1 is a leap year in the Julian calendar.
+		let days = days_since_epoch + U64_UNIX_EPOCH_SHIFT_IN_DAYS + MONTH_TO_DAYS_LEAP_YEAR[10] as u64 + 1;
 		// quarter-days since 0000-02-28 06:00
 		let qday = days * 4 + 3;
 		// century-Februaries elapsed
-		let cent = qday / 146097;
+		let cent = qday / U64_DAYS_IN_400_YEAR_CYCLE;
 		// map to Julian quarter-Day
 		let qjul = qday - (cent & !3) + cent * 4;
 		// year (later incremented if Jan/Feb)
-		let mut year = qjul / 1461;
+		let mut year = qjul / U64_DAYS_IN_4_YEARS;
 		// day of year (starting March 1st)
-		let yday = (qjul % 1461) / 4;
+		let yday = (qjul % U64_DAYS_IN_4_YEARS) / 4;
 		// Neri‑Schneider equivalent of...
 		let n = yday * 2141 + 197913;
 		// M = (yday * 5 + 2) / 153
@@ -120,15 +123,19 @@ impl<'i> TimestampParts<'i> {
 
 		let day = d + 1;
 
-		let year_day = if yday >= 306 {
+		let year_day = if yday > MONTH_TO_DAYS_LEAP_YEAR[10] as u64 {
 			// check if Jan or Feb
 			month -= 12;
 			year += 1;
 
-			yday - 305
+			yday - MONTH_TO_DAYS_LEAP_YEAR[10] as u64
 		} else {
 			// adjust for leap years
-			if Self::_is_leap_year(year) { yday + 61 } else { yday + 60 }
+			yday + if Self::_is_leap_year(year) {
+				MONTH_TO_DAYS_LEAP_YEAR[2] + 1
+			} else {
+				MONTH_TO_DAYS_COMMON_YEAR[2] + 1
+			} as u64
 		};
 
 		TimestampParts {
