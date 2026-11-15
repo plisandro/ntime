@@ -1,3 +1,4 @@
+use std::fmt;
 use std::io;
 
 use crate::Timestamp;
@@ -219,6 +220,12 @@ impl Default for Format {
 	/// Returns a default formatting for [`Timestamp`], as [`Self::DateTime`] in [`UTC`][FormatTimezone::UTC] with [millisecond][FormatPrecision::Milliseconds] precision.
 	fn default() -> Self {
 		Self::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds)
+	}
+}
+
+impl fmt::Display for Format {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		write!(f, "{}", self.name())
 	}
 }
 

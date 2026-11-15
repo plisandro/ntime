@@ -33,3 +33,7 @@ divan = "0.1.21"
 [[bench]]
 name = "casting"
 harness = false
+
+[[bench]]
+name = "formatting"
+harness = false
