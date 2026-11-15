@@ -49,7 +49,7 @@ impl<'i> Timestamp {
 	}
 
 	/// Creates a [`Timestamp`] from a given UTC date + time.
-	pub fn from_utc_date(year: u16, month: u8, day: u8, hour: u8, minutes: u8, secs: u8, millis: u16, nanos: u32) -> Result<Self, &'i str> {
+	pub fn from_utc_date(year: u64, month: u8, day: u8, hour: u8, minutes: u8, secs: u8, millis: u16, nanos: u32) -> Result<Self, &'i str> {
 		TimestampParts {
 			nanoseconds: nanos,
 			milliseconds: millis,

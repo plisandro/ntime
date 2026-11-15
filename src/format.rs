@@ -455,6 +455,7 @@ impl Format {
 			res
 		};
 
+		// TODO: string len computation assumes years are always 4-digits long, fix this
 		match self {
 			// fixed-size formats
 
