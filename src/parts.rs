@@ -62,8 +62,10 @@ impl<'i> TimestampParts<'i> {
 	}
 
 	/// Resolves whether a given year is a leap year.
-	fn leap_year(year: u64) -> bool {
-		(year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+	fn _is_leap_year(year: u64) -> bool {
+		// Implements an short-circuit version of the Drepper-Neri-Schneider algorithm: https://github.com/gcc-mirror/gcc/commit/86a0df1a6c7fe4a835620b868e76ea78d42d6620
+		// Relies on the fact that most compilers will optimize "mod 25" without divisions.
+		(year & 3 == 0) && (year % 25 != 0 || year & 15 == 0)
 	}
 
 	/// Creates a UTC [`TimestampParts`] from a given [`Timestamp`].
@@ -126,7 +128,7 @@ impl<'i> TimestampParts<'i> {
 			yday - 305
 		} else {
 			// adjust for leap years
-			if Self::leap_year(year) { yday + 61 } else { yday + 60 }
+			if Self::_is_leap_year(year) { yday + 61 } else { yday + 60 }
 		};
 
 		TimestampParts {
@@ -237,7 +239,7 @@ impl<'i> TimestampParts<'i> {
 
 	/// Resolves whether the year is a leap year ([`true`]) or common ([`false`]).
 	pub fn is_leap_year(&self) -> bool {
-		Self::leap_year(self.year)
+		Self::_is_leap_year(self.year)
 	}
 
 	/// Resolves the total number of leap since UNIX epoch.
