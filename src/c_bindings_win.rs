@@ -38,7 +38,6 @@ pub struct c_tm {
 // SAFETY: Wrapper for standard MSVC time functions. Callers must guarantee
 // the correct type and initialization for all passed parameters.
 unsafe extern "C" {
-	unsafe fn _gmtime64_s(tm: *mut c_tm, ts: *const CTime) -> c_int;
 	unsafe fn _localtime64_s(tm: *mut c_tm, ts: *const CTime) -> c_int;
 	// Windows is stupid and doesn't return TZ information in tm structs, so...
 	unsafe fn _get_timezone(seconds: *mut c_long) -> c_int;
@@ -47,21 +46,6 @@ unsafe extern "C" {
 }
 
 // Safe C function wrappers
-pub fn c_time_to_utc_tm(ts: CTime) -> Option<c_tm> {
-	let ts: *const CTime = &ts;
-	let mut tm = MaybeUninit::<c_tm>::uninit();
-
-	// SAFETY: Calling (g)libc functions with properly initialized types.
-	unsafe {
-		if _gmtime64_s(tm.as_mut_ptr(), ts) != 0 {
-			return None;
-		}
-	}
-
-	let tm = unsafe { tm.assume_init() };
-	Some(tm)
-}
-
 pub fn c_time_to_local_tm(ts: CTime) -> Option<c_tm> {
 	let ts: *const CTime = &ts;
 	let mut tm = MaybeUninit::<c_tm>::uninit();

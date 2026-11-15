@@ -10,6 +10,9 @@ pub const TIMEZONE_UTC: &str = "UTC";
 /* ----------------------- Dumb conversion constants ----------------------- */
 // these *really* help readability
 
+/// Number of days between 0001-01-01 and UNIX epoch (1970-01-01)
+pub const U64_UNIX_EPOCH_SHIFT_IN_DAYS: u64 = 719162;
+
 pub const U8_DAYS_IN_WEEK: u8 = 7;
 pub const U8_MONTHS_IN_YEAR: u8 = 12;
 pub const U8_MINUTES_IN_HOUR: u8 = 60;

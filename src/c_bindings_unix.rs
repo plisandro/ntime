@@ -27,7 +27,6 @@ pub struct c_tm {
 // SAFETY: Wrapper for standard (g)libc time functions. Callers must guarantee
 // the correct type and initialization for all passed parameters.
 unsafe extern "C" {
-	unsafe fn gmtime_r(ts: *const CTime, tm: *mut c_tm) -> *mut c_tm;
 	unsafe fn localtime_r(ts: *const CTime, tm: *mut c_tm) -> *mut c_tm;
 	#[cfg(test)]
 	// tzset() is only used to temporarily change the local timezone in tests
@@ -35,21 +34,6 @@ unsafe extern "C" {
 }
 
 // Safe C function wrappers
-pub fn c_time_to_utc_tm(ts: CTime) -> Option<c_tm> {
-	let ts: *const CTime = &ts;
-	let mut tm = MaybeUninit::<c_tm>::uninit();
-
-	// SAFETY: Calling (g)libc functions with properly initialized types.
-	unsafe {
-		if gmtime_r(ts, tm.as_mut_ptr()).is_null() {
-			return None;
-		}
-	}
-
-	let tm = unsafe { tm.assume_init() };
-	Some(tm)
-}
-
 pub fn c_time_to_local_tm(ts: CTime) -> Option<c_tm> {
 	let ts: *const CTime = &ts;
 	let mut tm = MaybeUninit::<c_tm>::uninit();

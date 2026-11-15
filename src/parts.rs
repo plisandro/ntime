@@ -4,31 +4,32 @@ use crate::c_bindings;
 use crate::constant::{
 	DAY_NAMES, DAYS_IN_MONTH_COMMON_YEAR, DAYS_IN_MONTH_LEAP_YEAR, MONTH_NAMES, MONTH_TO_DAYS_COMMON_YEAR, MONTH_TO_DAYS_LEAP_YEAR, TIMEZONE_UTC, U8_DAYS_IN_WEEK, U8_HOURS_IN_DAY, U8_MINUTES_IN_HOUR,
 	U8_MONTHS_IN_YEAR, U8_SECONDS_IN_MINUTE, U16_DAYS_IN_COMMON_YEAR, U16_DAYS_IN_LEAP_YEAR, U16_MILLIS_IN_SECOND, U16_UNIX_EPOCH_YEAR, U32_NANOS_IN_MILLI, U32_SECONDS_IN_HOUR, U32_SECONDS_IN_MINUTE,
-	U64_LEAP_YEARS_BEFORE_EPOCH, U64_SECONDS_IN_COMMON_YEAR, U64_SECONDS_IN_DAY, U64_SECONDS_IN_HOUR, U64_SECONDS_IN_MINUTE,
+	U64_LEAP_YEARS_BEFORE_EPOCH, U64_SECONDS_IN_COMMON_YEAR, U64_SECONDS_IN_DAY, U64_SECONDS_IN_HOUR, U64_SECONDS_IN_MINUTE, U64_UNIX_EPOCH_SHIFT_IN_DAYS,
 };
 
 /// A decomposition of a [`Timestamp`] into date + time parts, for a given timezone.
 #[derive(Clone, Debug, PartialEq)]
 pub struct TimestampParts<'l> {
-	/// Nanoseconds after the millisecond (0 - 999999)
+	/// Nanoseconds after the millisecond (`0`-`999999`).
 	pub nanoseconds: u32,
-	/// Milliseconds after the second (0 - 999)
+	/// Milliseconds after the second (`0`-`999`).
 	pub milliseconds: u16,
-	/// Seconds after the minute (0 - 59)
+	/// Seconds after the minute (`0`-`59`).
 	pub seconds: u8,
-	/// Minutes after the hour (0 - 59)
+	/// Minutes after the hour (`0`-`59`).
 	pub minutes: u8,
-	/// Hours since midnight (0 - 23)
+	/// Hours since midnight (`0`-`23`).
 	pub hour: u8,
-	/// Day of the month (1-31)
+	/// Day of the month (`1`-`31`).
 	pub month_day: u8,
-	/// Month of the year (1-12)
+	/// Month of the year (`1`-`12`).
 	pub month: u8,
 	/// Year.
+	// TODO: this really should be u64
 	pub year: u16,
-	/// Day of the week, beginning from Sunday (1-7)
+	/// Day of the week, beginning from Sunday (`1`-`7`).
 	pub week_day: u8,
-	/// Day of the year (1-366)
+	/// Day of the year (`1`-`366`).
 	pub year_day: u16,
 	/// Whether the timezone GMT offset is negative or positive.
 	pub gmt_offset_negative: bool,
@@ -52,7 +53,7 @@ impl<'i> TimestampParts<'i> {
 			month_day: 1,
 			month: 1,
 			year: U16_UNIX_EPOCH_YEAR,
-			week_day: 4,
+			week_day: 5,
 			year_day: 1,
 			gmt_offset_negative: false,
 			gmt_offset_hours: 0,
@@ -61,26 +62,85 @@ impl<'i> TimestampParts<'i> {
 		}
 	}
 
+	/// Resolves whether a given year is a leap year.
+	fn leap_year(year: u16) -> bool {
+		(year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+	}
+
 	/// Creates a UTC [`TimestampParts`] from a given [`Timestamp`].
 	pub fn utc(ts: &Timestamp) -> Self {
 		let (seconds, nanos) = ts.epoch_offset();
-		let ts = seconds as c_bindings::CTime;
-		let tm = match c_bindings::c_time_to_utc_tm(ts) {
-			Some(tm) => tm,
-			None => panic!("failed to parse UTC parts for timestamp={seconds}s"),
+
+		let days_since_epoch = seconds / U64_SECONDS_IN_DAY;
+		let day_total_seconds = seconds % U64_SECONDS_IN_DAY;
+		let day_milliseconds = nanos / U32_NANOS_IN_MILLI;
+		let day_nanoseconds = nanos % U32_NANOS_IN_MILLI;
+
+		// Implements Ben Joffe's Fast Time of Day algorithm.
+		// See https://www.benjoffe.com/fast-time-of-day for details.
+		const M_MUL: u64 = ((1 << 32) / 60 + 1) << 32;
+		const H_MUL: u64 = ((1 << 32) / 3600 + 1) << 32;
+		let hprd: u128 = (day_total_seconds as u128).wrapping_mul(H_MUL as u128);
+		let mlow = day_total_seconds.wrapping_mul(M_MUL);
+		let hlow = hprd as u64;
+
+		let day_hour = hprd.wrapping_shr(64);
+		let day_minutes = (hlow as u128).wrapping_mul(60).wrapping_shr(64) as u64;
+		let day_seconds = (mlow as u128).wrapping_mul(60).wrapping_shr(64) as u64;
+
+		// Implements Ben Joffe's Fast Day of The Week algorithm.
+		// See https://www.benjoffe.com/fast-day-of-week for details.
+		const M: u64 = 0xFFFFFFFFFFFFFFFF / 7;
+		const Z: u64 = 0x9400 << 48;
+		let a = days_since_epoch.wrapping_mul(M).wrapping_add(Z);
+		let b = days_since_epoch.wrapping_shr(2) + days_since_epoch.wrapping_shr(5);
+
+		let week_day = a.wrapping_add(b).wrapping_shr(61).wrapping_add(1);
+
+		// Implements Ben Joffe's Julian Map algorithm, based on the work of Neri-Schneider et all. Good stuff!
+		// See https://www.benjoffe.com/fast-date for details.
+		let days = days_since_epoch + U64_UNIX_EPOCH_SHIFT_IN_DAYS + 306;
+		// quarter-days since 0000-02-28 06:00
+		let qday = days * 4 + 3;
+		// century-Februaries elapsed
+		let cent = qday / 146097;
+		// map to Julian quarter-Day
+		let qjul = qday - (cent & !3) + cent * 4;
+		// year (later incremented if Jan/Feb)
+		let mut year = qjul / 1461;
+		// day of year (starting March 1st)
+		let yday = (qjul % 1461) / 4;
+		// Neri‑Schneider equivalent of...
+		let n = yday * 2141 + 197913;
+		// M = (yday * 5 + 2) / 153
+		let mut month = n / 65536;
+		// D = yday - (M * 153 + 2) / 5
+		let d = n % 65536 / 2141;
+
+		let day = d + 1;
+
+		let year_day = if yday >= 306 {
+			// check if Jan or Feb
+			month -= 12;
+			year += 1;
+
+			yday - 305
+		} else {
+			// adjust for leap years
+			if Self::leap_year(year as u16) { yday + 61 } else { yday + 60 }
 		};
 
 		TimestampParts {
-			nanoseconds: (nanos % U32_NANOS_IN_MILLI) as _,
-			milliseconds: (nanos / U32_NANOS_IN_MILLI) as _,
-			seconds: tm.tm_sec as _,
-			minutes: tm.tm_min as _,
-			hour: tm.tm_hour as _,
-			month_day: tm.tm_mday as _,
-			month: (1 + tm.tm_mon) as _,
-			year: (1900 + tm.tm_year) as _,
-			week_day: (1 + tm.tm_wday) as _,
-			year_day: (1 + tm.tm_yday) as _,
+			nanoseconds: day_nanoseconds as _,
+			milliseconds: day_milliseconds as _,
+			seconds: day_seconds as _,
+			minutes: day_minutes as _,
+			hour: day_hour as _,
+			month_day: day as _,
+			month: month as _,
+			year: year as _,
+			week_day: week_day as _,
+			year_day: year_day as _,
 			gmt_offset_negative: false,
 			gmt_offset_hours: 0 as _,
 			gmt_offset_minutes: 0 as _,
@@ -178,7 +238,7 @@ impl<'i> TimestampParts<'i> {
 
 	/// Resolves whether the year is a leap year ([`true`]) or common ([`false`]).
 	pub fn is_leap_year(&self) -> bool {
-		(self.year % 4 == 0 && self.year % 100 != 0) || (self.year % 400 == 0)
+		Self::leap_year(self.year)
 	}
 
 	/// Resolves the total number of leap since UNIX epoch.
@@ -595,31 +655,154 @@ mod test {
 
 	#[test]
 	fn utc_to_and_from_parts() {
-		let ts = Timestamp::from_utc_date(2026, 03, 24, 18, 47, 31, 111, 222).expect("invalid parts");
-		let parts = ts.as_utc_parts();
+		for (ts, want_parts) in [
+			// epoch
+			(
+				Timestamp::epoch(),
+				TimestampParts {
+					nanoseconds: 0,
+					milliseconds: 0,
+					seconds: 0,
+					minutes: 0,
+					hour: 0,
+					month_day: 1,
+					month: 1,
+					year: 1970,
+					week_day: 5,
+					year_day: 1,
+					gmt_offset_negative: false,
+					gmt_offset_hours: 0,
+					gmt_offset_minutes: 0,
+					timezone: "UTC",
+				},
+			),
+			// leap year
+			(
+				Timestamp::from_utc_date(2024, 11, 15, 13, 35, 18, 123, 456).expect("invalid parts"),
+				TimestampParts {
+					nanoseconds: 456,
+					milliseconds: 123,
+					seconds: 18,
+					minutes: 35,
+					hour: 13,
+					month_day: 15,
+					month: 11,
+					year: 2024,
+					week_day: 6,
+					year_day: 320,
+					gmt_offset_negative: false,
+					gmt_offset_hours: 0,
+					gmt_offset_minutes: 0,
+					timezone: "UTC",
+				},
+			),
+			// leap year, January
+			(
+				Timestamp::from_utc_date(2024, 1, 27, 7, 8, 9, 111, 222).expect("invalid parts"),
+				TimestampParts {
+					nanoseconds: 222,
+					milliseconds: 111,
+					seconds: 9,
+					minutes: 8,
+					hour: 7,
+					month_day: 27,
+					month: 1,
+					year: 2024,
+					week_day: 7,
+					year_day: 27,
+					gmt_offset_negative: false,
+					gmt_offset_hours: 0,
+					gmt_offset_minutes: 0,
+					timezone: "UTC",
+				},
+			),
+			// leap year, December
+			(
+				Timestamp::from_utc_date(2024, 12, 15, 10, 11, 12, 333, 444).expect("invalid parts"),
+				TimestampParts {
+					nanoseconds: 444,
+					milliseconds: 333,
+					seconds: 12,
+					minutes: 11,
+					hour: 10,
+					month_day: 15,
+					month: 12,
+					year: 2024,
+					week_day: 1,
+					year_day: 350,
+					gmt_offset_negative: false,
+					gmt_offset_hours: 0,
+					gmt_offset_minutes: 0,
+					timezone: "UTC",
+				},
+			),
+			// non-leap year
+			(
+				Timestamp::from_utc_date(2026, 03, 24, 18, 47, 31, 111, 222).expect("invalid parts"),
+				TimestampParts {
+					nanoseconds: 222,
+					milliseconds: 111,
+					seconds: 31,
+					minutes: 47,
+					hour: 18,
+					month_day: 24,
+					month: 3,
+					year: 2026,
+					week_day: 3,
+					year_day: 83,
+					gmt_offset_negative: false,
+					gmt_offset_hours: 0,
+					gmt_offset_minutes: 0,
+					timezone: "UTC",
+				},
+			),
+			// noon-leap year, February
+			(
+				Timestamp::from_utc_date(2026, 2, 23, 7, 8, 9, 111, 222).expect("invalid parts"),
+				TimestampParts {
+					nanoseconds: 222,
+					milliseconds: 111,
+					seconds: 9,
+					minutes: 8,
+					hour: 7,
+					month_day: 23,
+					month: 2,
+					year: 2026,
+					week_day: 2,
+					year_day: 54,
+					gmt_offset_negative: false,
+					gmt_offset_hours: 0,
+					gmt_offset_minutes: 0,
+					timezone: "UTC",
+				},
+			),
+			// non-leap year, December
+			(
+				Timestamp::from_utc_date(2026, 12, 17, 9, 11, 22, 333, 444).expect("invalid parts"),
+				TimestampParts {
+					nanoseconds: 444,
+					milliseconds: 333,
+					seconds: 22,
+					minutes: 11,
+					hour: 9,
+					month_day: 17,
+					month: 12,
+					year: 2026,
+					week_day: 5,
+					year_day: 351,
+					gmt_offset_negative: false,
+					gmt_offset_hours: 0,
+					gmt_offset_minutes: 0,
+					timezone: "UTC",
+				},
+			),
+		] {
+			let parts = ts.as_utc_parts();
+			assert_eq!(parts, want_parts);
 
-		assert_eq!(
-			parts,
-			TimestampParts {
-				nanoseconds: 222,
-				milliseconds: 111,
-				seconds: 31,
-				minutes: 47,
-				hour: 18,
-				month_day: 24,
-				month: 3,
-				year: 2026,
-				week_day: 3,
-				year_day: 83,
-				gmt_offset_negative: false,
-				gmt_offset_hours: 0,
-				gmt_offset_minutes: 0,
-				timezone: "UTC",
-			}
-		);
-
-		let from_parts: Timestamp = parts.to_timestamp().expect("invalid TimestampParts casted from Timestamp");
-		assert_eq!(ts, from_parts);
+			let ts_from_parts: Timestamp = parts.to_timestamp().expect("invalid TimestampParts casted from Timestamp");
+			assert_eq!(ts, ts_from_parts);
+		}
 	}
 
 	#[test]
