@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod dummy_examples {
-	use ntime::{Format, FormatPrecision, FormatTimezone, Timestamp};
+	use ntime::{Format, FormatPrecision, FormatTimezone, Timestamp, UTCDateTime};
 
 	#[test]
 	fn now() {
@@ -16,9 +16,26 @@ mod dummy_examples {
 	}
 
 	#[test]
+	fn initialization() {
+		let udt = UTCDateTime {
+			year: 2026,
+			month: 3,
+			day: 24,
+			hour: 17,
+			minutes: 44,
+			seconds: 48,
+			milliseconds: 123,
+			nanoseconds: 456,
+		};
+		let ts = Timestamp::try_from(&udt).expect("invalid UTCDateTime");
+
+		println!("{udt:?} converts to {ts}");
+	}
+
+	#[test]
 	fn duration() {
-		let a = Timestamp::from_utc_date(2026, 3, 24, 17, 44, 48, 123, 456).expect("invalid parameters for timestamp A");
-		let b = Timestamp::from_utc_date(2026, 3, 24, 17, 25, 30, 789, 12).expect("invalid parameters for timestamp B");
+		let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp A");
+		let b = Timestamp::try_from((2026, 3, 24, 17, 25, 30, 789, 12)).expect("invalid parameters for timestamp B");
 
 		println!("from {a} to {b}: {:?}", (a - b).unwrap());
 	}

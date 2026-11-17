@@ -830,7 +830,7 @@ mod test {
 			),
 			// leap year
 			(
-				Timestamp::from_utc_date(2024, 11, 15, 13, 35, 18, 123, 456).expect("invalid parts"),
+				Timestamp::try_from((2024, 11, 15, 13, 35, 18, 123, 456)).expect("invalid parts"),
 				TimestampParts {
 					nanoseconds: 456,
 					milliseconds: 123,
@@ -850,7 +850,7 @@ mod test {
 			),
 			// leap year, January
 			(
-				Timestamp::from_utc_date(2024, 1, 27, 7, 8, 9, 111, 222).expect("invalid parts"),
+				Timestamp::try_from((2024, 1, 27, 7, 8, 9, 111, 222)).expect("invalid parts"),
 				TimestampParts {
 					nanoseconds: 222,
 					milliseconds: 111,
@@ -870,7 +870,7 @@ mod test {
 			),
 			// leap year, December
 			(
-				Timestamp::from_utc_date(2024, 12, 15, 10, 11, 12, 333, 444).expect("invalid parts"),
+				Timestamp::try_from((2024, 12, 15, 10, 11, 12, 333, 444)).expect("invalid parts"),
 				TimestampParts {
 					nanoseconds: 444,
 					milliseconds: 333,
@@ -890,7 +890,7 @@ mod test {
 			),
 			// non-leap year
 			(
-				Timestamp::from_utc_date(2026, 3, 24, 18, 47, 31, 111, 222).expect("invalid parts"),
+				Timestamp::try_from((2026, 3, 24, 18, 47, 31, 111, 222)).expect("invalid parts"),
 				TimestampParts {
 					nanoseconds: 222,
 					milliseconds: 111,
@@ -910,7 +910,7 @@ mod test {
 			),
 			// noon-leap year, February
 			(
-				Timestamp::from_utc_date(2026, 2, 23, 7, 8, 9, 111, 222).expect("invalid parts"),
+				Timestamp::try_from((2026, 2, 23, 7, 8, 9, 111, 222)).expect("invalid parts"),
 				TimestampParts {
 					nanoseconds: 222,
 					milliseconds: 111,
@@ -930,7 +930,7 @@ mod test {
 			),
 			// non-leap year, December
 			(
-				Timestamp::from_utc_date(2026, 12, 17, 9, 11, 22, 333, 444).expect("invalid parts"),
+				Timestamp::try_from((2026, 12, 17, 9, 11, 22, 333, 444)).expect("invalid parts"),
 				TimestampParts {
 					nanoseconds: 444,
 					milliseconds: 333,
@@ -961,7 +961,7 @@ mod test {
 	fn local_offset() {
 		test_helpers::mocks::with_timezone("America/Montevideo", || {
 			// GMT -03:00
-			let ts = Timestamp::from_utc_date(2026, 3, 6, 14, 43, 49, 38, 23456).expect("invalid parts");
+			let ts = Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts");
 			assert_eq!(ts.as_string(&Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds)), "2026-03-06 11:43:49.038 -0300");
 			let parts = ts.as_local_parts();
 			assert!(parts.gmt_offset_negative);
@@ -971,7 +971,7 @@ mod test {
 
 		test_helpers::mocks::with_timezone("Pacific/Samoa", || {
 			// GMT -11:00
-			let ts = Timestamp::from_utc_date(2026, 3, 6, 14, 43, 49, 38, 23456).expect("invalid parts");
+			let ts = Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts");
 			assert_eq!(ts.as_string(&Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds)), "2026-03-06 03:43:49.038 -1100");
 
 			let parts = ts.as_local_parts();
@@ -982,7 +982,7 @@ mod test {
 
 		test_helpers::mocks::with_timezone("Pacific/Kanton", || {
 			// GMT +13:00
-			let ts = Timestamp::from_utc_date(2026, 3, 6, 14, 43, 49, 38, 23456).expect("invalid parts");
+			let ts = Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts");
 			assert_eq!(ts.as_string(&Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds)), "2026-03-07 03:43:49.038 +1300");
 
 			let parts = ts.as_local_parts();
@@ -997,9 +997,9 @@ mod test {
 		// verifies whether (local + GMT offset) parts match their UTC counterpart; this should *always*
 		// be true, regardless of platform and local TZ settings.
 		for ts in [
-			Timestamp::from_utc_date(2026, 1, 1, 0, 0, 0, 0, 0).expect("invalid timestamp for 2026-01-01 00:00:00"),
-			Timestamp::from_utc_date(2026, 7, 1, 0, 0, 0, 0, 0).expect("invalid timestamp for 2026-07-01 00:00:00"),
-			Timestamp::from_utc_date(2026, 7, 25, 11, 32, 12, 0, 0).expect("invalid timestamp for 2026-07-25 11:32:12"),
+			Timestamp::try_from((2026, 1, 1)).expect("invalid timestamp for 2026-01-01 00:00:00"),
+			Timestamp::try_from((2026, 7, 1)).expect("invalid timestamp for 2026-07-01 00:00:00"),
+			Timestamp::try_from((2026, 7, 25, 11, 32, 12)).expect("invalid timestamp for 2026-07-25 11:32:12"),
 		] {
 			let local = &ts.as_local_parts();
 			let gmt_offset_secs = local.gmt_offset_seconds();

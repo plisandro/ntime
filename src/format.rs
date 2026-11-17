@@ -812,7 +812,7 @@ mod test_format {
 
 	#[test]
 	fn timestamp_as_number_string() {
-		let ts = Timestamp::from_utc_date(2026, 3, 6, 14, 43, 49, 38, 23456).expect("invalid parts");
+		let ts = Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts");
 
 		assert_eq!(Format::Timestamp(FormatPrecision::Seconds).as_string(&ts), "1772808229");
 		assert_eq!(Format::Timestamp(FormatPrecision::Milliseconds).as_string(&ts), "1772808229038");
@@ -821,7 +821,7 @@ mod test_format {
 
 	#[test]
 	fn timestamp_as_utc_string() {
-		let ts = Timestamp::from_utc_date(2026, 3, 6, 14, 43, 49, 38, 23456).expect("invalid parts");
+		let ts = Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts");
 
 		assert_eq!(Format::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds).as_string(&ts), "2026-03-06 14:43:49");
 		assert_eq!(Format::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds).as_string(&ts), "2026-03-06 14:43:49.038");
@@ -846,7 +846,7 @@ mod test_format {
 	#[test]
 	fn timestamp_as_local_string() {
 		test_helpers::mocks::with_timezone("America/Montevideo", || {
-			let ts = Timestamp::from_utc_date(2026, 3, 6, 14, 43, 49, 38, 23456).expect("invalid parts");
+			let ts = Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts");
 
 			assert_eq!(Format::DateTime(FormatTimezone::Local, FormatPrecision::Seconds).as_string(&ts), "2026-03-06 11:43:49 -0300");
 			assert_eq!(Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds).as_string(&ts), "2026-03-06 11:43:49.038 -0300");
@@ -880,11 +880,11 @@ mod test_format {
 	fn timestamp_string_len() {
 		test_helpers::mocks::with_timezone("America/Montevideo", || {
 			for ts in [
-				Timestamp::from_utc_date(2026, 3, 6, 14, 43, 49, 38, 23456).expect("invalid parts for year 2026"),
-				Timestamp::from_utc_date(9999, 12, 31, 23, 59, 59, 999, 999999).expect("invalid parts for last day of year 9999"),
-				Timestamp::from_utc_date(10000, 1, 1, 0, 0, 0, 0, 0).expect("invalid parts for first day of year 10000"),
-				Timestamp::from_utc_date(31562, 9, 15, 6, 13, 55, 777, 8888).expect("invalid parts for year 31562"),
-				Timestamp::from_utc_date(54732890, 1, 26, 22, 50, 11, 111, 222).expect("invalid parts for year 54732890"),
+				Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts for year 2026"),
+				Timestamp::try_from((9999, 12, 31, 23, 59, 59, 999, 999999)).expect("invalid parts for last day of year 9999"),
+				Timestamp::try_from((10000, 1, 1)).expect("invalid parts for first day of year 10000"),
+				Timestamp::try_from((31562, 9, 15, 6, 13, 55, 777, 8888)).expect("invalid parts for year 31562"),
+				Timestamp::try_from((54732890, 1, 26, 22, 50, 11, 111, 222)).expect("invalid parts for year 54732890"),
 			] {
 				for format in [
 					Format::Date(FormatTimezone::Local),
@@ -933,7 +933,7 @@ mod test_format {
 
 	#[test]
 	fn timestamp_as_integer() {
-		let ts = Timestamp::from_utc_date(2026, 1, 29, 7, 43, 19, 134, 943903).expect("invalid parts");
+		let ts = Timestamp::try_from((2026, 1, 29, 7, 43, 19, 134, 943903)).expect("invalid parts");
 
 		assert_eq!(Format::Timestamp(FormatPrecision::Seconds).as_integer(&ts), Some(1769672599_u128));
 		assert_eq!(Format::Timestamp(FormatPrecision::Milliseconds).as_integer(&ts), Some(1769672599134_u128));

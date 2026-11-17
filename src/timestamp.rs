@@ -9,11 +9,115 @@ use crate::constant::{TIMEZONE_UTC, U64_SECONDS_IN_DAY, U128_MILLIS_IN_SECOND, U
 use crate::format::{Format, FormatPrecision, FormatTimezone};
 use crate::parts::TimestampParts;
 
+/// A UTC datetime, which can be used to initialize [`Timestamp`]s.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct UTCDateTime {
+	/// Year (`1970`-`584554051223`).
+	pub year: u64,
+	/// Month of the year (`1`-`12`).
+	pub month: u8,
+	/// Day of the month (`1`-`31`).
+	pub day: u8,
+	/// Hours since midnight (`0`-`23`).
+	pub hour: u8,
+	/// Minutes after the hour (`0`-`59`).
+	pub minutes: u8,
+	/// Seconds after the minute (`0`-`59`).
+	pub seconds: u8,
+	/// Milliseconds after the second (`0`-`999`).
+	pub milliseconds: u16,
+	/// Nanoseconds after the millisecond (`0`-`999999`).
+	pub nanoseconds: u32,
+}
+
+impl UTCDateTime {
+	/// Returns an UNIX epoch [`UTCDateTime`] (1970-01-01 00:00 UTC)
+	pub fn epoch() -> Self {
+		Self {
+			year: 1970,
+			month: 1,
+			day: 1,
+			hour: 0,
+			minutes: 0,
+			seconds: 0,
+			milliseconds: 0,
+			nanoseconds: 0,
+		}
+	}
+}
+
 /// Encapsulates a timestamp, as number of nanoseconds since UNIX epoch (1970-01-01 00:00 UTC).
 #[derive(Debug, Copy, Hash, Clone, PartialEq, Eq)]
 pub struct Timestamp {
 	seconds: u64,
 	nanoseconds: u32,
+}
+
+/// Initializes a [`Timestamp`] from a given [`UTCDateTime`], which gets consumed.
+impl TryFrom<UTCDateTime> for Timestamp {
+	type Error = &'static str;
+
+	fn try_from(udt: UTCDateTime) -> Result<Self, Self::Error> {
+		Timestamp::from_utc_datetime(&udt)
+	}
+}
+
+/// Initializes a [`Timestamp`] from a given [`UTCDateTime`] reference.
+impl<'i> TryFrom<&'i UTCDateTime> for Timestamp {
+	type Error = &'static str;
+
+	fn try_from(udt: &'i UTCDateTime) -> Result<Self, Self::Error> {
+		Timestamp::from_utc_datetime(udt)
+	}
+}
+
+/// Initializes a [`Timestamp`] from a (year, month, day) tuple.
+impl TryFrom<(u64, u8, u8)> for Timestamp {
+	type Error = &'static str;
+
+	fn try_from((year, month, day): (u64, u8, u8)) -> Result<Self, Self::Error> {
+		Self::try_from(UTCDateTime {
+			year,
+			month,
+			day,
+			..UTCDateTime::epoch()
+		})
+	}
+}
+
+/// Initializes a [`Timestamp`] from a (year, month, day, hour, minutes, seconds) tuple.
+impl TryFrom<(u64, u8, u8, u8, u8, u8)> for Timestamp {
+	type Error = &'static str;
+
+	fn try_from((year, month, day, hour, minutes, seconds): (u64, u8, u8, u8, u8, u8)) -> Result<Self, Self::Error> {
+		Self::try_from(UTCDateTime {
+			year,
+			month,
+			day,
+			hour,
+			minutes,
+			seconds,
+			..UTCDateTime::epoch()
+		})
+	}
+}
+
+/// Initializes a [`Timestamp`] from a (year, month, day, hour, minutes, seconds, milliseconds, nanoseconds) tuple.
+impl TryFrom<(u64, u8, u8, u8, u8, u8, u16, u32)> for Timestamp {
+	type Error = &'static str;
+
+	fn try_from((year, month, day, hour, minutes, seconds, milliseconds, nanoseconds): (u64, u8, u8, u8, u8, u8, u16, u32)) -> Result<Self, Self::Error> {
+		Self::try_from(UTCDateTime {
+			year,
+			month,
+			day,
+			hour,
+			minutes,
+			seconds,
+			milliseconds,
+			nanoseconds,
+		})
+	}
 }
 
 impl<'i> Timestamp {
@@ -48,19 +152,17 @@ impl<'i> Timestamp {
 		parts.to_timestamp()
 	}
 
-	/// Creates a [`Timestamp`] from a given UTC date + time.
-	// TODO: maybe implement a dedicated struct to hold these parameters?
-	#[allow(clippy::too_many_arguments)]
-	pub fn from_utc_date(year: u64, month: u8, day: u8, hour: u8, minutes: u8, secs: u8, millis: u16, nanos: u32) -> Result<Self, &'i str> {
+	/// Creates a [`Timestamp`] from a given [`UTCDateTime`].
+	fn from_utc_datetime(udt: &UTCDateTime) -> Result<Self, &'i str> {
 		TimestampParts {
-			nanoseconds: nanos,
-			milliseconds: millis,
-			seconds: secs,
-			minutes,
-			hour,
-			month_day: day,
-			month,
-			year,
+			nanoseconds: udt.nanoseconds,
+			milliseconds: udt.milliseconds,
+			seconds: udt.seconds,
+			minutes: udt.minutes,
+			hour: udt.hour,
+			month_day: udt.day,
+			month: udt.month,
+			year: udt.year,
 			// week_day and year_day are unused when converting back to [`Timestamp`]
 			week_day: 1,
 			year_day: 1,
@@ -232,7 +334,7 @@ mod tests {
 	#[test]
 	fn from_date() {
 		assert_eq!(
-			Timestamp::from_utc_date(2026, 3, 7, 4, 48, 17, 446, 37892),
+			Timestamp::try_from((2026, 3, 7, 4, 48, 17, 446, 37892)),
 			Ok(Timestamp {
 				seconds: 1772858897,
 				nanoseconds: 446037892,
@@ -271,7 +373,7 @@ mod tests {
 	#[test]
 	fn days_since_epoch() {
 		assert_eq!(Timestamp::epoch().days_since_epoch(), 0);
-		assert_eq!(Timestamp::from_utc_date(1980, 7, 19, 18, 15, 0, 0, 0).unwrap().days_since_epoch(), 3852);
+		assert_eq!(Timestamp::try_from((1980, 7, 19, 18, 15, 0)).unwrap().days_since_epoch(), 3852);
 		assert_eq!(Timestamp::new(1772457020, 789).days_since_epoch(), 20514);
 		assert_eq!(Timestamp::from_secs(1772457213).days_since_epoch(), 20514);
 		assert_eq!(Timestamp::from_millis(1772457213123).days_since_epoch(), 20514);
@@ -292,10 +394,7 @@ mod tests {
 			assert_eq!(Timestamp::new(1772457020, 789).to_string(), "2026-03-02 21:10:20 +0800",);
 			assert_eq!(Timestamp::from_secs(1772457213).to_string(), "2026-03-02 21:13:33 +0800",);
 			assert_eq!(Timestamp::from_millis(1772457213123).to_string(), "2026-03-02 21:13:33 +0800",);
-			assert_eq!(
-				Timestamp::from_utc_date(2026, 3, 6, 14, 43, 39, 128, 564).expect("invalid parts").to_string(),
-				"2026-03-06 22:43:39 +0800",
-			);
+			assert_eq!(Timestamp::try_from((2026, 3, 6, 14, 43, 39, 128, 564)).expect("invalid parts").to_string(), "2026-03-06 22:43:39 +0800",);
 		});
 	}
 

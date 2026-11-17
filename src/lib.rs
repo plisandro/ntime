@@ -14,7 +14,7 @@
 //!
 //!   * Current time: [`Timestamp::now()`]
 //!   * A standard [`std::time::SystemTime`]: [`Timestamp::from_system_time()`]
-//!   * A UTC date & time: [`Timestamp::from_utc_date()`]
+//!   * A UTC date & time: [`Timestamp::try_from()`] with a `(year, month, day[, hour, minutes, seconds[, millis, nanos]])` tuple, or a [`UTCDateTime`]
 //!   * From a timestamp in milliseconds/nanoseconds: [`Timestamp::new()`], [`Timestamp::from_secs()`], [`Timestamp::from_millis()`], [`Timestamp::from_nanos()`].
 //!   * From a [`TimestampParts`] struct: [`Timestamp::from_parts()`]
 //!
@@ -71,8 +71,8 @@
 //! ```rust
 //! use ntime::Timestamp;
 //!
-//! let a = Timestamp::from_utc_date(2026, 03, 24, 17, 44, 48, 123, 456).expect("invalid parameters");
-//! let b = Timestamp::from_utc_date(2026, 03, 24, 17, 25, 30, 789, 012).expect("invalid parameters");
+//! let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters");
+//! let b = Timestamp::try_from((2026, 3, 24, 17, 25, 30, 789, 12)).expect("invalid parameters");
 //! _ = dbg!(a - b);
 //! ```
 //! ```text
@@ -137,4 +137,4 @@ pub use format::{Format, FormatPrecision, FormatTimezone};
 pub use parts::TimestampParts;
 pub use sleep::*;
 pub use std::time::Duration;
-pub use timestamp::Timestamp;
+pub use timestamp::{Timestamp, UTCDateTime};
