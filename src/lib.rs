@@ -130,6 +130,7 @@ mod sleep;
 #[cfg(test)]
 mod test_helpers;
 mod timestamp;
+mod write;
 
 // Public exported symbols.
 pub use format::{Format, FormatPrecision, FormatTimezone};

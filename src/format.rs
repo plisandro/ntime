@@ -1,7 +1,8 @@
 use std::fmt;
 use std::io;
 
-use crate::Timestamp;
+use crate::timestamp::Timestamp;
+use crate::write;
 
 /// Supported timezones for [`Format`] settings.
 #[derive(Debug, Clone, Eq, PartialEq, Copy, Hash)]
@@ -292,279 +293,384 @@ impl Format {
 
 	/// Serializes a [`Timestamp`] as string, into a given [`std::io::Write`].
 	pub fn write<T: io::Write>(&self, out: &mut T, ts: &Timestamp) -> io::Result<()> {
+		let mut buf = write::Buffer::new();
+
 		match self {
 			Self::DateTime(FormatTimezone::UTC, pr) => {
 				let parts = ts.as_utc_parts();
 				match pr {
-					FormatPrecision::Seconds => write!(
-						out,
-						"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}",
-						year = parts.year,
-						month = parts.month,
-						day = parts.month_day,
-						hour = parts.hour,
-						mins = parts.minutes,
-						secs = parts.seconds,
-					),
-					FormatPrecision::Milliseconds => write!(
-						out,
-						"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03}",
-						year = parts.year,
-						month = parts.month,
-						day = parts.month_day,
-						hour = parts.hour,
-						mins = parts.minutes,
-						secs = parts.seconds,
-						msecs = parts.milliseconds,
-					),
-					FormatPrecision::Nanoseconds => write!(
-						out,
-						"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}",
-						year = parts.year,
-						month = parts.month,
-						day = parts.month_day,
-						hour = parts.hour,
-						mins = parts.minutes,
-						secs = parts.seconds,
-						msecs = parts.milliseconds,
-						nsecs = parts.nanoseconds,
-					),
+					FormatPrecision::Seconds => {
+						// "2026-03-02 13:22:15"
+						buf.u64_dec(parts.year);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month, b'0', 2);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month_day, b'0', 2);
+						buf.space();
+						buf.u8_dec_padded(parts.hour, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.minutes, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.seconds, b'0', 2);
+					}
+					FormatPrecision::Milliseconds => {
+						// "2026-03-02 13:22:15.488"
+						buf.u64_dec(parts.year);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month, b'0', 2);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month_day, b'0', 2);
+						buf.space();
+						buf.u8_dec_padded(parts.hour, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.minutes, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.seconds, b'0', 2);
+						buf.dot();
+						buf.u16_dec_padded(parts.milliseconds, b'0', 3);
+					}
+					FormatPrecision::Nanoseconds => {
+						// "2026-03-02 13:22:15.488167982"
+						buf.u64_dec(parts.year);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month, b'0', 2);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month_day, b'0', 2);
+						buf.space();
+						buf.u8_dec_padded(parts.hour, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.minutes, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.seconds, b'0', 2);
+						buf.dot();
+						buf.u16_dec_padded(parts.milliseconds, b'0', 3);
+						buf.u32_dec_padded(parts.nanoseconds, b'0', 6);
+					}
 				}
 			}
 			Self::DateTime(FormatTimezone::Local, pr) => {
 				let parts = ts.as_local_parts();
 				match pr {
-					FormatPrecision::Seconds => write!(
-						out,
-						"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02} {offset_sign}{offset_hours:02}{offset_minutes:02}",
-						year = parts.year,
-						month = parts.month,
-						day = parts.month_day,
-						hour = parts.hour,
-						mins = parts.minutes,
-						secs = parts.seconds,
-						offset_sign = parts.gmt_offset_sign(),
-						offset_hours = parts.gmt_offset_hours,
-						offset_minutes = parts.gmt_offset_minutes,
-					),
-					FormatPrecision::Milliseconds => write!(
-						out,
-						"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03} {offset_sign}{offset_hours:02}{offset_minutes:02}",
-						year = parts.year,
-						month = parts.month,
-						day = parts.month_day,
-						hour = parts.hour,
-						mins = parts.minutes,
-						secs = parts.seconds,
-						msecs = parts.milliseconds,
-						offset_sign = parts.gmt_offset_sign(),
-						offset_hours = parts.gmt_offset_hours,
-						offset_minutes = parts.gmt_offset_minutes,
-					),
-					FormatPrecision::Nanoseconds => write!(
-						out,
-						"{year}-{month:02}-{day:02} {hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06} {offset_sign}{offset_hours:02}{offset_minutes:02}",
-						year = parts.year,
-						month = parts.month,
-						day = parts.month_day,
-						hour = parts.hour,
-						mins = parts.minutes,
-						secs = parts.seconds,
-						msecs = parts.milliseconds,
-						nsecs = parts.nanoseconds,
-						offset_sign = parts.gmt_offset_sign(),
-						offset_hours = parts.gmt_offset_hours,
-						offset_minutes = parts.gmt_offset_minutes,
-					),
+					FormatPrecision::Seconds => {
+						// "2026-03-02 15:22:15 +0200"
+						buf.u64_dec(parts.year);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month, b'0', 2);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month_day, b'0', 2);
+						buf.space();
+						buf.u8_dec_padded(parts.hour, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.minutes, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.seconds, b'0', 2);
+						buf.space();
+						buf.str(parts.gmt_offset_sign());
+						buf.u8_dec_padded(parts.gmt_offset_hours, b'0', 2);
+						buf.u8_dec_padded(parts.gmt_offset_minutes, b'0', 2);
+					}
+					FormatPrecision::Milliseconds => {
+						// "2026-03-02 15:22:15.488 +0200"
+						buf.u64_dec(parts.year);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month, b'0', 2);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month_day, b'0', 2);
+						buf.space();
+						buf.u8_dec_padded(parts.hour, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.minutes, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.seconds, b'0', 2);
+						buf.dot();
+						buf.u16_dec_padded(parts.milliseconds, b'0', 3);
+						buf.space();
+						buf.str(parts.gmt_offset_sign());
+						buf.u8_dec_padded(parts.gmt_offset_hours, b'0', 2);
+						buf.u8_dec_padded(parts.gmt_offset_minutes, b'0', 2);
+					}
+					FormatPrecision::Nanoseconds => {
+						// "2026-03-02 15:22:15.488167982 +0200"
+						buf.u64_dec(parts.year);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month, b'0', 2);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month_day, b'0', 2);
+						buf.space();
+						buf.u8_dec_padded(parts.hour, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.minutes, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.seconds, b'0', 2);
+						buf.dot();
+						buf.u16_dec_padded(parts.milliseconds, b'0', 3);
+						buf.u32_dec_padded(parts.nanoseconds, b'0', 6);
+						buf.space();
+						buf.str(parts.gmt_offset_sign());
+						buf.u8_dec_padded(parts.gmt_offset_hours, b'0', 2);
+						buf.u8_dec_padded(parts.gmt_offset_minutes, b'0', 2);
+					}
 				}
 			}
 			Self::FileName(tz) => {
+				// 	"2026-03-02_13-22-15"
 				let parts = match tz {
 					FormatTimezone::UTC => ts.as_utc_parts(),
 					FormatTimezone::Local => ts.as_local_parts(),
 				};
-				write!(
-					out,
-					"{year}-{month:02}-{day:02}_{hour:02}-{mins:02}-{secs:02}",
-					year = parts.year,
-					month = parts.month,
-					day = parts.month_day,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-				)
+
+				buf.u64_dec(parts.year);
+				buf.hyphen();
+				buf.u8_dec_padded(parts.month, b'0', 2);
+				buf.hyphen();
+				buf.u8_dec_padded(parts.month_day, b'0', 2);
+				buf.underscore();
+				buf.u8_dec_padded(parts.hour, b'0', 2);
+				buf.hyphen();
+				buf.u8_dec_padded(parts.minutes, b'0', 2);
+				buf.hyphen();
+				buf.u8_dec_padded(parts.seconds, b'0', 2);
 			}
 			Self::Date(tz) => {
+				// "2026-03-02"
 				let parts = match tz {
 					FormatTimezone::UTC => ts.as_utc_parts(),
 					FormatTimezone::Local => ts.as_local_parts(),
 				};
-				write!(out, "{year}-{month:02}-{day:02}", year = parts.year, month = parts.month, day = parts.month_day)
+
+				buf.u64_dec(parts.year);
+				buf.hyphen();
+				buf.u8_dec_padded(parts.month, b'0', 2);
+				buf.hyphen();
+				buf.u8_dec_padded(parts.month_day, b'0', 2);
 			}
 			Self::Time(tz, pr) => {
 				let parts = match tz {
 					FormatTimezone::UTC => ts.as_utc_parts(),
 					FormatTimezone::Local => ts.as_local_parts(),
 				};
+
 				match pr {
-					FormatPrecision::Seconds => write!(out, "{hour:02}:{mins:02}:{secs:02}", hour = parts.hour, mins = parts.minutes, secs = parts.seconds),
-					FormatPrecision::Milliseconds => write!(
-						out,
-						"{hour:02}:{mins:02}:{secs:02}.{msecs:03}",
-						hour = parts.hour,
-						mins = parts.minutes,
-						secs = parts.seconds,
-						msecs = parts.milliseconds,
-					),
-					FormatPrecision::Nanoseconds => write!(
-						out,
-						"{hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}",
-						hour = parts.hour,
-						mins = parts.minutes,
-						secs = parts.seconds,
-						msecs = parts.milliseconds,
-						nsecs = parts.nanoseconds,
-					),
+					FormatPrecision::Seconds => {
+						// "13:22:15"
+						buf.u8_dec_padded(parts.hour, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.minutes, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.seconds, b'0', 2);
+					}
+					FormatPrecision::Milliseconds => {
+						// "13:22:15.488"
+						buf.u8_dec_padded(parts.hour, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.minutes, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.seconds, b'0', 2);
+						buf.dot();
+						buf.u16_dec_padded(parts.milliseconds, b'0', 3);
+					}
+					FormatPrecision::Nanoseconds => {
+						// "13:22:15.488167982"
+						buf.u8_dec_padded(parts.hour, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.minutes, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.seconds, b'0', 2);
+						buf.dot();
+						buf.u16_dec_padded(parts.milliseconds, b'0', 3);
+						buf.u32_dec_padded(parts.nanoseconds, b'0', 6);
+					}
 				}
 			}
 			Self::RFC2822(tz) => {
+				// "Mon, 02 Mar 2026 13:22:15 +0000" (UTC), "Mon, 02 Mar 2026 15:22:15 +0200" (local)
 				let parts = match tz {
 					FormatTimezone::UTC => ts.as_utc_parts(),
 					FormatTimezone::Local => ts.as_local_parts(),
 				};
-				write!(
-					out,
-					"{day_name}, {day:02} {month_name} {year} {hour:02}:{mins:02}:{secs:02} {offset_sign}{offset_hours:02}{offset_minutes:02}",
-					day_name = parts.day_name(),
-					day = parts.month_day,
-					month_name = parts.month_name(),
-					year = parts.year,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-					offset_sign = parts.gmt_offset_sign(),
-					offset_hours = parts.gmt_offset_hours,
-					offset_minutes = parts.gmt_offset_minutes,
-				)
+
+				buf.str(parts.day_name());
+				buf.str(", ");
+				buf.u8_dec_padded(parts.month_day, b'0', 2);
+				buf.space();
+				buf.str(parts.month_name());
+				buf.space();
+				buf.u64_dec(parts.year);
+				buf.space();
+				buf.u8_dec_padded(parts.hour, b'0', 2);
+				buf.colon();
+				buf.u8_dec_padded(parts.minutes, b'0', 2);
+				buf.colon();
+				buf.u8_dec_padded(parts.seconds, b'0', 2);
+				buf.space();
+				buf.str(parts.gmt_offset_sign());
+				buf.u8_dec_padded(parts.gmt_offset_hours, b'0', 2);
+				buf.u8_dec_padded(parts.gmt_offset_minutes, b'0', 2);
 			}
 			Self::RFC3339(FormatTimezone::UTC, pr) | Self::ISO8601(FormatTimezone::UTC, pr) => {
 				let parts = ts.as_utc_parts();
 				match pr {
-					FormatPrecision::Seconds => write!(
-						out,
-						"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}Z",
-						year = parts.year,
-						month = parts.month,
-						day = parts.month_day,
-						hour = parts.hour,
-						mins = parts.minutes,
-						secs = parts.seconds,
-					),
-					FormatPrecision::Milliseconds => write!(
-						out,
-						"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}.{msecs:03}Z",
-						year = parts.year,
-						month = parts.month,
-						day = parts.month_day,
-						hour = parts.hour,
-						mins = parts.minutes,
-						secs = parts.seconds,
-						msecs = parts.milliseconds,
-					),
-					FormatPrecision::Nanoseconds => write!(
-						out,
-						"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}Z",
-						year = parts.year,
-						month = parts.month,
-						day = parts.month_day,
-						hour = parts.hour,
-						mins = parts.minutes,
-						secs = parts.seconds,
-						msecs = parts.milliseconds,
-						nsecs = parts.nanoseconds,
-					),
-				}
+					FormatPrecision::Seconds => {
+						// "2026-03-02T13:22:15Z"
+						buf.u64_dec(parts.year);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month, b'0', 2);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month_day, b'0', 2);
+						buf.u8(b'T');
+						buf.u8_dec_padded(parts.hour, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.minutes, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.seconds, b'0', 2);
+						buf.u8(b'Z');
+					}
+					FormatPrecision::Milliseconds => {
+						// "2026-03-02T13:22:15.488Z`
+						buf.u64_dec(parts.year);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month, b'0', 2);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month_day, b'0', 2);
+						buf.u8(b'T');
+						buf.u8_dec_padded(parts.hour, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.minutes, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.seconds, b'0', 2);
+						buf.dot();
+						buf.u16_dec_padded(parts.milliseconds, b'0', 3);
+						buf.u8(b'Z');
+					}
+					FormatPrecision::Nanoseconds => {
+						// "2026-03-02T13:22:15.488167982Z"
+						buf.u64_dec(parts.year);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month, b'0', 2);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month_day, b'0', 2);
+						buf.u8(b'T');
+						buf.u8_dec_padded(parts.hour, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.minutes, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.seconds, b'0', 2);
+						buf.dot();
+						buf.u16_dec_padded(parts.milliseconds, b'0', 3);
+						buf.u32_dec_padded(parts.nanoseconds, b'0', 6);
+						buf.u8(b'Z');
+					}
+				};
 			}
 			Self::RFC3339(FormatTimezone::Local, pr) | Self::ISO8601(FormatTimezone::Local, pr) => {
 				let parts = ts.as_local_parts();
+
 				match pr {
-					FormatPrecision::Seconds => write!(
-						out,
-						"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}{offset_sign}{offset_hours:02}:{offset_minutes:02}",
-						year = parts.year,
-						month = parts.month,
-						day = parts.month_day,
-						hour = parts.hour,
-						mins = parts.minutes,
-						secs = parts.seconds,
-						offset_sign = parts.gmt_offset_sign(),
-						offset_hours = parts.gmt_offset_hours,
-						offset_minutes = parts.gmt_offset_minutes,
-					),
-					FormatPrecision::Milliseconds => write!(
-						out,
-						"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}.{msecs:03}{offset_sign}{offset_hours:02}:{offset_minutes:02}",
-						year = parts.year,
-						month = parts.month,
-						day = parts.month_day,
-						hour = parts.hour,
-						mins = parts.minutes,
-						secs = parts.seconds,
-						msecs = parts.milliseconds,
-						offset_sign = parts.gmt_offset_sign(),
-						offset_hours = parts.gmt_offset_hours,
-						offset_minutes = parts.gmt_offset_minutes,
-					),
-					FormatPrecision::Nanoseconds => write!(
-						out,
-						"{year}-{month:02}-{day:02}T{hour:02}:{mins:02}:{secs:02}.{msecs:03}{nsecs:06}{offset_sign}{offset_hours:02}:{offset_minutes:02}",
-						year = parts.year,
-						month = parts.month,
-						day = parts.month_day,
-						hour = parts.hour,
-						mins = parts.minutes,
-						secs = parts.seconds,
-						msecs = parts.milliseconds,
-						nsecs = parts.nanoseconds,
-						offset_sign = parts.gmt_offset_sign(),
-						offset_hours = parts.gmt_offset_hours,
-						offset_minutes = parts.gmt_offset_minutes,
-					),
-				}
+					FormatPrecision::Seconds => {
+						// "2026-03-02T15:22:15+02:00"
+						buf.u64_dec(parts.year);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month, b'0', 2);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month_day, b'0', 2);
+						buf.u8(b'T');
+						buf.u8_dec_padded(parts.hour, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.minutes, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.seconds, b'0', 2);
+						buf.str(parts.gmt_offset_sign());
+						buf.u8_dec_padded(parts.gmt_offset_hours, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.gmt_offset_minutes, b'0', 2);
+					}
+					FormatPrecision::Milliseconds => {
+						// "2026-03-02T15:22:15.488+02:00`
+						buf.u64_dec(parts.year);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month, b'0', 2);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month_day, b'0', 2);
+						buf.u8(b'T');
+						buf.u8_dec_padded(parts.hour, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.minutes, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.seconds, b'0', 2);
+						buf.u8(b'.');
+						buf.u16_dec_padded(parts.milliseconds, b'0', 3);
+						buf.str(parts.gmt_offset_sign());
+						buf.u8_dec_padded(parts.gmt_offset_hours, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.gmt_offset_minutes, b'0', 2);
+					}
+					FormatPrecision::Nanoseconds => {
+						// "2026-03-02T15:22:15.488167982+02:00"
+						buf.u64_dec(parts.year);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month, b'0', 2);
+						buf.hyphen();
+						buf.u8_dec_padded(parts.month_day, b'0', 2);
+						buf.u8(b'T');
+						buf.u8_dec_padded(parts.hour, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.minutes, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.seconds, b'0', 2);
+						buf.u8(b'.');
+						buf.u16_dec_padded(parts.milliseconds, b'0', 3);
+						buf.u32_dec_padded(parts.nanoseconds, b'0', 6);
+						buf.str(parts.gmt_offset_sign());
+						buf.u8_dec_padded(parts.gmt_offset_hours, b'0', 2);
+						buf.colon();
+						buf.u8_dec_padded(parts.gmt_offset_minutes, b'0', 2);
+					}
+				};
 			}
 			Self::RFC3164(tz) => {
+				// "Mar  2 15:22:15"
 				let parts = match tz {
 					FormatTimezone::UTC => ts.as_utc_parts(),
 					FormatTimezone::Local => ts.as_local_parts(),
 				};
-				write!(
-					out,
-					"{month_name} {day:>2} {hour:02}:{mins:02}:{secs:02}",
-					month_name = parts.month_name(),
-					day = parts.month_day,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-				)
+
+				buf.str(parts.month_name());
+				buf.space();
+				buf.u8_dec_padded(parts.month_day, b' ', 2);
+				buf.space();
+				buf.u8_dec_padded(parts.hour, b'0', 2);
+				buf.colon();
+				buf.u8_dec_padded(parts.minutes, b'0', 2);
+				buf.colon();
+				buf.u8_dec_padded(parts.seconds, b'0', 2);
 			}
 			Self::HTTP | Self::RFC7231 => {
+				// "Mon, 02 Mar 2026 13:22:15 GMT"
 				let parts = ts.as_utc_parts();
-				write!(
-					out,
-					"{day_name}, {day:02} {month_name} {year} {hour:02}:{mins:02}:{secs:02} GMT",
-					day_name = parts.day_name(),
-					day = parts.month_day,
-					month_name = parts.month_name(),
-					year = parts.year,
-					hour = parts.hour,
-					mins = parts.minutes,
-					secs = parts.seconds,
-				)
+				buf.str(parts.day_name());
+				buf.str(", ");
+				buf.u8_dec_padded(parts.month_day, b'0', 2);
+				buf.space();
+				buf.str(parts.month_name());
+				buf.space();
+				buf.u64_dec(parts.year);
+				buf.space();
+				buf.u8_dec_padded(parts.hour, b'0', 2);
+				buf.colon();
+				buf.u8_dec_padded(parts.minutes, b'0', 2);
+				buf.colon();
+				buf.u8_dec_padded(parts.seconds, b'0', 2);
+				buf.str(" GMT");
 			}
-			Self::Timestamp(FormatPrecision::Seconds) => write!(out, "{}", ts.as_secs()),
-			Self::Timestamp(FormatPrecision::Milliseconds) => write!(out, "{}", ts.as_millis()),
-			Self::Timestamp(FormatPrecision::Nanoseconds) => write!(out, "{}", ts.as_nanos()),
+			// "1772457735"
+			Self::Timestamp(FormatPrecision::Seconds) => buf.u64_dec(ts.as_secs()),
+			// "1772457735488"
+			Self::Timestamp(FormatPrecision::Milliseconds) => buf.u128_dec(ts.as_millis()),
+			// "1772457735488167982"
+			Self::Timestamp(FormatPrecision::Nanoseconds) => buf.u128_dec(ts.as_nanos()),
 		}
+
+		buf.write(out)
 	}
 
 	/// Returns the string representation length for a [`Timestamp`] using this [`Format`]

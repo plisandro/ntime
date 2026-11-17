@@ -16,7 +16,7 @@ const WRITE_BUFFER_MAX_SIZE: usize = 64;
 /// A compact write buffer for timestamp output, intended for stack allocation.
 ///
 /// Note that, for performance reasons, no operations for this struct perform
-/// index bound nor capacity checks, and will panic if outside their
+/// index bound nor capacity checks, and will panic if used outside their
 /// documented envelope.
 pub struct Buffer {
 	buf: [u8; WRITE_BUFFER_MAX_SIZE],
