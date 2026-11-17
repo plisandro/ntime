@@ -675,39 +675,30 @@ impl Format {
 
 	/// Returns the string representation length for a [`Timestamp`] using this [`Format`]
 	pub fn string_len(&self, ts: &Timestamp) -> usize {
-		let count_digits = |n: u128| -> usize {
-			let mut n = n;
-			let mut res: usize = 1;
+		// minor optimization: every date before the timestamp for
+		// 9999-12-30 00:00:00 has a four-digit year, regardless of timezone.
+		const FOUR_DIGIT_YEAR_CUTOFF_TIMESTAMP_SECS: u64 = 253402128000;
 
-			n /= 10;
-			while n != 0 {
-				res += 1;
-				n /= 10;
+		let digits_u64 = |n: u64| -> usize { n.checked_ilog10().unwrap_or(0) as usize + 1 };
+		let digits_u128 = |n: u128| -> usize { n.checked_ilog10().unwrap_or(0) as usize + 1 };
+		let digits_utc_year = |ts: &Timestamp| -> usize {
+			if ts.as_secs() < FOUR_DIGIT_YEAR_CUTOFF_TIMESTAMP_SECS {
+				4
+			} else {
+				digits_u64(ts.as_utc_parts().year)
 			}
-
-			res
+		};
+		let digits_local_year = |ts: &Timestamp| -> usize {
+			if ts.as_secs() < FOUR_DIGIT_YEAR_CUTOFF_TIMESTAMP_SECS {
+				4
+			} else {
+				digits_u64(ts.as_local_parts().year)
+			}
 		};
 
-		// TODO: string len computation assumes years are always 4-digits long, fix this
 		match self {
 			// fixed-size formats
 
-			// 2026-03-02 13:22:15
-			Self::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds) => 19,
-			// 2026-03-02 13:22:15.488
-			Self::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds) => 23,
-			// 2026-03-02 13:22:15.488167982
-			Self::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds) => 29,
-			// 2026-03-02 15:22:15 +0200
-			Self::DateTime(FormatTimezone::Local, FormatPrecision::Seconds) => 25,
-			// 2026-03-02 15:22:15.488 +0200
-			Self::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds) => 29,
-			// 2026-03-02 15:22:15.488167982 +0200
-			Self::DateTime(FormatTimezone::Local, FormatPrecision::Nanoseconds) => 35,
-			// 2026-03-02
-			Self::Date(FormatTimezone::UTC) => 10,
-			// 2026-03-02
-			Self::Date(FormatTimezone::Local) => 10,
 			// 13:22:15
 			Self::Time(FormatTimezone::UTC, FormatPrecision::Seconds) => 8,
 			// 13:22:15.488
@@ -720,41 +711,58 @@ impl Format {
 			Self::Time(FormatTimezone::Local, FormatPrecision::Milliseconds) => 12,
 			// 15:22:15.488167982
 			Self::Time(FormatTimezone::Local, FormatPrecision::Nanoseconds) => 18,
-			// 2026-03-02_13-22-15
-			Self::FileName(FormatTimezone::UTC) => 19,
-			// 2026-03-02_15-22-15
-			Self::FileName(FormatTimezone::Local) => 19,
-			// Mon, 02 Mar 2026 13:22:15 +0000
-			Self::RFC2822(FormatTimezone::UTC) => 31,
-			// Mon, 02 Mar 2026 15:22:15 +0200
-			Self::RFC2822(FormatTimezone::Local) => 31,
 			// Mar  2 13:22:15
 			Self::RFC3164(FormatTimezone::UTC) => 15,
 			// Mar  2 15:22:15
 			Self::RFC3164(FormatTimezone::Local) => 15,
-			// 2026-03-02T13:22:15Z
-			Self::RFC3339(FormatTimezone::UTC, FormatPrecision::Seconds) | Self::ISO8601(FormatTimezone::UTC, FormatPrecision::Seconds) => 20,
-			// 2026-03-02T13:22:15.488Z
-			Self::RFC3339(FormatTimezone::UTC, FormatPrecision::Milliseconds) | Self::ISO8601(FormatTimezone::UTC, FormatPrecision::Milliseconds) => 24,
-			// 2026-03-02T13:22:15.488167982Z
-			Self::RFC3339(FormatTimezone::UTC, FormatPrecision::Nanoseconds) | Self::ISO8601(FormatTimezone::UTC, FormatPrecision::Nanoseconds) => 30,
-			// 2026-03-02T15:22:15+02:00
-			Self::RFC3339(FormatTimezone::Local, FormatPrecision::Seconds) | Self::ISO8601(FormatTimezone::Local, FormatPrecision::Seconds) => 25,
-			// 2026-03-02T15:22:15.488+02:00
-			Self::RFC3339(FormatTimezone::Local, FormatPrecision::Milliseconds) | Self::ISO8601(FormatTimezone::Local, FormatPrecision::Milliseconds) => 29,
-			// 2026-03-02T15:22:15.488167982+02:00
-			Self::RFC3339(FormatTimezone::Local, FormatPrecision::Nanoseconds) | Self::ISO8601(FormatTimezone::Local, FormatPrecision::Nanoseconds) => 35,
-			// Mon, 02 Mar 2026 13:22:15 GMT
-			Self::HTTP | Self::RFC7231 => 29,
 
 			// variable length formats
 
+			// 2026-03-02 13:22:15
+			Self::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds) => 15 + digits_utc_year(ts),
+			// 2026-03-02 13:22:15.488
+			Self::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds) => 19 + digits_utc_year(ts),
+			// 2026-03-02 13:22:15.488167982
+			Self::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds) => 25 + digits_utc_year(ts),
+			// 2026-03-02 15:22:15 +0200
+			Self::DateTime(FormatTimezone::Local, FormatPrecision::Seconds) => 21 + digits_local_year(ts),
+			// 2026-03-02 15:22:15.488 +0200
+			Self::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds) => 25 + digits_local_year(ts),
+			// 2026-03-02 15:22:15.488167982 +0200
+			Self::DateTime(FormatTimezone::Local, FormatPrecision::Nanoseconds) => 31 + digits_local_year(ts),
+			// 2026-03-02
+			Self::Date(FormatTimezone::UTC) => 6 + digits_utc_year(ts),
+			// 2026-03-02
+			Self::Date(FormatTimezone::Local) => 6 + digits_local_year(ts),
+			// 2026-03-02_13-22-15
+			Self::FileName(FormatTimezone::UTC) => 15 + digits_utc_year(ts),
+			// 2026-03-02_15-22-15
+			Self::FileName(FormatTimezone::Local) => 15 + digits_local_year(ts),
+			// Mon, 02 Mar 2026 13:22:15 +0000
+			Self::RFC2822(FormatTimezone::UTC) => 27 + digits_utc_year(ts),
+			// Mon, 02 Mar 2026 15:22:15 +0200
+			Self::RFC2822(FormatTimezone::Local) => 27 + digits_local_year(ts),
+			// 2026-03-02T13:22:15Z
+			Self::RFC3339(FormatTimezone::UTC, FormatPrecision::Seconds) | Self::ISO8601(FormatTimezone::UTC, FormatPrecision::Seconds) => 16 + digits_utc_year(ts),
+			// 2026-03-02T13:22:15.488Z
+			Self::RFC3339(FormatTimezone::UTC, FormatPrecision::Milliseconds) | Self::ISO8601(FormatTimezone::UTC, FormatPrecision::Milliseconds) => 20 + digits_utc_year(ts),
+			// 2026-03-02T13:22:15.488167982Z
+			Self::RFC3339(FormatTimezone::UTC, FormatPrecision::Nanoseconds) | Self::ISO8601(FormatTimezone::UTC, FormatPrecision::Nanoseconds) => 26 + digits_utc_year(ts),
+			// 2026-03-02T15:22:15+02:00
+			Self::RFC3339(FormatTimezone::Local, FormatPrecision::Seconds) | Self::ISO8601(FormatTimezone::Local, FormatPrecision::Seconds) => 21 + digits_local_year(ts),
+			// 2026-03-02T15:22:15.488+02:00
+			Self::RFC3339(FormatTimezone::Local, FormatPrecision::Milliseconds) | Self::ISO8601(FormatTimezone::Local, FormatPrecision::Milliseconds) => 25 + digits_local_year(ts),
+			// 2026-03-02T15:22:15.488167982+02:00
+			Self::RFC3339(FormatTimezone::Local, FormatPrecision::Nanoseconds) | Self::ISO8601(FormatTimezone::Local, FormatPrecision::Nanoseconds) => 31 + digits_local_year(ts),
+			// Mon, 02 Mar 2026 13:22:15 GMT
+			Self::HTTP | Self::RFC7231 => 25 + digits_utc_year(ts),
+
 			// 1772457735
-			Self::Timestamp(FormatPrecision::Seconds) => count_digits(ts.as_secs() as u128),
+			Self::Timestamp(FormatPrecision::Seconds) => digits_u64(ts.as_secs()),
 			// 1772457735488
-			Self::Timestamp(FormatPrecision::Milliseconds) => count_digits(ts.as_millis()),
+			Self::Timestamp(FormatPrecision::Milliseconds) => digits_u128(ts.as_millis()),
 			// 1772457735488167982
-			Self::Timestamp(FormatPrecision::Nanoseconds) => count_digits(ts.as_nanos()),
+			Self::Timestamp(FormatPrecision::Nanoseconds) => digits_u128(ts.as_nanos()),
 		}
 	}
 
@@ -871,48 +879,54 @@ mod test_format {
 	#[test]
 	fn timestamp_string_len() {
 		test_helpers::mocks::with_timezone("America/Montevideo", || {
-			let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
-
-			for format in [
-				Format::Date(FormatTimezone::Local),
-				Format::Date(FormatTimezone::UTC),
-				Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds),
-				Format::DateTime(FormatTimezone::Local, FormatPrecision::Nanoseconds),
-				Format::DateTime(FormatTimezone::Local, FormatPrecision::Seconds),
-				Format::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds),
-				Format::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
-				Format::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds),
-				Format::FileName(FormatTimezone::Local),
-				Format::FileName(FormatTimezone::UTC),
-				Format::HTTP,
-				Format::ISO8601(FormatTimezone::Local, FormatPrecision::Milliseconds),
-				Format::ISO8601(FormatTimezone::Local, FormatPrecision::Nanoseconds),
-				Format::ISO8601(FormatTimezone::Local, FormatPrecision::Seconds),
-				Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Milliseconds),
-				Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
-				Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Seconds),
-				Format::RFC2822(FormatTimezone::Local),
-				Format::RFC2822(FormatTimezone::UTC),
-				Format::RFC3164(FormatTimezone::Local),
-				Format::RFC3164(FormatTimezone::UTC),
-				Format::RFC3339(FormatTimezone::Local, FormatPrecision::Milliseconds),
-				Format::RFC3339(FormatTimezone::Local, FormatPrecision::Nanoseconds),
-				Format::RFC3339(FormatTimezone::Local, FormatPrecision::Seconds),
-				Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Milliseconds),
-				Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
-				Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Seconds),
-				Format::RFC7231,
-				Format::Time(FormatTimezone::Local, FormatPrecision::Milliseconds),
-				Format::Time(FormatTimezone::Local, FormatPrecision::Nanoseconds),
-				Format::Time(FormatTimezone::Local, FormatPrecision::Seconds),
-				Format::Time(FormatTimezone::UTC, FormatPrecision::Milliseconds),
-				Format::Time(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
-				Format::Time(FormatTimezone::UTC, FormatPrecision::Seconds),
-				Format::Timestamp(FormatPrecision::Milliseconds),
-				Format::Timestamp(FormatPrecision::Nanoseconds),
-				Format::Timestamp(FormatPrecision::Seconds),
+			for ts in [
+				Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts for year 2026"),
+				Timestamp::from_utc_date(9999, 12, 31, 23, 59, 59, 999, 999999).expect("invalid parts for last day of year 9999"),
+				Timestamp::from_utc_date(10000, 01, 01, 0, 0, 0, 0, 0).expect("invalid parts for first day of year 10000"),
+				Timestamp::from_utc_date(31562, 09, 15, 6, 13, 55, 777, 8888).expect("invalid parts for year 31562"),
+				Timestamp::from_utc_date(54732890, 1, 26, 22, 50, 11, 111, 222).expect("invalid parts for year 54732890"),
 			] {
-				assert_eq!(format.string_len(&ts), format.as_string(&ts).len());
+				for format in [
+					Format::Date(FormatTimezone::Local),
+					Format::Date(FormatTimezone::UTC),
+					Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds),
+					Format::DateTime(FormatTimezone::Local, FormatPrecision::Nanoseconds),
+					Format::DateTime(FormatTimezone::Local, FormatPrecision::Seconds),
+					Format::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds),
+					Format::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
+					Format::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds),
+					Format::FileName(FormatTimezone::Local),
+					Format::FileName(FormatTimezone::UTC),
+					Format::HTTP,
+					Format::ISO8601(FormatTimezone::Local, FormatPrecision::Milliseconds),
+					Format::ISO8601(FormatTimezone::Local, FormatPrecision::Nanoseconds),
+					Format::ISO8601(FormatTimezone::Local, FormatPrecision::Seconds),
+					Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Milliseconds),
+					Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
+					Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Seconds),
+					Format::RFC2822(FormatTimezone::Local),
+					Format::RFC2822(FormatTimezone::UTC),
+					Format::RFC3164(FormatTimezone::Local),
+					Format::RFC3164(FormatTimezone::UTC),
+					Format::RFC3339(FormatTimezone::Local, FormatPrecision::Milliseconds),
+					Format::RFC3339(FormatTimezone::Local, FormatPrecision::Nanoseconds),
+					Format::RFC3339(FormatTimezone::Local, FormatPrecision::Seconds),
+					Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Milliseconds),
+					Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
+					Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Seconds),
+					Format::RFC7231,
+					Format::Time(FormatTimezone::Local, FormatPrecision::Milliseconds),
+					Format::Time(FormatTimezone::Local, FormatPrecision::Nanoseconds),
+					Format::Time(FormatTimezone::Local, FormatPrecision::Seconds),
+					Format::Time(FormatTimezone::UTC, FormatPrecision::Milliseconds),
+					Format::Time(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
+					Format::Time(FormatTimezone::UTC, FormatPrecision::Seconds),
+					Format::Timestamp(FormatPrecision::Milliseconds),
+					Format::Timestamp(FormatPrecision::Nanoseconds),
+					Format::Timestamp(FormatPrecision::Seconds),
+				] {
+					assert_eq!(format.string_len(&ts), format.as_string(&ts).len(), "{} for {}", format, ts);
+				}
 			}
 		})
 	}
