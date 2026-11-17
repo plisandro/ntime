@@ -16,8 +16,8 @@ pub type CSize = usize;
 
 // TZ details are surprisingly expensive to resolve in Windows :( GMT offset is
 // retrieved for every timestamp generation, as it can change over the duration of
-// a process, but the TZ name is kept cached.
-pub static MSVC_TZ_NAME: LazyLock<String> = LazyLock::new(|| c_tz_name());
+// a process, but standard and DST TZ names are kept cached.
+pub static MSVC_TZ_NAMES: LazyLock<(String, String)> = LazyLock::new(|| (c_tz_name(false), c_tz_name(true)));
 
 // Windows MSVC timezone fields
 #[repr(C)]
@@ -41,6 +41,7 @@ unsafe extern "C" {
 	unsafe fn _localtime64_s(tm: *mut c_tm, ts: *const CTime) -> c_int;
 	// Windows is stupid and doesn't return TZ information in tm structs, so...
 	unsafe fn _get_timezone(seconds: *mut c_long) -> c_int;
+	unsafe fn _get_dstbias(seconds: *mut c_long) -> c_int;
 	unsafe fn _get_tzname(pReturnValue: *mut CSize, timeZoneName: *mut c_char, sizeInBytes: CSize, index: c_int) -> c_int;
 	unsafe fn _tzset();
 }
@@ -72,8 +73,8 @@ pub fn c_reload_tz_info() {
 }
 */
 
-/// Resolves the current timezone GMT offset.
-pub fn c_tz_gmt_offset() -> i32 {
+/// Resolves the current timezone GMT offset, for either standard time or DST.
+pub fn c_tz_gmt_offset(is_dst: bool) -> i32 {
 	let mut gmt_delta: c_long = 0;
 
 	// SAFETY: Calling MSVC functions with properly initialized types.
@@ -83,6 +84,18 @@ pub fn c_tz_gmt_offset() -> i32 {
 		if errno != 0 {
 			panic!("failed to resolve TZ GMT delta: {errno}");
 		}
+
+		if is_dst {
+			// annoyingly, _localtime64_s() applies DST bias, but _get_timezone() does
+			// not - so this needs to be accounted for with yet another API call.
+			// great design guys!
+			let mut dst_bias: c_long = 0;
+			let errno = _get_dstbias(&mut dst_bias);
+			if errno != 0 {
+				panic!("failed to resolve TZ DST bias: {errno}");
+			}
+			gmt_delta += dst_bias;
+		}
 	}
 
 	// _get_timezone() returns (UTC - local) time, as seconds,
@@ -90,12 +103,9 @@ pub fn c_tz_gmt_offset() -> i32 {
 	((-1) * gmt_delta) as i32
 }
 
-// TODO: return IANA timezone names instead of Windows'.
-/// Resolves the current timezone name.
-pub fn c_tz_name() -> String {
+/// Resolves the current timezone name, for either standard time or DST.
+pub fn c_tz_name(is_dst: bool) -> String {
 	let tz_name: String;
-	// select non-DST TZ name
-	const INDEX: c_int = 0;
 
 	// SAFETY: Calling MSVC functions with properly initialized types.
 	unsafe {
@@ -104,27 +114,28 @@ pub fn c_tz_name() -> String {
 		_tzset();
 
 		// get the size of buffer required to hold the TZ name
+		let dst_index: c_int = if is_dst { 1 } else { 0 };
 		let mut buf_size_ptr = MaybeUninit::<CSize>::uninit();
-		let errno = _get_tzname(buf_size_ptr.as_mut_ptr(), NULL_C_CHAR, 0, INDEX);
+		let errno = _get_tzname(buf_size_ptr.as_mut_ptr(), NULL_C_CHAR, 0, dst_index);
 		if errno != 0 {
-			panic!("failed to resolve TZ name buffer size: {errno}");
+			panic!("failed to resolve TZ (dst = {is_dst}) name buffer size: {errno}");
 		}
 		let buf_size = buf_size_ptr.assume_init();
 
-		// allocate a buffer for the tz name.
+		// allocate a buffer for the TZ name.
 		let c_tz_name_buf: Vec<u8> = vec![0; buf_size];
 		let c_tz_name = CString::from_vec_unchecked(c_tz_name_buf); //Vec::<u8>::with_capacity(buf_size as usize));
 		let c_tz_name_ptr = c_tz_name.into_raw();
 
-		// load tz name in the buffer
-		let errno = _get_tzname(buf_size_ptr.as_mut_ptr(), c_tz_name_ptr as *mut c_char, buf_size, INDEX);
+		// load TZ name in the buffer
+		let errno = _get_tzname(buf_size_ptr.as_mut_ptr(), c_tz_name_ptr as *mut c_char, buf_size, dst_index);
 		if errno != 0 {
-			panic!("failed to resolve TZ name: {errno}");
+			panic!("failed to resolve TZ (dst = {is_dst}) name: {errno}");
 		}
 
 		tz_name = match CString::from_raw(c_tz_name_ptr).into_string() {
 			Ok(s) => s,
-			Err(e) => panic!("failed to serialize TZ string from C buffer: {e}"),
+			Err(e) => panic!("failed to serialize TZ (dst = {is_dst}) string from C buffer: {e}"),
 		};
 	}
 

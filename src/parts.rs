@@ -174,8 +174,10 @@ impl<'i> TimestampParts<'i> {
 		}
 		#[cfg(target_env = "msvc")]
 		{
-			gmt_offset_secs = c_bindings::c_tz_gmt_offset();
-			timezone = (*c_bindings::MSVC_TZ_NAME).as_str();
+			let is_dst = tm.tm_isdst > 0;
+			gmt_offset_secs = c_bindings::c_tz_gmt_offset(is_dst);
+			let (standard_tz, dst_tz) = &*c_bindings::MSVC_TZ_NAMES;
+			timezone = (if is_dst { dst_tz } else { standard_tz }).as_str();
 		}
 
 		let (gmt_offset_negative, gmt_offset_hours, gmt_offset_minutes) = Self::_gmt_offset_parts(gmt_offset_secs);
@@ -228,6 +230,13 @@ impl<'i> TimestampParts<'i> {
 		if self.gmt_offset_negative { "-" } else { "+" }
 	}
 
+	/// Returns the GMT offset in seconds (f.ex. 7200 for +02:00).
+	pub fn gmt_offset_seconds(&self) -> i32 {
+		let offset = ((self.gmt_offset_hours as u32 * U32_SECONDS_IN_HOUR) + (self.gmt_offset_minutes as u32 * U32_SECONDS_IN_MINUTE)) as i32;
+
+		if self.gmt_offset_negative { -1 * offset } else { offset }
+	}
+
 	/// Returns a short day name: `Tue`
 	pub fn day_name(&self) -> &str {
 		if self.week_day == 0 {
@@ -254,7 +263,7 @@ impl<'i> TimestampParts<'i> {
 		if self.year < U64_UNIX_EPOCH_YEAR {
 			return 0;
 		}
-		let year = self.year as u64 - 1;
+		let year = self.year - 1;
 		let leap_years = (year / 4) - (year / 100) + (year / 400);
 
 		leap_years - U64_LEAP_YEARS_BEFORE_EPOCH
@@ -372,6 +381,55 @@ mod test {
 	fn gmt_offset_parts() {
 		assert_eq!(TimestampParts::_gmt_offset_parts(30600), (false, 8, 30));
 		assert_eq!(TimestampParts::_gmt_offset_parts(-13500), (true, 3, 45));
+	}
+
+	#[test]
+	fn gmt_offset_seconds() {
+		for (parts, want) in [
+			(TimestampParts::epoch(), 0),
+			(
+				TimestampParts {
+					gmt_offset_negative: true,
+					gmt_offset_hours: 9,
+					gmt_offset_minutes: 30,
+					timezone: "Pacific/Marquesas",
+					..TimestampParts::epoch()
+				},
+				-34200,
+			),
+			(
+				TimestampParts {
+					gmt_offset_negative: true,
+					gmt_offset_hours: 6,
+					gmt_offset_minutes: 0,
+					timezone: "America/Edmonton",
+					..TimestampParts::epoch()
+				},
+				-21600,
+			),
+			(
+				TimestampParts {
+					gmt_offset_negative: false,
+					gmt_offset_hours: 4,
+					gmt_offset_minutes: 0,
+					timezone: "Asia/Baku",
+					..TimestampParts::epoch()
+				},
+				14400,
+			),
+			(
+				TimestampParts {
+					gmt_offset_negative: false,
+					gmt_offset_hours: 3,
+					gmt_offset_minutes: 30,
+					timezone: "Asia/Tehran",
+					..TimestampParts::epoch()
+				},
+				12600,
+			),
+		] {
+			assert_eq!(parts.gmt_offset_seconds(), want, "{parts:?}");
+		}
 	}
 
 	#[test]
@@ -936,5 +994,26 @@ mod test {
 			assert_eq!(parts.gmt_offset_hours, 13);
 			assert_eq!(parts.gmt_offset_minutes, 0);
 		});
+	}
+
+	#[test]
+	fn utc_local_gmt_offset_match() {
+		// verifies whether (local + GMT offset) parts match their UTC counterpart; this should *always*
+		// be true, regardless of platform and local TZ settings.
+		for ts in [
+			Timestamp::from_utc_date(2026, 01, 01, 0, 0, 0, 0, 0).expect("invalid timestamp for 2026-01-01 00:00:00"),
+			Timestamp::from_utc_date(2026, 07, 01, 0, 0, 0, 0, 0).expect("invalid timestamp for 2026-07-01 00:00:00"),
+			Timestamp::from_utc_date(2026, 07, 25, 11, 32, 12, 0, 0).expect("invalid timestamp for 2026-07-25 11:32:12"),
+		] {
+			let local = &ts.as_local_parts();
+			let gmt_offset_secs = local.gmt_offset_seconds();
+			let gmt_shifted = &Timestamp::from_secs((ts.as_secs() as i64 + gmt_offset_secs as i64) as u64).as_utc_parts();
+
+			assert_eq!(
+				(local.year, local.month, local.month_day, local.hour, local.minutes, local.seconds),
+				(gmt_shifted.year, gmt_shifted.month, gmt_shifted.month_day, gmt_shifted.hour, gmt_shifted.minutes, gmt_shifted.seconds),
+				"local parts for {ts:?} don't match UTC + GMT offset parts: {local:?} vs. {gmt_shifted:?}",
+			);
+		}
 	}
 }
