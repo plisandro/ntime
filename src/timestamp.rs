@@ -49,16 +49,18 @@ impl<'i> Timestamp {
 	}
 
 	/// Creates a [`Timestamp`] from a given UTC date + time.
+	// TODO: maybe implement a dedicated struct to hold these parameters?
+	#[allow(clippy::too_many_arguments)]
 	pub fn from_utc_date(year: u64, month: u8, day: u8, hour: u8, minutes: u8, secs: u8, millis: u16, nanos: u32) -> Result<Self, &'i str> {
 		TimestampParts {
 			nanoseconds: nanos,
 			milliseconds: millis,
 			seconds: secs,
-			minutes: minutes,
-			hour: hour,
+			minutes,
+			hour,
 			month_day: day,
-			month: month,
-			year: year,
+			month,
+			year,
 			// week_day and year_day are unused when converting back to [`Timestamp`]
 			week_day: 1,
 			year_day: 1,
@@ -121,12 +123,12 @@ impl<'i> Timestamp {
 
 	/// Returns a [`TimestampParts`] for the timezone, as UTC.
 	pub fn as_utc_parts(&self) -> TimestampParts<'i> {
-		TimestampParts::utc(&self)
+		TimestampParts::utc(self)
 	}
 
 	/// Returns a [`TimestampParts`] for the timezone, in the local timezone.
 	pub fn as_local_parts(&self) -> TimestampParts<'i> {
-		TimestampParts::local(&self)
+		TimestampParts::local(self)
 	}
 
 	/// Returns a string representation for the timestamp, in a given [`Format`].
@@ -153,7 +155,7 @@ impl<'i> Timestamp {
 	pub fn add_duration(&mut self, d: &Duration) -> &Self {
 		let nanos = d.as_nanos() + self.nanoseconds as u128;
 
-		self.seconds = self.seconds + (nanos / U128_NANOS_IN_SECOND) as u64;
+		self.seconds += (nanos / U128_NANOS_IN_SECOND) as u64;
 		self.nanoseconds = (nanos % U128_NANOS_IN_SECOND) as u32;
 
 		self
@@ -202,7 +204,7 @@ impl fmt::Display for Timestamp {
 
 impl PartialOrd for Timestamp {
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-		Some(self.cmp(other))
+		Some(Ord::cmp(self, other))
 	}
 }
 
@@ -230,7 +232,7 @@ mod tests {
 	#[test]
 	fn from_date() {
 		assert_eq!(
-			Timestamp::from_utc_date(2026, 03, 07, 04, 48, 17, 446, 37892),
+			Timestamp::from_utc_date(2026, 3, 7, 4, 48, 17, 446, 37892),
 			Ok(Timestamp {
 				seconds: 1772858897,
 				nanoseconds: 446037892,
@@ -269,7 +271,7 @@ mod tests {
 	#[test]
 	fn days_since_epoch() {
 		assert_eq!(Timestamp::epoch().days_since_epoch(), 0);
-		assert_eq!(Timestamp::from_utc_date(1980, 07, 19, 18, 15, 0, 0, 0).unwrap().days_since_epoch(), 3852);
+		assert_eq!(Timestamp::from_utc_date(1980, 7, 19, 18, 15, 0, 0, 0).unwrap().days_since_epoch(), 3852);
 		assert_eq!(Timestamp::new(1772457020, 789).days_since_epoch(), 20514);
 		assert_eq!(Timestamp::from_secs(1772457213).days_since_epoch(), 20514);
 		assert_eq!(Timestamp::from_millis(1772457213123).days_since_epoch(), 20514);
@@ -291,7 +293,7 @@ mod tests {
 			assert_eq!(Timestamp::from_secs(1772457213).to_string(), "2026-03-02 21:13:33 +0800",);
 			assert_eq!(Timestamp::from_millis(1772457213123).to_string(), "2026-03-02 21:13:33 +0800",);
 			assert_eq!(
-				Timestamp::from_utc_date(2026, 03, 06, 14, 43, 39, 128, 564).expect("invalid parts").to_string(),
+				Timestamp::from_utc_date(2026, 3, 6, 14, 43, 39, 128, 564).expect("invalid parts").to_string(),
 				"2026-03-06 22:43:39 +0800",
 			);
 		});

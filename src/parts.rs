@@ -67,7 +67,7 @@ impl<'i> TimestampParts<'i> {
 		// Implements an short-circuit version of the Drepper-Neri-Schneider algorithm:
 		// https://github.com/gcc-mirror/gcc/commit/86a0df1a6c7fe4a835620b868e76ea78d42d6620 .
 		// Relies on the fact that most compilers will optimize "mod 25" without divisions.
-		(year & 3 == 0) && (year % 25 != 0 || year & 15 == 0)
+		(year & 3 == 0) && (!year.is_multiple_of(25) || year & 15 == 0)
 	}
 
 	/// Creates a UTC [`TimestampParts`] from a given [`Timestamp`].
@@ -193,10 +193,10 @@ impl<'i> TimestampParts<'i> {
 			year: (1900 + tm.tm_year) as _,
 			week_day: (1 + tm.tm_wday) as _,
 			year_day: (1 + tm.tm_yday) as _,
-			gmt_offset_negative: gmt_offset_negative,
-			gmt_offset_hours: gmt_offset_hours,
-			gmt_offset_minutes: gmt_offset_minutes,
-			timezone: timezone,
+			gmt_offset_negative,
+			gmt_offset_hours,
+			gmt_offset_minutes,
+			timezone,
 		}
 	}
 
@@ -234,7 +234,7 @@ impl<'i> TimestampParts<'i> {
 	pub fn gmt_offset_seconds(&self) -> i32 {
 		let offset = ((self.gmt_offset_hours as u32 * U32_SECONDS_IN_HOUR) + (self.gmt_offset_minutes as u32 * U32_SECONDS_IN_MINUTE)) as i32;
 
-		if self.gmt_offset_negative { -1 * offset } else { offset }
+		if self.gmt_offset_negative { -offset } else { offset }
 	}
 
 	/// Returns a short day name: `Tue`
@@ -315,9 +315,7 @@ impl<'i> TimestampParts<'i> {
 
 	/// Validates [`TimestampParts`] for correctness.
 	pub fn validate(&self) -> Result<(), &'i str> {
-		if let Err(e) = self.validate_fields() {
-			return Err(e);
-		}
+		self.validate_fields()?;
 
 		// ensure the provided day of the year matches with other fields
 		let expected_year_day = self.year_day();
@@ -330,9 +328,7 @@ impl<'i> TimestampParts<'i> {
 
 	/// Converts the parts structure back into a [`Timestamp`], much like glibc's timegm().
 	pub fn to_timestamp(&self) -> Result<Timestamp, &'i str> {
-		if let Err(e) = self.validate_fields() {
-			return Err(e);
-		}
+		self.validate_fields()?;
 
 		// See https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_15 for
 		// a description of this algorithm:
@@ -345,7 +341,7 @@ impl<'i> TimestampParts<'i> {
 		let tm_hour = self.hour as u64;
 		let tm_year = self.year - U64_UNIX_EPOCH_YEAR;
 		let tm_yday = (self.year_day() - 1) as u64;
-		let leap_years = self.leap_years_since_epoch() as u64;
+		let leap_years = self.leap_years_since_epoch();
 
 		// compute total seconds since epoch...
 		let mut secs = tm_sec + tm_min * U64_SECONDS_IN_MINUTE + tm_hour * U64_SECONDS_IN_HOUR + tm_yday * U64_SECONDS_IN_DAY;
@@ -894,7 +890,7 @@ mod test {
 			),
 			// non-leap year
 			(
-				Timestamp::from_utc_date(2026, 03, 24, 18, 47, 31, 111, 222).expect("invalid parts"),
+				Timestamp::from_utc_date(2026, 3, 24, 18, 47, 31, 111, 222).expect("invalid parts"),
 				TimestampParts {
 					nanoseconds: 222,
 					milliseconds: 111,
@@ -965,32 +961,32 @@ mod test {
 	fn local_offset() {
 		test_helpers::mocks::with_timezone("America/Montevideo", || {
 			// GMT -03:00
-			let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
+			let ts = Timestamp::from_utc_date(2026, 3, 6, 14, 43, 49, 38, 23456).expect("invalid parts");
 			assert_eq!(ts.as_string(&Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds)), "2026-03-06 11:43:49.038 -0300");
 			let parts = ts.as_local_parts();
-			assert_eq!(parts.gmt_offset_negative, true);
+			assert!(parts.gmt_offset_negative);
 			assert_eq!(parts.gmt_offset_hours, 3);
 			assert_eq!(parts.gmt_offset_minutes, 0);
 		});
 
 		test_helpers::mocks::with_timezone("Pacific/Samoa", || {
 			// GMT -11:00
-			let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
+			let ts = Timestamp::from_utc_date(2026, 3, 6, 14, 43, 49, 38, 23456).expect("invalid parts");
 			assert_eq!(ts.as_string(&Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds)), "2026-03-06 03:43:49.038 -1100");
 
 			let parts = ts.as_local_parts();
-			assert_eq!(parts.gmt_offset_negative, true);
+			assert!(parts.gmt_offset_negative);
 			assert_eq!(parts.gmt_offset_hours, 11);
 			assert_eq!(parts.gmt_offset_minutes, 0);
 		});
 
 		test_helpers::mocks::with_timezone("Pacific/Kanton", || {
 			// GMT +13:00
-			let ts = Timestamp::from_utc_date(2026, 03, 06, 14, 43, 49, 038, 23456).expect("invalid parts");
+			let ts = Timestamp::from_utc_date(2026, 3, 6, 14, 43, 49, 38, 23456).expect("invalid parts");
 			assert_eq!(ts.as_string(&Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds)), "2026-03-07 03:43:49.038 +1300");
 
 			let parts = ts.as_local_parts();
-			assert_eq!(parts.gmt_offset_negative, false);
+			assert!(!parts.gmt_offset_negative);
 			assert_eq!(parts.gmt_offset_hours, 13);
 			assert_eq!(parts.gmt_offset_minutes, 0);
 		});
@@ -1001,9 +997,9 @@ mod test {
 		// verifies whether (local + GMT offset) parts match their UTC counterpart; this should *always*
 		// be true, regardless of platform and local TZ settings.
 		for ts in [
-			Timestamp::from_utc_date(2026, 01, 01, 0, 0, 0, 0, 0).expect("invalid timestamp for 2026-01-01 00:00:00"),
-			Timestamp::from_utc_date(2026, 07, 01, 0, 0, 0, 0, 0).expect("invalid timestamp for 2026-07-01 00:00:00"),
-			Timestamp::from_utc_date(2026, 07, 25, 11, 32, 12, 0, 0).expect("invalid timestamp for 2026-07-25 11:32:12"),
+			Timestamp::from_utc_date(2026, 1, 1, 0, 0, 0, 0, 0).expect("invalid timestamp for 2026-01-01 00:00:00"),
+			Timestamp::from_utc_date(2026, 7, 1, 0, 0, 0, 0, 0).expect("invalid timestamp for 2026-07-01 00:00:00"),
+			Timestamp::from_utc_date(2026, 7, 25, 11, 32, 12, 0, 0).expect("invalid timestamp for 2026-07-25 11:32:12"),
 		] {
 			let local = &ts.as_local_parts();
 			let gmt_offset_secs = local.gmt_offset_seconds();

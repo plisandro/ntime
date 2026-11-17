@@ -100,7 +100,7 @@ pub fn c_tz_gmt_offset(is_dst: bool) -> i32 {
 
 	// _get_timezone() returns (UTC - local) time, as seconds,
 	// which is the exact opposite of GMT offset >:(
-	((-1) * gmt_delta) as i32
+	(-gmt_delta) as i32
 }
 
 /// Resolves the current timezone name, for either standard time or DST.
