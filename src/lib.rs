@@ -14,7 +14,8 @@
 //!
 //!   * Current time: [`Timestamp::now()`]
 //!   * A standard [`std::time::SystemTime`]: [`Timestamp::from_system_time()`]
-//!   * A UTC date & time: [`Timestamp::try_from()`] with a `(year, month, day[, hour, minutes, seconds[, millis, nanos]])` tuple, or a [`UTCDateTime`]
+//!   * A UTC date & time tuple: [`Timestamp::try_from()`] with `(year, month, day[, hour, minutes, seconds[, millis, nanos]])`.
+//!   * A dedicated UTC date/time struct: [`Timestamp::try_from()`] with [`UTCDateTime`].
 //!   * From a timestamp in milliseconds/nanoseconds: [`Timestamp::new()`], [`Timestamp::from_secs()`], [`Timestamp::from_millis()`], [`Timestamp::from_nanos()`].
 //!   * From a [`TimestampParts`] struct: [`Timestamp::from_parts()`]
 //!
@@ -30,6 +31,8 @@
 //!
 //! ## Initialization
 //!
+//! [`Timestamp`]s can be initialized from current time...
+//!
 //!  ```rust
 //! use ntime::Timestamp;
 //!
@@ -40,7 +43,44 @@
 //! Timestamp { seconds: 1774369621, nanoseconds: 732000558 }
 //! ```
 //!
+//! ...from UTC `(year, month, day[, hour, minutes, seconds[, millis, nanos]])` tuples...
+//!
+//!  ```rust
+//! use ntime::Timestamp;
+//!
+//! let ts = Timestamp::try_from((2026, 11, 18, 22, 17, 19)).expect("invalid date/time values");
+//! println!("initialized from date/time values to {ts}");
+//! ```
+//! ```text
+//! initialized from date/time values to 2026-11-18 23:17:19 +0100
+//! ```
+//!
+//! ...or the dedicated [`UTCDateTime`] struct:
+//!
+//!  ```rust
+//! use ntime::{Timestamp, UTCDateTime};
+//!
+//! let udt = UTCDateTime {
+//!     year: 2026,
+//!     month: 3,
+//!     day: 24,
+//!     hour: 17,
+//!     minutes: 44,
+//!     seconds: 48,
+//!     milliseconds: 123,
+//!     nanoseconds: 456,
+//! };
+//!
+//! let ts = Timestamp::try_from(&udt).expect("invalid UTCDateTime");
+//! println!("{udt:?} converts to {ts}");
+//! ```
+//! ```text
+//! UTCDateTime { year: 2026, month: 3, day: 24, hour: 17, minutes: 44, seconds: 48, milliseconds: 123, nanoseconds: 456 } converts to 2026-03-24 18:44:48 +0100
+//! ```
+//!
 //! ## String conversion and casting
+//!
+//! NanoTime can serialize [`Timestamp`]s to a [`io::Write`][std::io::Write] or [`String`], with configurable [`Format`]ting.
 //!
 //! ```rust
 //! use ntime::{Format, Precision, Timezone, Timestamp};
@@ -102,7 +142,7 @@
 //! ```text
 //! today is Mon the 6th of Apr 2026, day 96 of the year in UTC
 //! ```
-//!
+//!:
 //! ## Sleeping
 //!
 //! ```rust
@@ -112,9 +152,41 @@
 //! ntime::sleep_millis(1500);
 //! ```
 //!
-//! # Limitations and Caveats
+//! # Limitations
 //!
-//!   * As noted, NanoTime is not well suited for applications requiring calendar operations, and/or flexible timezone management.
+//! ## Timestamp Ranges
+//!
+//! [`Timestamp`]s are internally stored as a duration since UNIX epoch, with a supported range of:
+//!   - [Minimum time][Timestamp::MIN]: `1970-01-01 00:00:00.000000000 UTC` (UNIX epoch).
+//!   - [Maximum time][Timestamp::MAX]: `584554051223-11-09 07:00:15.999999999 UTC`.
+//!
+//! ## Parts Conversion
+//!
+//! Conversion to [`TimestampParts`], and [`Format`]ting, are limited by the choice of [`Timezone`]
+//! for the operation. Attempting to perform these on unsupported [`Timestamp`] values will
+//! panic at runtime.
+//!
+//! ### [UTC][Timezone::UTC]
+//!
+//! For UTC, [`TimestampParts`] conversions are fully resolved with in-library logic, and
+//! support all possible [`Timestamp`] values.
+//!
+//! ### [Local][Timezone::Local]
+//!
+//! Local timezone conversions are resolved via (g)libc calls, with type limitations imposed
+//! by the C FFI. The maximum [`Timestamp`] which can be decomposed into [`TimestampParts`] is
+//! then determined by the libc implementation and/or system architecture.
+//!
+//!   - 64-bit systems, and 32-bit systems with 64-bit libc time implementations (f.ex. [musl](https://musl.libc.org/)): `2147485547-12-31 23:59:59.999999999 +0000`
+//!   - 32-bit systems: `2038-01-19 03:14:07.999999999 UTC`.
+//!
+//! These limitations apply also to formatting, so [`Timestamp`]s over these boundaries
+//! will panic if serialized as strings.
+//!
+//! ## Caveats
+//!
+//! As noted, NanoTime is not well suited for applications requiring calendar operations,
+//! and/or flexible timezone management.
 //!
 
 #![deny(missing_docs)]

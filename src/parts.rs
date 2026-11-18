@@ -2,10 +2,10 @@ use super::Timestamp;
 
 use crate::c_bindings;
 use crate::constant::{
-	DAY_NAMES, DAYS_IN_MONTH_COMMON_YEAR, DAYS_IN_MONTH_LEAP_YEAR, MONTH_NAMES, MONTH_TO_DAYS_COMMON_YEAR, MONTH_TO_DAYS_LEAP_YEAR, TIMEZONE_UTC, U8_DAYS_IN_WEEK, U8_HOURS_IN_DAY, U8_MINUTES_IN_HOUR,
-	U8_MONTHS_IN_YEAR, U8_SECONDS_IN_MINUTE, U16_DAYS_IN_COMMON_YEAR, U16_DAYS_IN_LEAP_YEAR, U16_MILLIS_IN_SECOND, U32_NANOS_IN_MILLI, U32_SECONDS_IN_HOUR, U32_SECONDS_IN_MINUTE, U64_DAYS_IN_4_YEARS,
-	U64_DAYS_IN_400_YEAR_CYCLE, U64_LEAP_YEARS_BEFORE_EPOCH, U64_MAX_YEAR, U64_SECONDS_IN_COMMON_YEAR, U64_SECONDS_IN_DAY, U64_SECONDS_IN_HOUR, U64_SECONDS_IN_MINUTE, U64_UNIX_EPOCH_SHIFT_IN_DAYS,
-	U64_UNIX_EPOCH_YEAR,
+	DAY_NAMES, DAYS_IN_MONTH_COMMON_YEAR, DAYS_IN_MONTH_LEAP_YEAR, MONTH_NAMES, MONTH_TO_DAYS_COMMON_YEAR, MONTH_TO_DAYS_LEAP_YEAR, TIMESTAMP_MAX_LOCAL_SECONDS, TIMESTAMP_MAX_LOCAL_YEAR,
+	TIMESTAMP_MAX_YEAR, TIMESTAMP_MIN_YEAR, TIMEZONE_UTC, U8_DAYS_IN_WEEK, U8_HOURS_IN_DAY, U8_MINUTES_IN_HOUR, U8_MONTHS_IN_YEAR, U8_SECONDS_IN_MINUTE, U16_DAYS_IN_COMMON_YEAR,
+	U16_DAYS_IN_LEAP_YEAR, U16_MILLIS_IN_SECOND, U32_NANOS_IN_MILLI, U32_SECONDS_IN_HOUR, U32_SECONDS_IN_MINUTE, U64_DAYS_IN_4_YEARS, U64_DAYS_IN_400_YEAR_CYCLE, U64_LEAP_YEARS_BEFORE_EPOCH,
+	U64_SECONDS_IN_COMMON_YEAR, U64_SECONDS_IN_DAY, U64_SECONDS_IN_HOUR, U64_SECONDS_IN_MINUTE, U64_TM_YEAR_OFFSET, U64_UNIX_EPOCH_SHIFT_IN_DAYS,
 };
 
 /// A decomposition of a [`Timestamp`] into date + time parts, for a given timezone.
@@ -42,24 +42,29 @@ pub struct TimestampParts<'l> {
 }
 
 impl<'i> TimestampParts<'i> {
-	/// Returns an UNIX epoch [`TimestampParts`] (1970-01-01 00:00 UTC)
+	/// [`TimestampParts`] for UNIX epoch (`1970-01-01 00:00 UTC`)
+	pub const EPOCH: Self = Self {
+		nanoseconds: 0,
+		milliseconds: 0,
+		seconds: 0,
+		minutes: 0,
+		hour: 0,
+		month_day: 1,
+		month: 1,
+		year: TIMESTAMP_MIN_YEAR,
+		week_day: 5,
+		year_day: 1,
+		gmt_offset_negative: false,
+		gmt_offset_hours: 0,
+		gmt_offset_minutes: 0,
+		timezone: TIMEZONE_UTC,
+	};
+
+	/// Returns an UNIX epoch [`TimestampParts`] (`1970-01-01 00:00:00 UTC`).
+	#[deprecated(note = "use TimestampParts::EPOCH instead")]
+	#[inline]
 	pub fn epoch() -> Self {
-		TimestampParts {
-			nanoseconds: 0,
-			milliseconds: 0,
-			seconds: 0,
-			minutes: 0,
-			hour: 0,
-			month_day: 1,
-			month: 1,
-			year: U64_UNIX_EPOCH_YEAR,
-			week_day: 5,
-			year_day: 1,
-			gmt_offset_negative: false,
-			gmt_offset_hours: 0,
-			gmt_offset_minutes: 0,
-			timezone: TIMEZONE_UTC,
-		}
+		Self::EPOCH
 	}
 
 	/// Resolves whether a given year is a leap year.
@@ -159,10 +164,14 @@ impl<'i> TimestampParts<'i> {
 	/// Creates a local timezone [`TimestampParts`] from a given [`Timestamp`].
 	pub fn local(ts: &Timestamp) -> Self {
 		let (seconds, nanos) = ts.epoch_offset();
-		let ts = seconds as c_bindings::CTime;
-		let tm = match c_bindings::c_time_to_local_tm(ts) {
+		if seconds > TIMESTAMP_MAX_LOCAL_SECONDS {
+			panic!("timestamp {ts:?} cannot be converted to local timezone due to libc limitations");
+		}
+
+		let c_secs = seconds as c_bindings::CTime;
+		let tm = match c_bindings::c_time_to_local_tm(c_secs) {
 			Some(tm) => tm,
-			None => panic!("failed to parse local parts for timestamp={seconds}s"),
+			None => panic!("failed to parse local parts for {ts:?}"),
 		};
 
 		let gmt_offset_secs: i32;
@@ -190,7 +199,7 @@ impl<'i> TimestampParts<'i> {
 			hour: tm.tm_hour as _,
 			month_day: tm.tm_mday as _,
 			month: (1 + tm.tm_mon) as _,
-			year: (1900 + tm.tm_year) as _,
+			year: tm.tm_year as u64 + U64_TM_YEAR_OFFSET,
 			week_day: (1 + tm.tm_wday) as _,
 			year_day: (1 + tm.tm_yday) as _,
 			gmt_offset_negative,
@@ -223,6 +232,12 @@ impl<'i> TimestampParts<'i> {
 	fn year_day(&self) -> u16 {
 		let month_to_days = (if self.is_leap_year() { MONTH_TO_DAYS_LEAP_YEAR } else { MONTH_TO_DAYS_COMMON_YEAR })[(self.month - 1) as usize];
 		month_to_days + (self.month_day as u16)
+	}
+
+	/// Verifies whether a given [`TimestampParts`] is in UTC timezone, or +00:00 GMT.
+	#[inline]
+	pub fn is_utc(&self) -> bool {
+		self.gmt_offset_hours == 0 && self.gmt_offset_minutes == 0
 	}
 
 	/// Returns a sign string for the timezone GMT offset (either `+` or `-`).
@@ -260,7 +275,7 @@ impl<'i> TimestampParts<'i> {
 
 	/// Resolves the total number of leap since UNIX epoch.
 	pub fn leap_years_since_epoch(&self) -> u64 {
-		if self.year < U64_UNIX_EPOCH_YEAR {
+		if self.year < TIMESTAMP_MIN_YEAR {
 			return 0;
 		}
 		let year = self.year - 1;
@@ -271,6 +286,8 @@ impl<'i> TimestampParts<'i> {
 
 	/// Validates [`TimestampParts`] individual fields for correctness.
 	fn validate_fields(&self) -> Result<(), &'i str> {
+		let max_year = if self.is_utc() { TIMESTAMP_MAX_YEAR } else { TIMESTAMP_MAX_LOCAL_YEAR };
+
 		if self.nanoseconds >= U32_NANOS_IN_MILLI {
 			return Err("invalid nanoseconds field");
 		}
@@ -289,7 +306,7 @@ impl<'i> TimestampParts<'i> {
 		if self.month < 1 || self.month > U8_MONTHS_IN_YEAR {
 			return Err("invalid month field");
 		}
-		if self.year < U64_UNIX_EPOCH_YEAR || self.year > U64_MAX_YEAR {
+		if self.year < TIMESTAMP_MIN_YEAR || self.year > max_year {
 			return Err("invalid year field");
 		}
 		if self.month_day < 1 || self.month_day > (if self.is_leap_year() { DAYS_IN_MONTH_LEAP_YEAR } else { DAYS_IN_MONTH_COMMON_YEAR })[(self.month - 1) as usize] {
@@ -339,7 +356,7 @@ impl<'i> TimestampParts<'i> {
 		let tm_sec = self.seconds as u64;
 		let tm_min = self.minutes as u64;
 		let tm_hour = self.hour as u64;
-		let tm_year = self.year - U64_UNIX_EPOCH_YEAR;
+		let tm_year = self.year - TIMESTAMP_MIN_YEAR;
 		let tm_yday = (self.year_day() - 1) as u64;
 		let leap_years = self.leap_years_since_epoch();
 
@@ -374,6 +391,19 @@ mod test {
 	use crate::test_helpers;
 
 	#[test]
+	fn is_utc() {
+		let utc = TimestampParts::EPOCH;
+
+		let mut local = TimestampParts::EPOCH;
+		local.hour = 17;
+		local.gmt_offset_hours = 4;
+		local.timezone = "Asia/Baku";
+
+		assert!(utc.is_utc());
+		assert!(!local.is_utc());
+	}
+
+	#[test]
 	fn gmt_offset_parts() {
 		assert_eq!(TimestampParts::_gmt_offset_parts(30600), (false, 8, 30));
 		assert_eq!(TimestampParts::_gmt_offset_parts(-13500), (true, 3, 45));
@@ -382,14 +412,14 @@ mod test {
 	#[test]
 	fn gmt_offset_seconds() {
 		for (parts, want) in [
-			(TimestampParts::epoch(), 0),
+			(TimestampParts::EPOCH, 0),
 			(
 				TimestampParts {
 					gmt_offset_negative: true,
 					gmt_offset_hours: 9,
 					gmt_offset_minutes: 30,
 					timezone: "Pacific/Marquesas",
-					..TimestampParts::epoch()
+					..TimestampParts::EPOCH
 				},
 				-34200,
 			),
@@ -399,7 +429,7 @@ mod test {
 					gmt_offset_hours: 6,
 					gmt_offset_minutes: 0,
 					timezone: "America/Edmonton",
-					..TimestampParts::epoch()
+					..TimestampParts::EPOCH
 				},
 				-21600,
 			),
@@ -409,7 +439,7 @@ mod test {
 					gmt_offset_hours: 4,
 					gmt_offset_minutes: 0,
 					timezone: "Asia/Baku",
-					..TimestampParts::epoch()
+					..TimestampParts::EPOCH
 				},
 				14400,
 			),
@@ -419,7 +449,7 @@ mod test {
 					gmt_offset_hours: 3,
 					gmt_offset_minutes: 30,
 					timezone: "Asia/Tehran",
-					..TimestampParts::epoch()
+					..TimestampParts::EPOCH
 				},
 				12600,
 			),
@@ -465,7 +495,7 @@ mod test {
 
 	#[test]
 	fn leap_years_since_epoch() {
-		let mut parts = TimestampParts::epoch();
+		let mut parts = TimestampParts::EPOCH;
 
 		assert_eq!(parts.leap_years_since_epoch(), 0);
 		parts.year = 1971;
@@ -486,8 +516,20 @@ mod test {
 	}
 
 	#[test]
+	#[should_panic]
+	fn parts_conversion_max_timestamp() {
+		_ = Timestamp::MAX.as_local_parts();
+	}
+
+	#[test]
+	#[should_panic]
+	fn parts_conversion_timestamp_overflow() {
+		let _ = Timestamp::from_secs(TIMESTAMP_MAX_LOCAL_SECONDS + 1).as_local_parts();
+	}
+
+	#[test]
 	fn parts_field_validation() {
-		let mut parts = TimestampParts::epoch();
+		let mut parts = TimestampParts::EPOCH;
 
 		// rely on the order fields are checked so we don't build a new TimestampParts every time
 		parts.nanoseconds = 0;
@@ -608,7 +650,7 @@ mod test {
 
 	#[test]
 	fn parts_validation() {
-		let mut parts = TimestampParts::epoch();
+		let mut parts = TimestampParts::EPOCH;
 
 		// rely on the order fields are checked so we don't build a new TimestampParts every time
 		parts.nanoseconds = 1000037;
@@ -667,7 +709,7 @@ mod test {
 
 	#[test]
 	fn epoch_parts() {
-		assert_eq!(Timestamp::epoch().as_utc_parts(), TimestampParts::epoch());
+		assert_eq!(Timestamp::EPOCH.as_utc_parts(), TimestampParts::EPOCH);
 	}
 
 	#[test]
@@ -711,6 +753,26 @@ mod test {
 				},
 				Err("timestamp GMT offset underflow"),
 			),
+			// local year is too large
+			(
+				TimestampParts {
+					nanoseconds: 0,
+					milliseconds: 0,
+					seconds: 0,
+					minutes: 0,
+					hour: 0,
+					month_day: 1,
+					month: 1,
+					year: TIMESTAMP_MAX_LOCAL_YEAR + 1,
+					week_day: 1,
+					year_day: 1,
+					gmt_offset_negative: true,
+					gmt_offset_hours: 3,
+					gmt_offset_minutes: 0,
+					timezone: "Europe/Istanbul",
+				},
+				Err("invalid year field"),
+			),
 			// Max supported date is 584554051223-11-09 07:00:15 UTC.
 			(
 				TimestampParts {
@@ -721,7 +783,7 @@ mod test {
 					hour: 7,
 					month_day: 9,
 					month: 11,
-					year: U64_MAX_YEAR,
+					year: TIMESTAMP_MAX_YEAR,
 					week_day: 1,
 					year_day: 1,
 					gmt_offset_negative: false,
@@ -731,27 +793,8 @@ mod test {
 				},
 				Err("timestamp overflow"),
 			),
-			(
-				TimestampParts {
-					nanoseconds: 456,
-					milliseconds: 123,
-					seconds: 15,
-					minutes: 0,
-					hour: 7,
-					month_day: 9,
-					month: 11,
-					year: U64_MAX_YEAR,
-					week_day: 1,
-					year_day: 1,
-					gmt_offset_negative: true,
-					gmt_offset_hours: 3,
-					gmt_offset_minutes: 0,
-					timezone: "Europe/Istanbul",
-				},
-				Err("timestamp GMT offset overflow"),
-			),
 		] {
-			assert_eq!(parts.to_timestamp(), want);
+			assert_eq!(parts.to_timestamp(), want, "{:?}", parts);
 		}
 	}
 
@@ -790,7 +833,7 @@ mod test {
 		for (ts, want_parts) in [
 			// epoch
 			(
-				Timestamp::epoch(),
+				Timestamp::EPOCH,
 				TimestampParts {
 					nanoseconds: 0,
 					milliseconds: 0,
@@ -802,6 +845,46 @@ mod test {
 					year: 1970,
 					week_day: 5,
 					year_day: 1,
+					gmt_offset_negative: false,
+					gmt_offset_hours: 0,
+					gmt_offset_minutes: 0,
+					timezone: "UTC",
+				},
+			),
+			// min supported timestamp
+			(
+				Timestamp::MIN,
+				TimestampParts {
+					nanoseconds: 0,
+					milliseconds: 0,
+					seconds: 0,
+					minutes: 0,
+					hour: 0,
+					month_day: 1,
+					month: 1,
+					year: 1970,
+					week_day: 5,
+					year_day: 1,
+					gmt_offset_negative: false,
+					gmt_offset_hours: 0,
+					gmt_offset_minutes: 0,
+					timezone: "UTC",
+				},
+			),
+			// max supported timestamp
+			(
+				Timestamp::MAX,
+				TimestampParts {
+					nanoseconds: 999999,
+					milliseconds: 999,
+					seconds: 15,
+					minutes: 0,
+					hour: 7,
+					month_day: 9,
+					month: 11,
+					year: 584554051223,
+					week_day: 5,
+					year_day: 313,
 					gmt_offset_negative: false,
 					gmt_offset_hours: 0,
 					gmt_offset_minutes: 0,

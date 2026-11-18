@@ -4,8 +4,20 @@ use std::mem::MaybeUninit;
 
 /* ----------------------- Bindings for C stdlib time functions ----------------------- */
 
-// time_t is platform-specific, so use the largest single-register type available
-pub type CTime = usize;
+// time_t is always a *signed* type, with a bit width depending on
+// both platform and libc implementations :'(
+//
+//   - All 64-bit systems use 64-bit time_t.
+//   - musl +1.2.0 supports 64-bit time_t on 32-bit systems:
+//     https://musl.libc.org/time64.html
+#[cfg(any(target_pointer_width = "64", target_env = "musl"))]
+pub type CTime = i64;
+#[cfg(not(any(target_pointer_width = "64", target_env = "musl")))]
+pub type CTime = i32;
+
+// Type used for years in c_tm; this determines the maximum timestamp
+// which can be converted from and into c_tm structs.
+pub type CTmYear = c_int;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

@@ -8,11 +8,15 @@ pub const NULL_C_CHAR: *mut c_char = ptr::null::<*mut c_char>() as *mut c_char;
 
 /* ----------------------- Bindings for C stdlib time functions ----------------------- */
 
-// time_t should be able to store a timestamp (64-bit) on all supported platforms.
-pub type CTime = u64;
-// size_t is platform-specific, so use the largest single-register type available
+// time_t is long integer, a.k.a i64, for all _*64() MSVC calls.
+pub type CTime = i64;
+// size_t is platform-specific, so use the largest single-register type available.
 // TODO: replace by core::ffi::c_size_t once stable.
 pub type CSize = usize;
+
+// Type used for years in c_tm; this determines the maximum timestamp
+// which can be converted from and into c_tm structs.
+pub type CTmYear = c_int;
 
 // TZ details are surprisingly expensive to resolve in Windows :( GMT offset is
 // retrieved for every timestamp generation, as it can change over the duration of

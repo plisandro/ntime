@@ -1,3 +1,5 @@
+use crate::c_bindings;
+
 pub const DAY_NAMES: [&str; 7] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 pub const MONTH_NAMES: [&str; 12] = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 pub const DAYS_IN_MONTH_COMMON_YEAR: [u8; 12] = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -6,6 +8,21 @@ pub const MONTH_TO_DAYS_COMMON_YEAR: [u16; 12] = [0, 31, 59, 90, 120, 151, 181, 
 pub const MONTH_TO_DAYS_LEAP_YEAR: [u16; 12] = [0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
 
 pub const TIMEZONE_UTC: &str = "UTC";
+
+/// Maximum supported seconds timestamp for local TZ conversions.
+/// Imposed by the fact that (g)libc calls deal with seconds timestamps as
+/// signed types, while NanoTime uses u64 seconds timestamps.
+pub const TIMESTAMP_MAX_LOCAL_SECONDS: u64 = c_bindings::CTime::MAX as u64;
+
+/// Minimum year representable by a [`Timestamp`][crate::Timestamp].
+pub const TIMESTAMP_MIN_YEAR: u64 = 1970;
+
+/// Maximum year representable by a [`Timestamp`][crate::Timestamp].
+pub const TIMESTAMP_MAX_YEAR: u64 = 584554051223;
+
+/// Maximum year supported by local [`TimestampParts`][crate::TimestampParts] conversion.
+/// This limit is imposed by libc calls using the tm struct.
+pub const TIMESTAMP_MAX_LOCAL_YEAR: u64 = c_bindings::CTmYear::MAX as u64 + U64_TM_YEAR_OFFSET;
 
 /* ----------------------- Dumb conversion constants ----------------------- */
 // these *really* help readability
@@ -37,10 +54,9 @@ pub const U64_SECONDS_IN_HOUR: u64 = U32_SECONDS_IN_HOUR as _;
 pub const U64_SECONDS_IN_DAY: u64 = U32_SECONDS_IN_DAY as _;
 pub const U64_SECONDS_IN_COMMON_YEAR: u64 = U16_DAYS_IN_COMMON_YEAR as u64 * U64_SECONDS_IN_DAY;
 pub const U64_LEAP_YEARS_BEFORE_EPOCH: u64 = U16_LEAP_YEARS_BEFORE_EPOCH as _;
-pub const U64_UNIX_EPOCH_YEAR: u64 = 1970;
 pub const U64_DAYS_IN_400_YEAR_CYCLE: u64 = 146097;
 pub const U64_DAYS_IN_4_YEARS: u64 = 1461;
-pub const U64_MAX_YEAR: u64 = 584554051223;
+pub const U64_TM_YEAR_OFFSET: u64 = 1900;
 
 pub const U128_MILLIS_IN_SECOND: u128 = U16_MILLIS_IN_SECOND as _;
 pub const U128_NANOS_IN_MILLI: u128 = U32_NANOS_IN_MILLI as _;

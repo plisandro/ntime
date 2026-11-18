@@ -5,7 +5,7 @@ use std::io;
 use std::time;
 use std::time::Duration;
 
-use crate::constant::{TIMEZONE_UTC, U64_SECONDS_IN_DAY, U128_MILLIS_IN_SECOND, U128_NANOS_IN_MILLI, U128_NANOS_IN_SECOND};
+use crate::constant::{TIMEZONE_UTC, U32_NANOS_IN_SECOND, U64_SECONDS_IN_DAY, U128_MILLIS_IN_SECOND, U128_NANOS_IN_MILLI, U128_NANOS_IN_SECOND};
 use crate::format::{Format, Precision, Timezone};
 use crate::parts::TimestampParts;
 
@@ -31,22 +31,42 @@ pub struct UTCDateTime {
 }
 
 impl UTCDateTime {
-	/// Returns an UNIX epoch [`UTCDateTime`] (1970-01-01 00:00 UTC)
+	/// Minimum supported [`UTCDateTime`]: `1970-01-01 00:00:00.000000000 UTC`
+	pub const MIN: Self = Self {
+		year: 1970,
+		month: 1,
+		day: 1,
+		hour: 0,
+		minutes: 0,
+		seconds: 0,
+		milliseconds: 0,
+		nanoseconds: 0,
+	};
+
+	/// Maximum supported [`UTCDateTime`]: `584554051223-11-09 07:00:15.999999999 UTC`
+	pub const MAX: Self = Self {
+		year: 584554051223,
+		month: 11,
+		day: 9,
+		hour: 7,
+		minutes: 0,
+		seconds: 15,
+		milliseconds: 999,
+		nanoseconds: 999999,
+	};
+
+	/// UNIX epoch [`UTCDateTime`] (`1970-01-01 00:00:00 UTC`)
+	pub const EPOCH: Self = Self::MIN;
+
+	/// Returns the UNIX epoch [`UTCDateTime`] (`1970-01-01 00:00:00 UTC`).
+	#[deprecated(note = "use UTCDateTime::EPOCH instead")]
+	#[inline]
 	pub fn epoch() -> Self {
-		Self {
-			year: 1970,
-			month: 1,
-			day: 1,
-			hour: 0,
-			minutes: 0,
-			seconds: 0,
-			milliseconds: 0,
-			nanoseconds: 0,
-		}
+		Self::EPOCH
 	}
 }
 
-/// Encapsulates a timestamp, as number of nanoseconds since UNIX epoch (1970-01-01 00:00 UTC).
+/// Encapsulates a timestamp, as number of nanoseconds since UNIX epoch (`1970-01-01 00:00:00 UTC`).
 #[derive(Debug, Copy, Hash, Clone, PartialEq, Eq)]
 pub struct Timestamp {
 	seconds: u64,
@@ -80,7 +100,7 @@ impl TryFrom<(u64, u8, u8)> for Timestamp {
 			year,
 			month,
 			day,
-			..UTCDateTime::epoch()
+			..UTCDateTime::EPOCH
 		})
 	}
 }
@@ -97,7 +117,7 @@ impl TryFrom<(u64, u8, u8, u8, u8, u8)> for Timestamp {
 			hour,
 			minutes,
 			seconds,
-			..UTCDateTime::epoch()
+			..UTCDateTime::EPOCH
 		})
 	}
 }
@@ -121,6 +141,18 @@ impl TryFrom<(u64, u8, u8, u8, u8, u8, u16, u32)> for Timestamp {
 }
 
 impl<'i> Timestamp {
+	/// Minimum supported [`Timestamp`]: `1970-01-01 00:00:00.000000000 UTC`.
+	pub const MIN: Timestamp = Self { seconds: 0, nanoseconds: 0 };
+
+	/// Maximum supported [`Timestamp`]: `584554051223-11-09 07:00:15.999999999 UTC`.
+	pub const MAX: Timestamp = Self {
+		seconds: u64::MAX,
+		nanoseconds: U32_NANOS_IN_SECOND - 1,
+	};
+
+	/// UNIX epoch [`Timestamp`] (`1970-01-01 00:00:00 UTC`)
+	pub const EPOCH: Self = Self::MIN;
+
 	/// Creates a [`Timestamp`] from a given epoch timestamp in seconds + nanoseconds.
 	pub fn new(secs: u64, nanos: u32) -> Self {
 		Self { seconds: secs, nanoseconds: nanos }
@@ -174,9 +206,11 @@ impl<'i> Timestamp {
 		.to_timestamp()
 	}
 
-	/// Returns an UNIX epoch [`Timestamp`] (1970-01-01 00:00 UTC)
+	/// Returns an UNIX epoch [`Timestamp`] (`1970-01-01 00:00:00 UTC`).
+	#[deprecated(note = "use Timestamp::EPOCH instead")]
+	#[inline]
 	pub fn epoch() -> Self {
-		Self::new(0, 0)
+		Self::EPOCH
 	}
 
 	/// Creates a [`Timestamp`] from a given [`std::time::SystemTime`].
@@ -372,7 +406,7 @@ mod tests {
 
 	#[test]
 	fn days_since_epoch() {
-		assert_eq!(Timestamp::epoch().days_since_epoch(), 0);
+		assert_eq!(Timestamp::EPOCH.days_since_epoch(), 0);
 		assert_eq!(Timestamp::try_from((1980, 7, 19, 18, 15, 0)).unwrap().days_since_epoch(), 3852);
 		assert_eq!(Timestamp::new(1772457020, 789).days_since_epoch(), 20514);
 		assert_eq!(Timestamp::from_secs(1772457213).days_since_epoch(), 20514);

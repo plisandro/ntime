@@ -16,7 +16,13 @@ mod dummy_examples {
 	}
 
 	#[test]
-	fn initialization() {
+	fn from_utc_datetime_tuple() {
+		let ts = Timestamp::try_from((2026, 11, 18, 22, 17, 19)).expect("invalid date/time values");
+		println!("initialized from date/time values to {ts}");
+	}
+
+	#[test]
+	fn from_utcdatetime() {
 		let udt = UTCDateTime {
 			year: 2026,
 			month: 3,
