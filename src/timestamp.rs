@@ -6,6 +6,7 @@ use std::time;
 use std::time::Duration;
 
 use crate::constant::{TIMEZONE_UTC, U32_NANOS_IN_SECOND, U64_SECONDS_IN_DAY, U128_MILLIS_IN_SECOND, U128_NANOS_IN_MILLI, U128_NANOS_IN_SECOND};
+use crate::error::CastError;
 use crate::format::{Format, Precision, Timezone};
 use crate::parts::TimestampParts;
 
@@ -75,19 +76,19 @@ pub struct Timestamp {
 
 /// Initializes a [`Timestamp`] from a [`std::time::SystemTime`] reference.
 impl TryFrom<&std::time::SystemTime> for Timestamp {
-	type Error = &'static str;
+	type Error = CastError;
 
 	fn try_from(time: &time::SystemTime) -> Result<Self, Self::Error> {
 		match time.duration_since(time::UNIX_EPOCH) {
 			Ok(d) => Ok(Self::from_nanos(d.as_nanos())),
-			Err(_) => Err("failed to parse SystemTime"),
+			Err(e) => Err(CastError::from(e)),
 		}
 	}
 }
 
 /// Initializes a [`Timestamp`] from a [`std::time::SystemTime`].
 impl TryFrom<std::time::SystemTime> for Timestamp {
-	type Error = &'static str;
+	type Error = CastError;
 
 	fn try_from(time: time::SystemTime) -> Result<Self, Self::Error> {
 		Self::try_from(&time)
@@ -96,7 +97,7 @@ impl TryFrom<std::time::SystemTime> for Timestamp {
 
 /// Initializes a [`Timestamp`] from a given [`UTCDateTime`], which gets consumed.
 impl TryFrom<UTCDateTime> for Timestamp {
-	type Error = &'static str;
+	type Error = CastError;
 
 	fn try_from(udt: UTCDateTime) -> Result<Self, Self::Error> {
 		Timestamp::from_utc_datetime(&udt)
@@ -105,7 +106,7 @@ impl TryFrom<UTCDateTime> for Timestamp {
 
 /// Initializes a [`Timestamp`] from a given [`UTCDateTime`] reference.
 impl<'i> TryFrom<&'i UTCDateTime> for Timestamp {
-	type Error = &'static str;
+	type Error = CastError;
 
 	fn try_from(udt: &'i UTCDateTime) -> Result<Self, Self::Error> {
 		Timestamp::from_utc_datetime(udt)
@@ -114,7 +115,7 @@ impl<'i> TryFrom<&'i UTCDateTime> for Timestamp {
 
 /// Initializes a [`Timestamp`] from a (year, month, day) tuple.
 impl TryFrom<(u64, u8, u8)> for Timestamp {
-	type Error = &'static str;
+	type Error = CastError;
 
 	fn try_from((year, month, day): (u64, u8, u8)) -> Result<Self, Self::Error> {
 		Self::try_from(UTCDateTime {
@@ -128,7 +129,7 @@ impl TryFrom<(u64, u8, u8)> for Timestamp {
 
 /// Initializes a [`Timestamp`] from a (year, month, day, hour, minutes, seconds) tuple.
 impl TryFrom<(u64, u8, u8, u8, u8, u8)> for Timestamp {
-	type Error = &'static str;
+	type Error = CastError;
 
 	fn try_from((year, month, day, hour, minutes, seconds): (u64, u8, u8, u8, u8, u8)) -> Result<Self, Self::Error> {
 		Self::try_from(UTCDateTime {
@@ -145,7 +146,7 @@ impl TryFrom<(u64, u8, u8, u8, u8, u8)> for Timestamp {
 
 /// Initializes a [`Timestamp`] from a (year, month, day, hour, minutes, seconds, milliseconds, nanoseconds) tuple.
 impl TryFrom<(u64, u8, u8, u8, u8, u8, u16, u32)> for Timestamp {
-	type Error = &'static str;
+	type Error = CastError;
 
 	fn try_from((year, month, day, hour, minutes, seconds, milliseconds, nanoseconds): (u64, u8, u8, u8, u8, u8, u16, u32)) -> Result<Self, Self::Error> {
 		Self::try_from(UTCDateTime {
@@ -201,12 +202,12 @@ impl<'i> Timestamp {
 	}
 
 	/// Creates a [`Timestamp`] from a given [`TimestampParts`].
-	pub fn from_parts(parts: &'i TimestampParts) -> Result<Self, &'i str> {
+	pub fn from_parts(parts: &'i TimestampParts) -> Result<Self, CastError> {
 		parts.to_timestamp()
 	}
 
 	/// Creates a [`Timestamp`] from a given [`UTCDateTime`].
-	fn from_utc_datetime(udt: &UTCDateTime) -> Result<Self, &'i str> {
+	fn from_utc_datetime(udt: &UTCDateTime) -> Result<Self, CastError> {
 		TimestampParts {
 			nanoseconds: udt.nanoseconds,
 			milliseconds: udt.milliseconds,
@@ -335,6 +336,7 @@ impl<'i> Timestamp {
 	}
 
 	/// Returns the difference between two timestamps as [`time::Duration`].
+	// TODO: give me a proper error type
 	pub fn diff_as_duration(&self, other: &Self) -> Result<Duration, &'static str> {
 		let self_nanos = self.as_nanos();
 		let other_nanos = other.as_nanos();

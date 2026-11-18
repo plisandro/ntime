@@ -7,6 +7,7 @@ use crate::constant::{
 	U16_DAYS_IN_LEAP_YEAR, U16_MILLIS_IN_SECOND, U32_NANOS_IN_MILLI, U32_SECONDS_IN_HOUR, U32_SECONDS_IN_MINUTE, U64_DAYS_IN_4_YEARS, U64_DAYS_IN_400_YEAR_CYCLE, U64_LEAP_YEARS_BEFORE_EPOCH,
 	U64_SECONDS_IN_COMMON_YEAR, U64_SECONDS_IN_DAY, U64_SECONDS_IN_HOUR, U64_SECONDS_IN_MINUTE, U64_TM_YEAR_OFFSET, U64_UNIX_EPOCH_SHIFT_IN_DAYS,
 };
+use crate::error::CastError;
 
 /// A decomposition of a [`Timestamp`] into date + time parts, for a given timezone.
 #[derive(Clone, Debug, PartialEq)]
@@ -285,45 +286,45 @@ impl<'i> TimestampParts<'i> {
 	}
 
 	/// Validates [`TimestampParts`] individual fields for correctness.
-	fn validate_fields(&self) -> Result<(), &'i str> {
+	fn validate_fields(&self) -> Result<(), CastError> {
 		let max_year = if self.is_utc() { TIMESTAMP_MAX_YEAR } else { TIMESTAMP_MAX_LOCAL_YEAR };
 
 		if self.nanoseconds >= U32_NANOS_IN_MILLI {
-			return Err("invalid nanoseconds field");
+			return Err(CastError::TimestampParts("invalid nanoseconds field".into()));
 		}
 		if self.milliseconds >= U16_MILLIS_IN_SECOND {
-			return Err("invalid milliseconds field");
+			return Err(CastError::TimestampParts("invalid milliseconds field".into()));
 		}
 		if self.seconds >= U8_SECONDS_IN_MINUTE {
-			return Err("invalid seconds field");
+			return Err(CastError::TimestampParts("invalid seconds field".into()));
 		}
 		if self.minutes >= U8_MINUTES_IN_HOUR {
-			return Err("invalid minutes field");
+			return Err(CastError::TimestampParts("invalid minutes field".into()));
 		}
 		if self.hour >= U8_HOURS_IN_DAY {
-			return Err("invalid hour field");
+			return Err(CastError::TimestampParts("invalid hour field".into()));
 		}
 		if self.month < 1 || self.month > U8_MONTHS_IN_YEAR {
-			return Err("invalid month field");
+			return Err(CastError::TimestampParts("invalid month field".into()));
 		}
 		if self.year < TIMESTAMP_MIN_YEAR || self.year > max_year {
-			return Err("invalid year field");
+			return Err(CastError::TimestampParts("invalid year field".into()));
 		}
 		if self.month_day < 1 || self.month_day > (if self.is_leap_year() { DAYS_IN_MONTH_LEAP_YEAR } else { DAYS_IN_MONTH_COMMON_YEAR })[(self.month - 1) as usize] {
-			return Err("invalid month_day field");
+			return Err(CastError::TimestampParts("invalid month_day field".into()));
 		};
 		if self.week_day < 1 || self.week_day > U8_DAYS_IN_WEEK {
-			return Err("invalid week_day field");
+			return Err(CastError::TimestampParts("invalid week_day field".into()));
 		}
 		if self.year_day < 1 || self.year_day > (if self.is_leap_year() { U16_DAYS_IN_LEAP_YEAR } else { U16_DAYS_IN_COMMON_YEAR }) {
-			return Err("invalid year_day field");
+			return Err(CastError::TimestampParts("invalid year_day field".into()));
 		}
 		// no checks for self.gmt_offset_negative
 		if self.gmt_offset_hours >= U8_HOURS_IN_DAY {
-			return Err("invalid gmt_offset_hours field");
+			return Err(CastError::TimestampParts("invalid gmt_offset_hours field".into()));
 		}
 		if self.gmt_offset_minutes >= U8_MINUTES_IN_HOUR {
-			return Err("invalid gmt_offset_minutes field");
+			return Err(CastError::TimestampParts("invalid gmt_offset_minutes field".into()));
 		}
 		// no checks for self.timezone
 
@@ -331,20 +332,20 @@ impl<'i> TimestampParts<'i> {
 	}
 
 	/// Validates [`TimestampParts`] for correctness.
-	pub fn validate(&self) -> Result<(), &'i str> {
+	pub fn validate(&self) -> Result<(), CastError> {
 		self.validate_fields()?;
 
 		// ensure the provided day of the year matches with other fields
 		let expected_year_day = self.year_day();
 		if self.year_day != expected_year_day {
-			return Err("year_day doesn't match year + month + month_day");
+			return Err(CastError::TimestampParts("year_day doesn't match year + month + month_day".into()));
 		}
 
 		Ok(())
 	}
 
 	/// Converts the parts structure back into a [`Timestamp`], much like glibc's timegm().
-	pub fn to_timestamp(&self) -> Result<Timestamp, &'i str> {
+	pub fn to_timestamp(&self) -> Result<Timestamp, CastError> {
 		self.validate_fields()?;
 
 		// See https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_15 for
@@ -362,17 +363,17 @@ impl<'i> TimestampParts<'i> {
 
 		// compute total seconds since epoch...
 		let mut secs = tm_sec + tm_min * U64_SECONDS_IN_MINUTE + tm_hour * U64_SECONDS_IN_HOUR + tm_yday * U64_SECONDS_IN_DAY;
-		let year_secs = tm_year.checked_mul(U64_SECONDS_IN_COMMON_YEAR).ok_or("timestamp year overflow")?;
-		let leap_year_secs = leap_years.checked_mul(U64_SECONDS_IN_DAY).ok_or("timestamp leap years overflow")?;
-		secs = secs.checked_add(year_secs).ok_or("timestamp overflow")?;
-		secs = secs.checked_add(leap_year_secs).ok_or("timestamp overflow")?;
+		let year_secs = tm_year.checked_mul(U64_SECONDS_IN_COMMON_YEAR).ok_or(CastError::from("timestamp year overflow"))?;
+		let leap_year_secs = leap_years.checked_mul(U64_SECONDS_IN_DAY).ok_or(CastError::from("timestamp leap years overflow"))?;
+		secs = secs.checked_add(year_secs).ok_or(CastError::from("timestamp overflow"))?;
+		secs = secs.checked_add(leap_year_secs).ok_or(CastError::from("timestamp overflow"))?;
 
 		// ..and add GMT offset.
 		let gmt_offset_secs = (self.gmt_offset_minutes as u64) * U64_SECONDS_IN_MINUTE + (self.gmt_offset_hours as u64) * U64_SECONDS_IN_HOUR;
 		if self.gmt_offset_negative {
-			secs = secs.checked_add(gmt_offset_secs).ok_or("timestamp GMT offset overflow")?;
+			secs = secs.checked_add(gmt_offset_secs).ok_or(CastError::from("timestamp GMT offset overflow"))?;
 		} else {
-			secs = secs.checked_sub(gmt_offset_secs).ok_or("timestamp GMT offset underflow")?;
+			secs = secs.checked_sub(gmt_offset_secs).ok_or(CastError::from("timestamp GMT offset underflow"))?;
 		};
 
 		let nanos = self.nanoseconds + ((self.milliseconds as u32) * U32_NANOS_IN_MILLI);
@@ -537,7 +538,7 @@ mod test {
 		parts.nanoseconds = 999999;
 		assert_eq!(parts.validate_fields(), Ok(()));
 		parts.nanoseconds = 1000000;
-		assert_eq!(parts.validate_fields(), Err("invalid nanoseconds field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid nanoseconds field".into())));
 		parts.nanoseconds = 10037;
 
 		parts.milliseconds = 0;
@@ -545,9 +546,9 @@ mod test {
 		parts.milliseconds = 999;
 		assert_eq!(parts.validate_fields(), Ok(()));
 		parts.milliseconds = 1000;
-		assert_eq!(parts.validate_fields(), Err("invalid milliseconds field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid milliseconds field".into())));
 		parts.milliseconds = 2196;
-		assert_eq!(parts.validate_fields(), Err("invalid milliseconds field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid milliseconds field".into())));
 		parts.milliseconds = 761;
 
 		parts.seconds = 0;
@@ -555,9 +556,9 @@ mod test {
 		parts.seconds = 59;
 		assert_eq!(parts.validate_fields(), Ok(()));
 		parts.seconds = 60;
-		assert_eq!(parts.validate_fields(), Err("invalid seconds field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid seconds field".into())));
 		parts.seconds = 77;
-		assert_eq!(parts.validate_fields(), Err("invalid seconds field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid seconds field".into())));
 		parts.seconds = 19;
 
 		parts.minutes = 0;
@@ -565,9 +566,9 @@ mod test {
 		parts.minutes = 59;
 		assert_eq!(parts.validate_fields(), Ok(()));
 		parts.minutes = 60;
-		assert_eq!(parts.validate_fields(), Err("invalid minutes field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid minutes field".into())));
 		parts.minutes = 77;
-		assert_eq!(parts.validate_fields(), Err("invalid minutes field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid minutes field".into())));
 		parts.minutes = 58;
 
 		parts.hour = 0;
@@ -575,56 +576,56 @@ mod test {
 		parts.hour = 2;
 		assert_eq!(parts.validate_fields(), Ok(()));
 		parts.hour = 24;
-		assert_eq!(parts.validate_fields(), Err("invalid hour field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid hour field".into())));
 		parts.hour = 22;
 
 		parts.month = 0;
-		assert_eq!(parts.validate_fields(), Err("invalid month field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid month field".into())));
 		parts.month = 1;
 		assert_eq!(parts.validate_fields(), Ok(()));
 		parts.month = 12;
 		assert_eq!(parts.validate_fields(), Ok(()));
 		parts.month = 15;
-		assert_eq!(parts.validate_fields(), Err("invalid month field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid month field".into())));
 		parts.month = 2;
 
 		parts.year = 1969;
-		assert_eq!(parts.validate_fields(), Err("invalid year field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid year field".into())));
 		parts.year = u64::MAX;
-		assert_eq!(parts.validate_fields(), Err("invalid year field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid year field".into())));
 		parts.year = 2026;
 
 		parts.month_day = 0;
-		assert_eq!(parts.validate_fields(), Err("invalid month_day field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid month_day field".into())));
 		parts.month_day = 1;
 		assert_eq!(parts.validate_fields(), Ok(()));
 		parts.month_day = 44;
-		assert_eq!(parts.validate_fields(), Err("invalid month_day field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid month_day field".into())));
 		// 2026 is a common year, so...
 		parts.month_day = 29;
-		assert_eq!(parts.validate_fields(), Err("invalid month_day field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid month_day field".into())));
 		parts.month_day = 6;
 
 		parts.week_day = 0;
-		assert_eq!(parts.validate_fields(), Err("invalid week_day field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid week_day field".into())));
 		parts.week_day = 1;
 		assert_eq!(parts.validate_fields(), Ok(()));
 		parts.week_day = 7;
 		assert_eq!(parts.validate_fields(), Ok(()));
 		parts.week_day = 8;
-		assert_eq!(parts.validate_fields(), Err("invalid week_day field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid week_day field".into())));
 		parts.week_day = 6;
 
 		parts.year_day = 0;
-		assert_eq!(parts.validate_fields(), Err("invalid year_day field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid year_day field".into())));
 		parts.year_day = 1;
 		assert_eq!(parts.validate_fields(), Ok(()));
 		parts.year_day = 365;
 		assert_eq!(parts.validate_fields(), Ok(()));
 		parts.year_day = 366;
-		assert_eq!(parts.validate_fields(), Err("invalid year_day field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid year_day field".into())));
 		parts.year_day = 390;
-		assert_eq!(parts.validate_fields(), Err("invalid year_day field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid year_day field".into())));
 		parts.year_day = 37;
 
 		parts.gmt_offset_hours = 0;
@@ -632,7 +633,7 @@ mod test {
 		parts.gmt_offset_hours = 23;
 		assert_eq!(parts.validate_fields(), Ok(()));
 		parts.gmt_offset_hours = 24;
-		assert_eq!(parts.validate_fields(), Err("invalid gmt_offset_hours field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid gmt_offset_hours field".into())));
 		parts.gmt_offset_hours = 3;
 
 		parts.gmt_offset_minutes = 0;
@@ -640,9 +641,9 @@ mod test {
 		parts.gmt_offset_minutes = 59;
 		assert_eq!(parts.validate_fields(), Ok(()));
 		parts.gmt_offset_minutes = 60;
-		assert_eq!(parts.validate_fields(), Err("invalid gmt_offset_minutes field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid gmt_offset_minutes field".into())));
 		parts.gmt_offset_minutes = 79;
-		assert_eq!(parts.validate_fields(), Err("invalid gmt_offset_minutes field"));
+		assert_eq!(parts.validate_fields(), Err(CastError::TimestampParts("invalid gmt_offset_minutes field".into())));
 		parts.gmt_offset_minutes = 45;
 
 		assert_eq!(parts.validate_fields(), Ok(()));
@@ -654,54 +655,54 @@ mod test {
 
 		// rely on the order fields are checked so we don't build a new TimestampParts every time
 		parts.nanoseconds = 1000037;
-		assert_eq!(parts.validate(), Err("invalid nanoseconds field"));
+		assert_eq!(parts.validate(), Err(CastError::TimestampParts("invalid nanoseconds field".into())));
 		parts.nanoseconds = 10037;
 
 		parts.milliseconds = 2196;
-		assert_eq!(parts.validate(), Err("invalid milliseconds field"));
+		assert_eq!(parts.validate(), Err(CastError::TimestampParts("invalid milliseconds field".into())));
 		parts.milliseconds = 761;
 
 		parts.seconds = 77;
-		assert_eq!(parts.validate(), Err("invalid seconds field"));
+		assert_eq!(parts.validate(), Err(CastError::TimestampParts("invalid seconds field".into())));
 		parts.seconds = 19;
 
 		parts.minutes = 77;
-		assert_eq!(parts.validate(), Err("invalid minutes field"));
+		assert_eq!(parts.validate(), Err(CastError::TimestampParts("invalid minutes field".into())));
 		parts.minutes = 58;
 
 		parts.hour = 24;
-		assert_eq!(parts.validate(), Err("invalid hour field"));
+		assert_eq!(parts.validate(), Err(CastError::TimestampParts("invalid hour field".into())));
 		parts.hour = 22;
 
 		parts.month = 15;
-		assert_eq!(parts.validate(), Err("invalid month field"));
+		assert_eq!(parts.validate(), Err(CastError::TimestampParts("invalid month field".into())));
 		parts.month = 2;
 
 		parts.year = 1969;
-		assert_eq!(parts.validate(), Err("invalid year field"));
+		assert_eq!(parts.validate(), Err(CastError::TimestampParts("invalid year field".into())));
 		parts.year = 2026;
 
 		// 2026 is a common year, so...
 		parts.month_day = 29;
-		assert_eq!(parts.validate(), Err("invalid month_day field"));
+		assert_eq!(parts.validate(), Err(CastError::TimestampParts("invalid month_day field".into())));
 		parts.month_day = 6;
 
 		parts.week_day = 9;
-		assert_eq!(parts.validate(), Err("invalid week_day field"));
+		assert_eq!(parts.validate(), Err(CastError::TimestampParts("invalid week_day field".into())));
 		parts.week_day = 6;
 
 		parts.year_day = 390;
-		assert_eq!(parts.validate(), Err("invalid year_day field"));
+		assert_eq!(parts.validate(), Err(CastError::TimestampParts("invalid year_day field".into())));
 		parts.year_day = 12;
-		assert_eq!(parts.validate(), Err("year_day doesn't match year + month + month_day"));
+		assert_eq!(parts.validate(), Err(CastError::TimestampParts("year_day doesn't match year + month + month_day".into())));
 		parts.year_day = 37;
 
 		parts.gmt_offset_hours = 25;
-		assert_eq!(parts.validate(), Err("invalid gmt_offset_hours field"));
+		assert_eq!(parts.validate(), Err(CastError::TimestampParts("invalid gmt_offset_hours field".into())));
 		parts.gmt_offset_hours = 3;
 
 		parts.gmt_offset_minutes = 79;
-		assert_eq!(parts.validate(), Err("invalid gmt_offset_minutes field"));
+		assert_eq!(parts.validate(), Err(CastError::TimestampParts("invalid gmt_offset_minutes field".into())));
 		parts.gmt_offset_minutes = 45;
 
 		assert_eq!(parts.validate(), Ok(()));
@@ -713,7 +714,7 @@ mod test {
 	}
 
 	#[test]
-	fn parts_to_timestamp_errors() {
+	fn parts_to_timestamp_error() {
 		for (parts, want) in [
 			(
 				TimestampParts {
@@ -732,7 +733,7 @@ mod test {
 					gmt_offset_minutes: 0,
 					timezone: "UTC",
 				},
-				Err("invalid year field"),
+				Err(CastError::TimestampParts("invalid year field".into())),
 			),
 			(
 				TimestampParts {
@@ -751,7 +752,7 @@ mod test {
 					gmt_offset_minutes: 0,
 					timezone: "Asia/Baku",
 				},
-				Err("timestamp GMT offset underflow"),
+				Err(CastError::from("timestamp GMT offset underflow")),
 			),
 			// local year is too large
 			(
@@ -771,7 +772,7 @@ mod test {
 					gmt_offset_minutes: 0,
 					timezone: "Europe/Istanbul",
 				},
-				Err("invalid year field"),
+				Err(CastError::TimestampParts("invalid year field".into())),
 			),
 			// Max supported date is 584554051223-11-09 07:00:15 UTC.
 			(
@@ -791,7 +792,7 @@ mod test {
 					gmt_offset_minutes: 0,
 					timezone: "UTC",
 				},
-				Err("timestamp overflow"),
+				Err(CastError::from("timestamp overflow")),
 			),
 		] {
 			assert_eq!(parts.to_timestamp(), want, "{:?}", parts);

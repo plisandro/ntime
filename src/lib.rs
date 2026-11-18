@@ -196,6 +196,7 @@
 #[cfg_attr(not(target_env = "msvc"), path = "c_bindings_unix.rs")]
 mod c_bindings;
 mod constant;
+mod error;
 mod format;
 mod parts;
 mod sleep;
@@ -205,6 +206,7 @@ mod timestamp;
 mod write;
 
 // Public exported symbols.
+pub use error::CastError;
 pub use format::{Format, Precision, Timezone};
 pub use parts::TimestampParts;
 pub use sleep::*;
