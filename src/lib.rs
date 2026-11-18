@@ -13,9 +13,9 @@
 //! since Unix epoch (1970-01-01 00:00 UTC). [`Timestamp`]s can be instantiated by...
 //!
 //!   * Current time: [`Timestamp::now()`]
-//!   * A standard [`std::time::SystemTime`]: [`Timestamp::from_system_time()`]
+//!   * A standard [`std::time::SystemTime`], via [`Timestamp::try_from()`].
 //!   * A UTC date & time tuple: [`Timestamp::try_from()`] with `(year, month, day[, hour, minutes, seconds[, millis, nanos]])`.
-//!   * A dedicated UTC date/time struct: [`Timestamp::try_from()`] with [`UTCDateTime`].
+//!   * A dedicated [`UTCDateTime`] struct, via [`Timestamp::try_from()`].
 //!   * From a timestamp in milliseconds/nanoseconds: [`Timestamp::new()`], [`Timestamp::from_secs()`], [`Timestamp::from_millis()`], [`Timestamp::from_nanos()`].
 //!   * From a [`TimestampParts`] struct: [`Timestamp::from_parts()`]
 //!

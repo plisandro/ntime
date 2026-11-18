@@ -73,6 +73,27 @@ pub struct Timestamp {
 	nanoseconds: u32,
 }
 
+/// Initializes a [`Timestamp`] from a [`std::time::SystemTime`] reference.
+impl TryFrom<&std::time::SystemTime> for Timestamp {
+	type Error = &'static str;
+
+	fn try_from(time: &time::SystemTime) -> Result<Self, Self::Error> {
+		match time.duration_since(time::UNIX_EPOCH) {
+			Ok(d) => Ok(Self::from_nanos(d.as_nanos())),
+			Err(_) => Err("failed to parse SystemTime"),
+		}
+	}
+}
+
+/// Initializes a [`Timestamp`] from a [`std::time::SystemTime`].
+impl TryFrom<std::time::SystemTime> for Timestamp {
+	type Error = &'static str;
+
+	fn try_from(time: time::SystemTime) -> Result<Self, Self::Error> {
+		Self::try_from(&time)
+	}
+}
+
 /// Initializes a [`Timestamp`] from a given [`UTCDateTime`], which gets consumed.
 impl TryFrom<UTCDateTime> for Timestamp {
 	type Error = &'static str;
@@ -214,16 +235,14 @@ impl<'i> Timestamp {
 	}
 
 	/// Creates a [`Timestamp`] from a given [`std::time::SystemTime`].
-	pub fn from_system_time(time: std::time::SystemTime) -> Self {
-		match time.duration_since(time::UNIX_EPOCH) {
-			Ok(d) => Self::from_nanos(d.as_nanos()),
-			Err(e) => panic!("failed to parse time duration: {e}"),
-		}
+	#[deprecated(note = "use Timestamp::try_from() instead")]
+	pub fn from_system_time(st: std::time::SystemTime) -> Self {
+		Self::try_from(st).expect("failed to parse SystemTime")
 	}
 
 	/// Creates a [`Timestamp`] for the current time.
 	pub fn now() -> Self {
-		Self::from_system_time(time::SystemTime::now())
+		Self::try_from(time::SystemTime::now()).expect("failed to parse current SystemTime")
 	}
 
 	/// Updates a [`Timestamp`] in place, with the contents of another [`Timestamp`].
@@ -366,14 +385,45 @@ mod tests {
 	use crate::test_helpers;
 
 	#[test]
-	fn from_date() {
+	fn try_from() {
+		assert_eq!(Timestamp::try_from(std::time::UNIX_EPOCH), Ok(Timestamp::EPOCH));
+		assert!(Timestamp::try_from(std::time::SystemTime::now()).is_ok());
+		assert!(
+			Timestamp::try_from(std::time::UNIX_EPOCH - std::time::Duration::from_secs(1)).is_err(),
+			"casting from pre-epoch SystemTime must fail"
+		);
+
+		assert_eq!(Timestamp::try_from((2026, 3, 7)), Ok(Timestamp { seconds: 1772841600, nanoseconds: 0 }), "cast from UTC date");
+		assert_eq!(
+			Timestamp::try_from((2026, 3, 7, 4, 48, 17)),
+			Ok(Timestamp { seconds: 1772858897, nanoseconds: 0 }),
+			"cast from UTC date+time"
+		);
 		assert_eq!(
 			Timestamp::try_from((2026, 3, 7, 4, 48, 17, 446, 37892)),
 			Ok(Timestamp {
 				seconds: 1772858897,
 				nanoseconds: 446037892,
 			}),
-			"cast from UTC date"
+			"cast from UTC date+time+millis"
+		);
+
+		assert_eq!(
+			Timestamp::try_from(UTCDateTime {
+				year: 2026,
+				month: 3,
+				day: 7,
+				hour: 4,
+				minutes: 48,
+				seconds: 17,
+				milliseconds: 446,
+				nanoseconds: 37892,
+			}),
+			Ok(Timestamp {
+				seconds: 1772858897,
+				nanoseconds: 446037892,
+			}),
+			"cast from UTCDateTime"
 		);
 	}
 
