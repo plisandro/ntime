@@ -2,7 +2,7 @@ use std::hint;
 use std::io;
 
 use divan::{Bencher, counter};
-use ntime::{Format, FormatPrecision, FormatTimezone, Timestamp};
+use ntime::{Format, Precision, Timestamp, Timezone};
 
 const BENCHMARK_LOG_ITEMS: usize = 10000;
 
@@ -33,17 +33,17 @@ mod write {
 
 		#[divan::bench]
 		fn nanoseconds(bench: Bencher) {
-			run(bench, &Format::Timestamp(FormatPrecision::Nanoseconds));
+			run(bench, &Format::Timestamp(Precision::Nanoseconds));
 		}
 
 		#[divan::bench]
 		fn utc(bench: Bencher) {
-			run(bench, &Format::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds));
+			run(bench, &Format::DateTime(Timezone::UTC, Precision::Milliseconds));
 		}
 
 		#[divan::bench]
 		fn local(bench: Bencher) {
-			run(bench, &Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds));
+			run(bench, &Format::DateTime(Timezone::Local, Precision::Milliseconds));
 		}
 	}
 
@@ -69,17 +69,17 @@ mod write {
 
 		#[divan::bench]
 		fn nanoseconds(bench: Bencher) {
-			run(bench, &Format::Timestamp(FormatPrecision::Nanoseconds));
+			run(bench, &Format::Timestamp(Precision::Nanoseconds));
 		}
 
 		#[divan::bench]
 		fn utc(bench: Bencher) {
-			run(bench, &Format::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds));
+			run(bench, &Format::DateTime(Timezone::UTC, Precision::Milliseconds));
 		}
 
 		#[divan::bench]
 		fn local(bench: Bencher) {
-			run(bench, &Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds));
+			run(bench, &Format::DateTime(Timezone::Local, Precision::Milliseconds));
 		}
 	}
 }
@@ -104,17 +104,17 @@ mod to_string {
 
 	#[divan::bench]
 	fn nanoseconds(bench: Bencher) {
-		run(bench, &Format::Timestamp(FormatPrecision::Nanoseconds));
+		run(bench, &Format::Timestamp(Precision::Nanoseconds));
 	}
 
 	#[divan::bench]
 	fn utc(bench: Bencher) {
-		run(bench, &Format::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds));
+		run(bench, &Format::DateTime(Timezone::UTC, Precision::Milliseconds));
 	}
 
 	#[divan::bench]
 	fn local(bench: Bencher) {
-		run(bench, &Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds));
+		run(bench, &Format::DateTime(Timezone::Local, Precision::Milliseconds));
 	}
 }
 
@@ -138,16 +138,16 @@ mod as_integer {
 
 	#[divan::bench]
 	fn seconds(bench: Bencher) {
-		run(bench, &Format::Timestamp(FormatPrecision::Seconds));
+		run(bench, &Format::Timestamp(Precision::Seconds));
 	}
 
 	#[divan::bench]
 	fn milliseconds(bench: Bencher) {
-		run(bench, &Format::Timestamp(FormatPrecision::Milliseconds));
+		run(bench, &Format::Timestamp(Precision::Milliseconds));
 	}
 
 	#[divan::bench]
 	fn nanoseconds(bench: Bencher) {
-		run(bench, &Format::Timestamp(FormatPrecision::Nanoseconds));
+		run(bench, &Format::Timestamp(Precision::Nanoseconds));
 	}
 }

@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod dummy_examples {
-	use ntime::{Format, FormatPrecision, FormatTimezone, Timestamp, UTCDateTime};
+	use ntime::{Format, Precision, Timestamp, Timezone, UTCDateTime};
 
 	#[test]
 	fn now() {
@@ -9,8 +9,8 @@ mod dummy_examples {
 		println!("current time as nanos:  {}", now.as_nanos());
 		println!("current time as debug:  {:?}", now);
 		println!("current time as string: {}", now);
-		println!("current time (local):   {}", now.as_string(&Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds)));
-		println!("current time (UTC):     {}", now.as_string(&Format::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds)));
+		println!("current time (local):   {}", now.as_string(&Format::DateTime(Timezone::Local, Precision::Milliseconds)));
+		println!("current time (UTC):     {}", now.as_string(&Format::DateTime(Timezone::UTC, Precision::Milliseconds)));
 		println!("week day (local):       {}", now.as_local_parts().week_day);
 		println!("year day (UTC):         {}", now.as_utc_parts().year_day);
 	}

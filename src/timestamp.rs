@@ -6,7 +6,7 @@ use std::time;
 use std::time::Duration;
 
 use crate::constant::{TIMEZONE_UTC, U64_SECONDS_IN_DAY, U128_MILLIS_IN_SECOND, U128_NANOS_IN_MILLI, U128_NANOS_IN_SECOND};
-use crate::format::{Format, FormatPrecision, FormatTimezone};
+use crate::format::{Format, Precision, Timezone};
 use crate::parts::TimestampParts;
 
 /// A UTC datetime, which can be used to initialize [`Timestamp`]s.
@@ -300,7 +300,7 @@ impl<'i> Timestamp {
 
 impl fmt::Display for Timestamp {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		write!(f, "{}", self.as_string(&Format::DateTime(FormatTimezone::Local, FormatPrecision::Seconds)))
+		write!(f, "{}", self.as_string(&Format::DateTime(Timezone::Local, Precision::Seconds)))
 	}
 }
 

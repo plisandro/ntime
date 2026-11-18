@@ -7,7 +7,7 @@ use crate::write;
 /// Supported timezones for [`Format`] settings.
 #[derive(Debug, Clone, Eq, PartialEq, Copy, Hash)]
 #[non_exhaustive]
-pub enum FormatTimezone {
+pub enum Timezone {
 	/// Local timezone.
 	Local,
 	/// UTC/GMT.
@@ -17,7 +17,7 @@ pub enum FormatTimezone {
 /// Supported precisions for [`Format`] settings.
 #[derive(Debug, Clone, Eq, PartialEq, Copy, Hash)]
 #[non_exhaustive]
-pub enum FormatPrecision {
+pub enum Precision {
 	/// Seconds: `15`.
 	Seconds,
 	/// Milliseconds: `15.488`.
@@ -32,67 +32,67 @@ pub enum FormatPrecision {
 pub enum Format {
 	/// Compact datetime.
 	///
-	///   * [UTC][`FormatTimezone::UTC`], in [seconds][`FormatPrecision::Seconds`]: `2026-03-02 13:22:15`
-	///   * [UTC][`FormatTimezone::UTC`], with [milliseconds][`FormatPrecision::Milliseconds`]: `2026-03-02 13:22:15.488`
-	///   * [UTC][`FormatTimezone::UTC`], with [nanoseconds][`FormatPrecision::Nanoseconds`]: `2026-03-02 13:22:15.488167982`
-	///   * [Local][`FormatTimezone::Local`], in [seconds][`FormatPrecision::Seconds`]: `2026-03-02 15:22:15 +0200`
-	///   * [Local][`FormatTimezone::Local`], with [milliseconds][`FormatPrecision::Milliseconds`]: `2026-03-02 15:22:15.488 +0200`
-	///   * [Local][`FormatTimezone::Local`], with [nanoseconds][`FormatPrecision::Nanoseconds`]: `2026-03-02 15:22:15.488167982 +0200`
-	DateTime(FormatTimezone, FormatPrecision),
+	///   * [UTC][`Timezone::UTC`], in [seconds][`Precision::Seconds`]: `2026-03-02 13:22:15`
+	///   * [UTC][`Timezone::UTC`], with [milliseconds][`Precision::Milliseconds`]: `2026-03-02 13:22:15.488`
+	///   * [UTC][`Timezone::UTC`], with [nanoseconds][`Precision::Nanoseconds`]: `2026-03-02 13:22:15.488167982`
+	///   * [Local][`Timezone::Local`], in [seconds][`Precision::Seconds`]: `2026-03-02 15:22:15 +0200`
+	///   * [Local][`Timezone::Local`], with [milliseconds][`Precision::Milliseconds`]: `2026-03-02 15:22:15.488 +0200`
+	///   * [Local][`Timezone::Local`], with [nanoseconds][`Precision::Nanoseconds`]: `2026-03-02 15:22:15.488167982 +0200`
+	DateTime(Timezone, Precision),
 
 	/// Compact date.
 	///
-	///   * [UTC][`FormatTimezone::UTC`]: `2026-03-02`
-	///   * [Local][`FormatTimezone::Local`]: `2026-03-02`
-	Date(FormatTimezone),
+	///   * [UTC][`Timezone::UTC`]: `2026-03-02`
+	///   * [Local][`Timezone::Local`]: `2026-03-02`
+	Date(Timezone),
 
 	/// Compact time.
 	///
-	///   * [UTC][`FormatTimezone::UTC`], in [seconds][`FormatPrecision::Seconds`]: `13:22:15`
-	///   * [UTC][`FormatTimezone::UTC`], with [milliseconds][`FormatPrecision::Milliseconds`]: `13:22:15.488`
-	///   * [UTC][`FormatTimezone::UTC`], with [nanoseconds][`FormatPrecision::Nanoseconds`]: `13:22:15.488167982`
-	///   * [Local][`FormatTimezone::Local`], in [seconds][`FormatPrecision::Seconds`]: `15:22:15`
-	///   * [Local][`FormatTimezone::Local`], with [milliseconds][`FormatPrecision::Milliseconds`]: `15:22:15.488`
-	///   * [Local][`FormatTimezone::Local`], with [nanoseconds][`FormatPrecision::Nanoseconds`]: `15:22:15.488167982`
-	Time(FormatTimezone, FormatPrecision),
+	///   * [UTC][`Timezone::UTC`], in [seconds][`Precision::Seconds`]: `13:22:15`
+	///   * [UTC][`Timezone::UTC`], with [milliseconds][`Precision::Milliseconds`]: `13:22:15.488`
+	///   * [UTC][`Timezone::UTC`], with [nanoseconds][`Precision::Nanoseconds`]: `13:22:15.488167982`
+	///   * [Local][`Timezone::Local`], in [seconds][`Precision::Seconds`]: `15:22:15`
+	///   * [Local][`Timezone::Local`], with [milliseconds][`Precision::Milliseconds`]: `15:22:15.488`
+	///   * [Local][`Timezone::Local`], with [nanoseconds][`Precision::Nanoseconds`]: `15:22:15.488167982`
+	Time(Timezone, Precision),
 
 	/// Date/time format suitable to append to filenames.
 	///
-	///   * [UTC][`FormatTimezone::UTC`]: `2026-03-02_13-22-15`
-	///   * [Local][`FormatTimezone::Local`]: `2026-03-02_15-22-15`
-	FileName(FormatTimezone),
+	///   * [UTC][`Timezone::UTC`]: `2026-03-02_13-22-15`
+	///   * [Local][`Timezone::Local`]: `2026-03-02_15-22-15`
+	FileName(Timezone),
 
 	/// [RFC 2822](https://www.rfc-editor.org/rfc/rfc2822.html) (Internet Message Format).
 	///
-	///   * [UTC][`FormatTimezone::UTC`]: `Mon, 02 Mar 2026 13:22:15 +0000`
-	///   * [Local][`FormatTimezone::Local`]: `Mon, 02 Mar 2026 15:22:15 +0200`
-	RFC2822(FormatTimezone),
+	///   * [UTC][`Timezone::UTC`]: `Mon, 02 Mar 2026 13:22:15 +0000`
+	///   * [Local][`Timezone::Local`]: `Mon, 02 Mar 2026 15:22:15 +0200`
+	RFC2822(Timezone),
 
 	/// Abridged datetime format for syslog [RFC 3164](https://www.rfc-editor.org/rfc/rfc3164.html).
 	///
-	///   * [UTC][`FormatTimezone::UTC`]: `Mar  2 13:22:15`
-	///   * [Local][`FormatTimezone::Local`]: `Mar  2 15:22:15`
-	RFC3164(FormatTimezone),
+	///   * [UTC][`Timezone::UTC`]: `Mar  2 13:22:15`
+	///   * [Local][`Timezone::Local`]: `Mar  2 15:22:15`
+	RFC3164(Timezone),
 
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF).
 	///
-	///   * [UTC][`FormatTimezone::UTC`], in [seconds][`FormatPrecision::Seconds`]: `2026-03-02T13:22:15Z`
-	///   * [UTC][`FormatTimezone::UTC`], with [milliseconds][`FormatPrecision::Milliseconds`]: `2026-03-02T13:22:15.488Z`
-	///   * [UTC][`FormatTimezone::UTC`], with [nanoseconds][`FormatPrecision::Nanoseconds`]: `2026-03-02T13:22:15.488167982Z`
-	///   * [Local][`FormatTimezone::Local`], in [seconds][`FormatPrecision::Seconds`]: `2026-03-02T15:22:15+02:00`
-	///   * [Local][`FormatTimezone::Local`], with [milliseconds][`FormatPrecision::Milliseconds`]: `2026-03-02T15:22:15.488+02:00`
-	///   * [Local][`FormatTimezone::Local`], with [nanoseconds][`FormatPrecision::Nanoseconds`]: `2026-03-02T15:22:15.488167982+02:00`
-	RFC3339(FormatTimezone, FormatPrecision),
+	///   * [UTC][`Timezone::UTC`], in [seconds][`Precision::Seconds`]: `2026-03-02T13:22:15Z`
+	///   * [UTC][`Timezone::UTC`], with [milliseconds][`Precision::Milliseconds`]: `2026-03-02T13:22:15.488Z`
+	///   * [UTC][`Timezone::UTC`], with [nanoseconds][`Precision::Nanoseconds`]: `2026-03-02T13:22:15.488167982Z`
+	///   * [Local][`Timezone::Local`], in [seconds][`Precision::Seconds`]: `2026-03-02T15:22:15+02:00`
+	///   * [Local][`Timezone::Local`], with [milliseconds][`Precision::Milliseconds`]: `2026-03-02T15:22:15.488+02:00`
+	///   * [Local][`Timezone::Local`], with [nanoseconds][`Precision::Nanoseconds`]: `2026-03-02T15:22:15.488167982+02:00`
+	RFC3339(Timezone, Precision),
 
 	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html).
 	///
-	///   * [UTC][`FormatTimezone::UTC`], in [seconds][`FormatPrecision::Seconds`]: `2026-03-02T13:22:15Z`
-	///   * [UTC][`FormatTimezone::UTC`], with [milliseconds][`FormatPrecision::Milliseconds`]: `2026-03-02T13:22:15.488Z`
-	///   * [UTC][`FormatTimezone::UTC`], with [nanoseconds][`FormatPrecision::Nanoseconds`]: `2026-03-02T13:22:15.488167982Z`
-	///   * [Local][`FormatTimezone::Local`], in [seconds][`FormatPrecision::Seconds`]: `2026-03-02T15:22:15+02:00`
-	///   * [Local][`FormatTimezone::Local`], with [milliseconds][`FormatPrecision::Milliseconds`]: `2026-03-02T15:22:15.488+02:00`
-	///   * [Local][`FormatTimezone::Local`], with [nanoseconds][`FormatPrecision::Nanoseconds`]: `2026-03-02T15:22:15.488167982+02:00`
-	ISO8601(FormatTimezone, FormatPrecision),
+	///   * [UTC][`Timezone::UTC`], in [seconds][`Precision::Seconds`]: `2026-03-02T13:22:15Z`
+	///   * [UTC][`Timezone::UTC`], with [milliseconds][`Precision::Milliseconds`]: `2026-03-02T13:22:15.488Z`
+	///   * [UTC][`Timezone::UTC`], with [nanoseconds][`Precision::Nanoseconds`]: `2026-03-02T13:22:15.488167982Z`
+	///   * [Local][`Timezone::Local`], in [seconds][`Precision::Seconds`]: `2026-03-02T15:22:15+02:00`
+	///   * [Local][`Timezone::Local`], with [milliseconds][`Precision::Milliseconds`]: `2026-03-02T15:22:15.488+02:00`
+	///   * [Local][`Timezone::Local`], with [nanoseconds][`Precision::Nanoseconds`]: `2026-03-02T15:22:15.488167982+02:00`
+	ISO8601(Timezone, Precision),
 
 	/// An alias for [`Format::RFC7231`].
 	HTTP,
@@ -101,126 +101,126 @@ pub enum Format {
 
 	/// Timestamp, as time since Unix epoch.
 	///
-	///   * In [seconds][`FormatPrecision::Seconds`]: `1772457735`
-	///   * In [milliseconds][`FormatPrecision::Milliseconds`]: `1772457735488`
-	///   * In [nanoseconds][`FormatPrecision::Nanoseconds`]: `1772457735488167982`
-	Timestamp(FormatPrecision),
+	///   * In [seconds][`Precision::Seconds`]: `1772457735`
+	///   * In [milliseconds][`Precision::Milliseconds`]: `1772457735488`
+	///   * In [nanoseconds][`Precision::Nanoseconds`]: `1772457735488167982`
+	Timestamp(Precision),
 }
 
 // deprecated API formatting definitions
 #[allow(non_upper_case_globals)]
 impl Format {
 	/// Compact datetime format, in UTC: `2026-03-02 13:22:15`
-	#[deprecated(note = "use Format::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds) instead")]
-	pub const UtcDateTime: Self = Self::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds);
+	#[deprecated(note = "use Format::DateTime(Timezone::UTC, Precision::Seconds) instead")]
+	pub const UtcDateTime: Self = Self::DateTime(Timezone::UTC, Precision::Seconds);
 	/// Compact datetime with milliseconds, in UTC: `2026-03-02 13:22:15.488`
-	#[deprecated(note = "use Format::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds) instead")]
-	pub const UtcMillisDateTime: Self = Self::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds);
+	#[deprecated(note = "use Format::DateTime(Timezone::UTC, Precision::Milliseconds) instead")]
+	pub const UtcMillisDateTime: Self = Self::DateTime(Timezone::UTC, Precision::Milliseconds);
 	/// Compact datetime with nanoseconds, in UTC: `2026-03-02 13:22:15.488167982`
-	#[deprecated(note = "use Format::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds) instead")]
-	pub const UtcNanosDateTime: Self = Self::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds);
+	#[deprecated(note = "use Format::DateTime(Timezone::UTC, Precision::Nanoseconds) instead")]
+	pub const UtcNanosDateTime: Self = Self::DateTime(Timezone::UTC, Precision::Nanoseconds);
 	/// Compact date, in UTC: `2026-03-02`
-	#[deprecated(note = "use Format::Date(FormatTimezone::UTC) instead")]
-	pub const UtcDate: Self = Self::Date(FormatTimezone::UTC);
+	#[deprecated(note = "use Format::Date(Timezone::UTC) instead")]
+	pub const UtcDate: Self = Self::Date(Timezone::UTC);
 	/// Compact time, in UTC: `13:22:15`
-	#[deprecated(note = "use Format::Time(FormatTimezone::UTC, FormatPrecision::Seconds) instead")]
-	pub const UtcTime: Self = Self::Time(FormatTimezone::UTC, FormatPrecision::Seconds);
+	#[deprecated(note = "use Format::Time(Timezone::UTC, Precision::Seconds) instead")]
+	pub const UtcTime: Self = Self::Time(Timezone::UTC, Precision::Seconds);
 	/// Compact time with milliseconds, in UTC: `13:22:15.488`
-	#[deprecated(note = "use Format::Time(FormatTimezone::UTC, FormatPrecision::Milliseconds) instead")]
-	pub const UtcMillisTime: Self = Self::Time(FormatTimezone::UTC, FormatPrecision::Milliseconds);
+	#[deprecated(note = "use Format::Time(Timezone::UTC, Precision::Milliseconds) instead")]
+	pub const UtcMillisTime: Self = Self::Time(Timezone::UTC, Precision::Milliseconds);
 	/// Compact time with nanoseconds, in UTC: `13:22:15.488167982`
-	#[deprecated(note = "use Format::Time(FormatTimezone::UTC, FormatPrecision::Nanoseconds) instead")]
-	pub const UtcNanosTime: Self = Self::Time(FormatTimezone::UTC, FormatPrecision::Nanoseconds);
+	#[deprecated(note = "use Format::Time(Timezone::UTC, Precision::Nanoseconds) instead")]
+	pub const UtcNanosTime: Self = Self::Time(Timezone::UTC, Precision::Nanoseconds);
 	/// Date/time format suitable to append to filenames. in UTC: `2026-03-02_13-22-15`
-	#[deprecated(note = "use Format::FileName(FormatTimezone::UTC) instead")]
-	pub const UtcFileName: Self = Self::FileName(FormatTimezone::UTC);
+	#[deprecated(note = "use Format::FileName(Timezone::UTC) instead")]
+	pub const UtcFileName: Self = Self::FileName(Timezone::UTC);
 	/// [RFC 2822](https://www.rfc-editor.org/rfc/rfc2822.html) (Internet Message Format), in UTC: `Mon, 02 Mar 2026 13:22:15 +0000`
-	#[deprecated(note = "use Format::RFC2822(FormatTimezone::UTC) instead")]
-	pub const UtcRFC2822: Self = Self::RFC2822(FormatTimezone::UTC);
+	#[deprecated(note = "use Format::RFC2822(Timezone::UTC) instead")]
+	pub const UtcRFC2822: Self = Self::RFC2822(Timezone::UTC);
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF), in UTC: `2026-03-02T13:22:15Z`
-	#[deprecated(note = "use Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Seconds) instead")]
-	pub const UtcRFC3339: Self = Self::RFC3339(FormatTimezone::UTC, FormatPrecision::Seconds);
+	#[deprecated(note = "use Format::RFC3339(Timezone::UTC, Precision::Seconds) instead")]
+	pub const UtcRFC3339: Self = Self::RFC3339(Timezone::UTC, Precision::Seconds);
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with millisecond precision, in UTC: `2026-03-02T13:22:15.488Z`
-	#[deprecated(note = "use Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Milliseconds) instead")]
-	pub const UtcMillisRFC3339: Self = Self::RFC3339(FormatTimezone::UTC, FormatPrecision::Milliseconds);
+	#[deprecated(note = "use Format::RFC3339(Timezone::UTC, Precision::Milliseconds) instead")]
+	pub const UtcMillisRFC3339: Self = Self::RFC3339(Timezone::UTC, Precision::Milliseconds);
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with nanosecond precision, in UTC: `2026-03-02T13:22:15.488167982Z`
-	#[deprecated(note = "use Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Nanoseconds) instead")]
-	pub const UtcNanosRFC3339: Self = Self::RFC3339(FormatTimezone::UTC, FormatPrecision::Nanoseconds);
+	#[deprecated(note = "use Format::RFC3339(Timezone::UTC, Precision::Nanoseconds) instead")]
+	pub const UtcNanosRFC3339: Self = Self::RFC3339(Timezone::UTC, Precision::Nanoseconds);
 	/// Abridged datetime format for syslog [RFC 3164](https://www.rfc-editor.org/rfc/rfc3164.html), in UTC: `Mar  2 13:22:15`
-	#[deprecated(note = "use Format::RFC3164(FormatTimezone::UTC) instead")]
-	pub const UtcRFC3164: Self = Self::RFC3164(FormatTimezone::UTC);
+	#[deprecated(note = "use Format::RFC3164(Timezone::UTC) instead")]
+	pub const UtcRFC3164: Self = Self::RFC3164(Timezone::UTC);
 	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), in UTC: `2026-03-02T13:22:15Z`
-	#[deprecated(note = "use Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Seconds) instead")]
-	pub const UtcISO8601: Self = Self::ISO8601(FormatTimezone::UTC, FormatPrecision::Seconds);
+	#[deprecated(note = "use Format::ISO8601(Timezone::UTC, Precision::Seconds) instead")]
+	pub const UtcISO8601: Self = Self::ISO8601(Timezone::UTC, Precision::Seconds);
 	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), with millisecond precision, in UTC: `2026-03-02T13:22:15.488Z`
-	#[deprecated(note = "use Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Milliseconds) instead")]
-	pub const UtcMillisISO8601: Self = Self::ISO8601(FormatTimezone::UTC, FormatPrecision::Milliseconds);
+	#[deprecated(note = "use Format::ISO8601(Timezone::UTC, Precision::Milliseconds) instead")]
+	pub const UtcMillisISO8601: Self = Self::ISO8601(Timezone::UTC, Precision::Milliseconds);
 	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), with nanosecond precision, in UTC: `2026-03-02T13:22:15.488167982Z`
-	#[deprecated(note = "use Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Nanoseconds) instead")]
-	pub const UtcNanosISO8601: Self = Self::ISO8601(FormatTimezone::UTC, FormatPrecision::Nanoseconds);
+	#[deprecated(note = "use Format::ISO8601(Timezone::UTC, Precision::Nanoseconds) instead")]
+	pub const UtcNanosISO8601: Self = Self::ISO8601(Timezone::UTC, Precision::Nanoseconds);
 	/// Compact datetime, in local timezone: `2026-03-02 15:22:15 +0200`
-	#[deprecated(note = "use Format::DateTime(FormatTimezone::Local, FormatPrecision::Seconds) instead")]
-	pub const LocalDateTime: Self = Self::DateTime(FormatTimezone::Local, FormatPrecision::Seconds);
+	#[deprecated(note = "use Format::DateTime(Timezone::Local, Precision::Seconds) instead")]
+	pub const LocalDateTime: Self = Self::DateTime(Timezone::Local, Precision::Seconds);
 	/// Compact datetime with milliseconds, in local timezone: `2026-03-02 15:22:15.488 +0200`
-	#[deprecated(note = "use Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds) instead")]
-	pub const LocalMillisDateTime: Self = Self::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds);
+	#[deprecated(note = "use Format::DateTime(Timezone::Local, Precision::Milliseconds) instead")]
+	pub const LocalMillisDateTime: Self = Self::DateTime(Timezone::Local, Precision::Milliseconds);
 	/// Compact datetime with nanoseconds, in local timezone: `2026-03-02 15:22:15.488167982 +0200`
-	#[deprecated(note = "use Format::DateTime(FormatTimezone::Local, FormatPrecision::Nanoseconds) instead")]
-	pub const LocalNanosDateTime: Self = Self::DateTime(FormatTimezone::Local, FormatPrecision::Nanoseconds);
+	#[deprecated(note = "use Format::DateTime(Timezone::Local, Precision::Nanoseconds) instead")]
+	pub const LocalNanosDateTime: Self = Self::DateTime(Timezone::Local, Precision::Nanoseconds);
 	/// Compact date, in local timezone: `2026-03-02`
-	#[deprecated(note = "use Format::Date(FormatTimezone::Local) instead")]
-	pub const LocalDate: Self = Self::Date(FormatTimezone::Local);
+	#[deprecated(note = "use Format::Date(Timezone::Local) instead")]
+	pub const LocalDate: Self = Self::Date(Timezone::Local);
 	/// Compact time, in local timezone: `15:22:15`
-	#[deprecated(note = "use Format::Time(FormatTimezone::Local, FormatPrecision::Seconds) instead")]
-	pub const LocalTime: Self = Self::Time(FormatTimezone::Local, FormatPrecision::Seconds);
+	#[deprecated(note = "use Format::Time(Timezone::Local, Precision::Seconds) instead")]
+	pub const LocalTime: Self = Self::Time(Timezone::Local, Precision::Seconds);
 	/// Compact time with milliseconds, in local timezone: `15:22:15.488`
-	#[deprecated(note = "use Format::Time(FormatTimezone::Local, FormatPrecision::Milliseconds) instead")]
-	pub const LocalMillisTime: Self = Self::Time(FormatTimezone::Local, FormatPrecision::Milliseconds);
+	#[deprecated(note = "use Format::Time(Timezone::Local, Precision::Milliseconds) instead")]
+	pub const LocalMillisTime: Self = Self::Time(Timezone::Local, Precision::Milliseconds);
 	/// Compact time with nanoseconds, in local timezone: `15:22:15.488167982`
-	#[deprecated(note = "use Format::Time(FormatTimezone::Local, FormatPrecision::Nanoseconds) instead")]
-	pub const LocalNanosTime: Self = Self::Time(FormatTimezone::Local, FormatPrecision::Nanoseconds);
+	#[deprecated(note = "use Format::Time(Timezone::Local, Precision::Nanoseconds) instead")]
+	pub const LocalNanosTime: Self = Self::Time(Timezone::Local, Precision::Nanoseconds);
 	/// Date/time format suitable to append to filenames. in local timezone: `2026-03-02_15-22-15`
-	#[deprecated(note = "use Format::FileName(FormatTimezone::Local) instead")]
-	pub const LocalFileName: Self = Self::FileName(FormatTimezone::Local);
+	#[deprecated(note = "use Format::FileName(Timezone::Local) instead")]
+	pub const LocalFileName: Self = Self::FileName(Timezone::Local);
 	/// [RFC 2822](https://www.rfc-editor.org/rfc/rfc2822.html) (Internet Message Format), in local timezone: `Mon, 02 Mar 2026 15:22:15 +0200`
-	#[deprecated(note = "use Format::RFC2822(FormatTimezone::Local) instead")]
-	pub const LocalRFC2822: Self = Self::RFC2822(FormatTimezone::Local);
+	#[deprecated(note = "use Format::RFC2822(Timezone::Local) instead")]
+	pub const LocalRFC2822: Self = Self::RFC2822(Timezone::Local);
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF), in local timezone: `2026-03-02T15:22:15+02:00`
-	#[deprecated(note = "use Format::RFC3339(FormatTimezone::Local, FormatPrecision::Seconds) instead")]
-	pub const LocalRFC3339: Self = Self::RFC3339(FormatTimezone::Local, FormatPrecision::Seconds);
+	#[deprecated(note = "use Format::RFC3339(Timezone::Local, Precision::Seconds) instead")]
+	pub const LocalRFC3339: Self = Self::RFC3339(Timezone::Local, Precision::Seconds);
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with millisecond precision, in local timezone: `2026-03-02T15:22:15.488+02:00`
-	#[deprecated(note = "use Format::RFC3339(FormatTimezone::Local, FormatPrecision::Milliseconds) instead")]
-	pub const LocalMillisRFC3339: Self = Self::RFC3339(FormatTimezone::Local, FormatPrecision::Milliseconds);
+	#[deprecated(note = "use Format::RFC3339(Timezone::Local, Precision::Milliseconds) instead")]
+	pub const LocalMillisRFC3339: Self = Self::RFC3339(Timezone::Local, Precision::Milliseconds);
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with nanosecond precision, in local timezone: `2026-03-02T15:22:15.488167982+02:00`
-	#[deprecated(note = "use Format::RFC3339(FormatTimezone::Local, FormatPrecision::Nanoseconds) instead")]
-	pub const LocalNanosRFC3339: Self = Self::RFC3339(FormatTimezone::Local, FormatPrecision::Nanoseconds);
+	#[deprecated(note = "use Format::RFC3339(Timezone::Local, Precision::Nanoseconds) instead")]
+	pub const LocalNanosRFC3339: Self = Self::RFC3339(Timezone::Local, Precision::Nanoseconds);
 	/// Abridged datetime format for syslog [RFC 3164](https://www.rfc-editor.org/rfc/rfc3164.html), in local timezone: `Mar  2 15:22:15`
-	#[deprecated(note = "use Format::RFC3164(FormatTimezone::Local) instead")]
-	pub const LocalRFC3164: Self = Self::RFC3164(FormatTimezone::Local);
+	#[deprecated(note = "use Format::RFC3164(Timezone::Local) instead")]
+	pub const LocalRFC3164: Self = Self::RFC3164(Timezone::Local);
 	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), in local timezone: `2026-03-02T15:22:15+02:00`
-	#[deprecated(note = "use Format::ISO8601(FormatTimezone::Local, FormatPrecision::Seconds) instead")]
-	pub const LocalISO8601: Self = Self::ISO8601(FormatTimezone::Local, FormatPrecision::Seconds);
+	#[deprecated(note = "use Format::ISO8601(Timezone::Local, Precision::Seconds) instead")]
+	pub const LocalISO8601: Self = Self::ISO8601(Timezone::Local, Precision::Seconds);
 	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), with millisecond precision, in local timezone: `2026-03-02T15:22:15.488+02:00`
-	#[deprecated(note = "use Format::ISO8601(FormatTimezone::Local, FormatPrecision::Milliseconds) instead")]
-	pub const LocalMillisISO8601: Self = Self::ISO8601(FormatTimezone::Local, FormatPrecision::Milliseconds);
+	#[deprecated(note = "use Format::ISO8601(Timezone::Local, Precision::Milliseconds) instead")]
+	pub const LocalMillisISO8601: Self = Self::ISO8601(Timezone::Local, Precision::Milliseconds);
 	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), with nanosecond precision, in local timezone: `2026-03-02T15:22:15.488167982+02:00`
-	#[deprecated(note = "use Format::ISO8601(FormatTimezone::Local, FormatPrecision::Nanoseconds) instead")]
-	pub const LocalNanosISO8601: Self = Self::ISO8601(FormatTimezone::Local, FormatPrecision::Nanoseconds);
+	#[deprecated(note = "use Format::ISO8601(Timezone::Local, Precision::Nanoseconds) instead")]
+	pub const LocalNanosISO8601: Self = Self::ISO8601(Timezone::Local, Precision::Nanoseconds);
 	/// Seconds since UNIX epoch: `1772457735`
-	#[deprecated(note = "use Format::Timestamp(FormatPrecision::Seconds) instead")]
-	pub const TimestampSeconds: Self = Self::Timestamp(FormatPrecision::Seconds);
+	#[deprecated(note = "use Format::Timestamp(Precision::Seconds) instead")]
+	pub const TimestampSeconds: Self = Self::Timestamp(Precision::Seconds);
 	/// Milliseconds since UNIX epoch: `1772457735488`
-	#[deprecated(note = "use Format::Timestamp(FormatPrecision::Milliseconds) instead")]
-	pub const TimestampMilliseconds: Self = Self::Timestamp(FormatPrecision::Milliseconds);
+	#[deprecated(note = "use Format::Timestamp(Precision::Milliseconds) instead")]
+	pub const TimestampMilliseconds: Self = Self::Timestamp(Precision::Milliseconds);
 	/// Nanoseconds since UNIX epoch: `1772457735488167982`
-	#[deprecated(note = "use Format::Timestamp(FormatPrecision::Nanoseconds) instead")]
-	pub const TimestampNanoseconds: Self = Self::Timestamp(FormatPrecision::Nanoseconds);
+	#[deprecated(note = "use Format::Timestamp(Precision::Nanoseconds) instead")]
+	pub const TimestampNanoseconds: Self = Self::Timestamp(Precision::Nanoseconds);
 }
 
 impl Default for Format {
-	/// Returns a default formatting for [`Timestamp`], as [`Self::DateTime`] in [`UTC`][FormatTimezone::UTC] with [millisecond][FormatPrecision::Milliseconds] precision.
+	/// Returns a default formatting for [`Timestamp`], as [`Self::DateTime`] in [`UTC`][Timezone::UTC] with [millisecond][Precision::Milliseconds] precision.
 	fn default() -> Self {
-		Self::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds)
+		Self::DateTime(Timezone::UTC, Precision::Milliseconds)
 	}
 }
 
@@ -234,58 +234,58 @@ impl Format {
 	/// Returns a string name for the [`Format`]
 	pub fn name(&self) -> &'static str {
 		match self {
-			Self::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds) => "compact datetime (UTC)",
-			Self::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds) => "compact datetime with milliseconds (UTC)",
-			Self::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds) => "compact datetime with nanoseconds (UTC)",
-			Self::DateTime(FormatTimezone::Local, FormatPrecision::Seconds) => "compact datetime (local)",
-			Self::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds) => "compact datetime with milliseconds (local)",
-			Self::DateTime(FormatTimezone::Local, FormatPrecision::Nanoseconds) => "compact datetime with nanoseconds (local)",
-			Self::Date(FormatTimezone::UTC) => "compact date (UTC)",
-			Self::Date(FormatTimezone::Local) => "compact date (local)",
-			Self::Time(FormatTimezone::UTC, FormatPrecision::Seconds) => "compact time (UTC)",
-			Self::Time(FormatTimezone::UTC, FormatPrecision::Milliseconds) => "compact time with milliseconds (UTC)",
-			Self::Time(FormatTimezone::UTC, FormatPrecision::Nanoseconds) => "compact time with nanoseconds (UTC)",
-			Self::Time(FormatTimezone::Local, FormatPrecision::Seconds) => "compact time (local)",
-			Self::Time(FormatTimezone::Local, FormatPrecision::Milliseconds) => "compact time with milliseconds (local)",
-			Self::Time(FormatTimezone::Local, FormatPrecision::Nanoseconds) => "compact time with nanoseconds (local)",
-			Self::FileName(FormatTimezone::UTC) => "date+time filename (UTC)",
-			Self::FileName(FormatTimezone::Local) => "date+time filename (local)",
-			Self::RFC2822(FormatTimezone::UTC) => "RFC 2822 (UTC)",
-			Self::RFC2822(FormatTimezone::Local) => "RFC 2822 (local)",
-			Self::RFC3339(FormatTimezone::UTC, FormatPrecision::Seconds) => "RFC 3339 (UTC)",
-			Self::RFC3339(FormatTimezone::UTC, FormatPrecision::Milliseconds) => "RFC 3339 with milliseconds (UTC)",
-			Self::RFC3339(FormatTimezone::UTC, FormatPrecision::Nanoseconds) => "RFC 3339 with nanoseconds (UTC)",
-			Self::RFC3339(FormatTimezone::Local, FormatPrecision::Seconds) => "RFC 3339 (local)",
-			Self::RFC3339(FormatTimezone::Local, FormatPrecision::Milliseconds) => "RFC 3339 with milliseconds (local)",
-			Self::RFC3339(FormatTimezone::Local, FormatPrecision::Nanoseconds) => "RFC 3339 with nanoseconds (local)",
-			Self::RFC3164(FormatTimezone::UTC) => "syslog RFC 3164 (UTC)",
-			Self::RFC3164(FormatTimezone::Local) => "syslog RFC 3164 (local)",
-			Self::ISO8601(FormatTimezone::UTC, FormatPrecision::Seconds) => "ISO 8601 (UTC)",
-			Self::ISO8601(FormatTimezone::UTC, FormatPrecision::Milliseconds) => "ISO 8601 with milliseconds (UTC)",
-			Self::ISO8601(FormatTimezone::UTC, FormatPrecision::Nanoseconds) => "ISO 8601 with nanoseconds (UTC)",
-			Self::ISO8601(FormatTimezone::Local, FormatPrecision::Seconds) => "ISO 8601 (local)",
-			Self::ISO8601(FormatTimezone::Local, FormatPrecision::Milliseconds) => "ISO 8601 with milliseconds (local)",
-			Self::ISO8601(FormatTimezone::Local, FormatPrecision::Nanoseconds) => "ISO 8601 with nanoseconds (local)",
+			Self::DateTime(Timezone::UTC, Precision::Seconds) => "compact datetime (UTC)",
+			Self::DateTime(Timezone::UTC, Precision::Milliseconds) => "compact datetime with milliseconds (UTC)",
+			Self::DateTime(Timezone::UTC, Precision::Nanoseconds) => "compact datetime with nanoseconds (UTC)",
+			Self::DateTime(Timezone::Local, Precision::Seconds) => "compact datetime (local)",
+			Self::DateTime(Timezone::Local, Precision::Milliseconds) => "compact datetime with milliseconds (local)",
+			Self::DateTime(Timezone::Local, Precision::Nanoseconds) => "compact datetime with nanoseconds (local)",
+			Self::Date(Timezone::UTC) => "compact date (UTC)",
+			Self::Date(Timezone::Local) => "compact date (local)",
+			Self::Time(Timezone::UTC, Precision::Seconds) => "compact time (UTC)",
+			Self::Time(Timezone::UTC, Precision::Milliseconds) => "compact time with milliseconds (UTC)",
+			Self::Time(Timezone::UTC, Precision::Nanoseconds) => "compact time with nanoseconds (UTC)",
+			Self::Time(Timezone::Local, Precision::Seconds) => "compact time (local)",
+			Self::Time(Timezone::Local, Precision::Milliseconds) => "compact time with milliseconds (local)",
+			Self::Time(Timezone::Local, Precision::Nanoseconds) => "compact time with nanoseconds (local)",
+			Self::FileName(Timezone::UTC) => "date+time filename (UTC)",
+			Self::FileName(Timezone::Local) => "date+time filename (local)",
+			Self::RFC2822(Timezone::UTC) => "RFC 2822 (UTC)",
+			Self::RFC2822(Timezone::Local) => "RFC 2822 (local)",
+			Self::RFC3339(Timezone::UTC, Precision::Seconds) => "RFC 3339 (UTC)",
+			Self::RFC3339(Timezone::UTC, Precision::Milliseconds) => "RFC 3339 with milliseconds (UTC)",
+			Self::RFC3339(Timezone::UTC, Precision::Nanoseconds) => "RFC 3339 with nanoseconds (UTC)",
+			Self::RFC3339(Timezone::Local, Precision::Seconds) => "RFC 3339 (local)",
+			Self::RFC3339(Timezone::Local, Precision::Milliseconds) => "RFC 3339 with milliseconds (local)",
+			Self::RFC3339(Timezone::Local, Precision::Nanoseconds) => "RFC 3339 with nanoseconds (local)",
+			Self::RFC3164(Timezone::UTC) => "syslog RFC 3164 (UTC)",
+			Self::RFC3164(Timezone::Local) => "syslog RFC 3164 (local)",
+			Self::ISO8601(Timezone::UTC, Precision::Seconds) => "ISO 8601 (UTC)",
+			Self::ISO8601(Timezone::UTC, Precision::Milliseconds) => "ISO 8601 with milliseconds (UTC)",
+			Self::ISO8601(Timezone::UTC, Precision::Nanoseconds) => "ISO 8601 with nanoseconds (UTC)",
+			Self::ISO8601(Timezone::Local, Precision::Seconds) => "ISO 8601 (local)",
+			Self::ISO8601(Timezone::Local, Precision::Milliseconds) => "ISO 8601 with milliseconds (local)",
+			Self::ISO8601(Timezone::Local, Precision::Nanoseconds) => "ISO 8601 with nanoseconds (local)",
 
 			Self::HTTP | Self::RFC7231 => "RFC 7231 (GMT)",
 
-			Self::Timestamp(FormatPrecision::Seconds) => "seconds since epoch",
-			Self::Timestamp(FormatPrecision::Milliseconds) => "milliseconds since epoch",
-			Self::Timestamp(FormatPrecision::Nanoseconds) => "nanoseconds since epoch",
+			Self::Timestamp(Precision::Seconds) => "seconds since epoch",
+			Self::Timestamp(Precision::Milliseconds) => "milliseconds since epoch",
+			Self::Timestamp(Precision::Nanoseconds) => "nanoseconds since epoch",
 		}
 	}
 
 	/// Evaluates if the given [`Format`] is in UTC timezone.
 	pub fn is_utc(&self) -> bool {
 		match self {
-			Self::DateTime(tz, _) => tz == &FormatTimezone::UTC,
-			Self::Date(tz) => tz == &FormatTimezone::UTC,
-			Self::Time(tz, _) => tz == &FormatTimezone::UTC,
-			Self::FileName(tz) => tz == &FormatTimezone::UTC,
-			Self::RFC2822(tz) => tz == &FormatTimezone::UTC,
-			Self::RFC3339(tz, _) => tz == &FormatTimezone::UTC,
-			Self::RFC3164(tz) => tz == &FormatTimezone::UTC,
-			Self::ISO8601(tz, _) => tz == &FormatTimezone::UTC,
+			Self::DateTime(tz, _) => tz == &Timezone::UTC,
+			Self::Date(tz) => tz == &Timezone::UTC,
+			Self::Time(tz, _) => tz == &Timezone::UTC,
+			Self::FileName(tz) => tz == &Timezone::UTC,
+			Self::RFC2822(tz) => tz == &Timezone::UTC,
+			Self::RFC3339(tz, _) => tz == &Timezone::UTC,
+			Self::RFC3164(tz) => tz == &Timezone::UTC,
+			Self::ISO8601(tz, _) => tz == &Timezone::UTC,
 			Self::HTTP | Self::RFC7231 => true,
 			Self::Timestamp(_) => true,
 		}
@@ -296,10 +296,10 @@ impl Format {
 		let mut buf = write::Buffer::new();
 
 		match self {
-			Self::DateTime(FormatTimezone::UTC, pr) => {
+			Self::DateTime(Timezone::UTC, pr) => {
 				let parts = ts.as_utc_parts();
 				match pr {
-					FormatPrecision::Seconds => {
+					Precision::Seconds => {
 						// "2026-03-02 13:22:15"
 						buf.u64_dec(parts.year);
 						buf.hyphen();
@@ -313,7 +313,7 @@ impl Format {
 						buf.colon();
 						buf.u8_dec_padded(parts.seconds, b'0', 2);
 					}
-					FormatPrecision::Milliseconds => {
+					Precision::Milliseconds => {
 						// "2026-03-02 13:22:15.488"
 						buf.u64_dec(parts.year);
 						buf.hyphen();
@@ -329,7 +329,7 @@ impl Format {
 						buf.dot();
 						buf.u16_dec_padded(parts.milliseconds, b'0', 3);
 					}
-					FormatPrecision::Nanoseconds => {
+					Precision::Nanoseconds => {
 						// "2026-03-02 13:22:15.488167982"
 						buf.u64_dec(parts.year);
 						buf.hyphen();
@@ -348,10 +348,10 @@ impl Format {
 					}
 				}
 			}
-			Self::DateTime(FormatTimezone::Local, pr) => {
+			Self::DateTime(Timezone::Local, pr) => {
 				let parts = ts.as_local_parts();
 				match pr {
-					FormatPrecision::Seconds => {
+					Precision::Seconds => {
 						// "2026-03-02 15:22:15 +0200"
 						buf.u64_dec(parts.year);
 						buf.hyphen();
@@ -369,7 +369,7 @@ impl Format {
 						buf.u8_dec_padded(parts.gmt_offset_hours, b'0', 2);
 						buf.u8_dec_padded(parts.gmt_offset_minutes, b'0', 2);
 					}
-					FormatPrecision::Milliseconds => {
+					Precision::Milliseconds => {
 						// "2026-03-02 15:22:15.488 +0200"
 						buf.u64_dec(parts.year);
 						buf.hyphen();
@@ -389,7 +389,7 @@ impl Format {
 						buf.u8_dec_padded(parts.gmt_offset_hours, b'0', 2);
 						buf.u8_dec_padded(parts.gmt_offset_minutes, b'0', 2);
 					}
-					FormatPrecision::Nanoseconds => {
+					Precision::Nanoseconds => {
 						// "2026-03-02 15:22:15.488167982 +0200"
 						buf.u64_dec(parts.year);
 						buf.hyphen();
@@ -415,8 +415,8 @@ impl Format {
 			Self::FileName(tz) => {
 				// 	"2026-03-02_13-22-15"
 				let parts = match tz {
-					FormatTimezone::UTC => ts.as_utc_parts(),
-					FormatTimezone::Local => ts.as_local_parts(),
+					Timezone::UTC => ts.as_utc_parts(),
+					Timezone::Local => ts.as_local_parts(),
 				};
 
 				buf.u64_dec(parts.year);
@@ -434,8 +434,8 @@ impl Format {
 			Self::Date(tz) => {
 				// "2026-03-02"
 				let parts = match tz {
-					FormatTimezone::UTC => ts.as_utc_parts(),
-					FormatTimezone::Local => ts.as_local_parts(),
+					Timezone::UTC => ts.as_utc_parts(),
+					Timezone::Local => ts.as_local_parts(),
 				};
 
 				buf.u64_dec(parts.year);
@@ -446,12 +446,12 @@ impl Format {
 			}
 			Self::Time(tz, pr) => {
 				let parts = match tz {
-					FormatTimezone::UTC => ts.as_utc_parts(),
-					FormatTimezone::Local => ts.as_local_parts(),
+					Timezone::UTC => ts.as_utc_parts(),
+					Timezone::Local => ts.as_local_parts(),
 				};
 
 				match pr {
-					FormatPrecision::Seconds => {
+					Precision::Seconds => {
 						// "13:22:15"
 						buf.u8_dec_padded(parts.hour, b'0', 2);
 						buf.colon();
@@ -459,7 +459,7 @@ impl Format {
 						buf.colon();
 						buf.u8_dec_padded(parts.seconds, b'0', 2);
 					}
-					FormatPrecision::Milliseconds => {
+					Precision::Milliseconds => {
 						// "13:22:15.488"
 						buf.u8_dec_padded(parts.hour, b'0', 2);
 						buf.colon();
@@ -469,7 +469,7 @@ impl Format {
 						buf.dot();
 						buf.u16_dec_padded(parts.milliseconds, b'0', 3);
 					}
-					FormatPrecision::Nanoseconds => {
+					Precision::Nanoseconds => {
 						// "13:22:15.488167982"
 						buf.u8_dec_padded(parts.hour, b'0', 2);
 						buf.colon();
@@ -485,8 +485,8 @@ impl Format {
 			Self::RFC2822(tz) => {
 				// "Mon, 02 Mar 2026 13:22:15 +0000" (UTC), "Mon, 02 Mar 2026 15:22:15 +0200" (local)
 				let parts = match tz {
-					FormatTimezone::UTC => ts.as_utc_parts(),
-					FormatTimezone::Local => ts.as_local_parts(),
+					Timezone::UTC => ts.as_utc_parts(),
+					Timezone::Local => ts.as_local_parts(),
 				};
 
 				buf.str(parts.day_name());
@@ -507,10 +507,10 @@ impl Format {
 				buf.u8_dec_padded(parts.gmt_offset_hours, b'0', 2);
 				buf.u8_dec_padded(parts.gmt_offset_minutes, b'0', 2);
 			}
-			Self::RFC3339(FormatTimezone::UTC, pr) | Self::ISO8601(FormatTimezone::UTC, pr) => {
+			Self::RFC3339(Timezone::UTC, pr) | Self::ISO8601(Timezone::UTC, pr) => {
 				let parts = ts.as_utc_parts();
 				match pr {
-					FormatPrecision::Seconds => {
+					Precision::Seconds => {
 						// "2026-03-02T13:22:15Z"
 						buf.u64_dec(parts.year);
 						buf.hyphen();
@@ -525,7 +525,7 @@ impl Format {
 						buf.u8_dec_padded(parts.seconds, b'0', 2);
 						buf.u8(b'Z');
 					}
-					FormatPrecision::Milliseconds => {
+					Precision::Milliseconds => {
 						// "2026-03-02T13:22:15.488Z`
 						buf.u64_dec(parts.year);
 						buf.hyphen();
@@ -542,7 +542,7 @@ impl Format {
 						buf.u16_dec_padded(parts.milliseconds, b'0', 3);
 						buf.u8(b'Z');
 					}
-					FormatPrecision::Nanoseconds => {
+					Precision::Nanoseconds => {
 						// "2026-03-02T13:22:15.488167982Z"
 						buf.u64_dec(parts.year);
 						buf.hyphen();
@@ -562,11 +562,11 @@ impl Format {
 					}
 				};
 			}
-			Self::RFC3339(FormatTimezone::Local, pr) | Self::ISO8601(FormatTimezone::Local, pr) => {
+			Self::RFC3339(Timezone::Local, pr) | Self::ISO8601(Timezone::Local, pr) => {
 				let parts = ts.as_local_parts();
 
 				match pr {
-					FormatPrecision::Seconds => {
+					Precision::Seconds => {
 						// "2026-03-02T15:22:15+02:00"
 						buf.u64_dec(parts.year);
 						buf.hyphen();
@@ -584,7 +584,7 @@ impl Format {
 						buf.colon();
 						buf.u8_dec_padded(parts.gmt_offset_minutes, b'0', 2);
 					}
-					FormatPrecision::Milliseconds => {
+					Precision::Milliseconds => {
 						// "2026-03-02T15:22:15.488+02:00`
 						buf.u64_dec(parts.year);
 						buf.hyphen();
@@ -604,7 +604,7 @@ impl Format {
 						buf.colon();
 						buf.u8_dec_padded(parts.gmt_offset_minutes, b'0', 2);
 					}
-					FormatPrecision::Nanoseconds => {
+					Precision::Nanoseconds => {
 						// "2026-03-02T15:22:15.488167982+02:00"
 						buf.u64_dec(parts.year);
 						buf.hyphen();
@@ -630,8 +630,8 @@ impl Format {
 			Self::RFC3164(tz) => {
 				// "Mar  2 15:22:15"
 				let parts = match tz {
-					FormatTimezone::UTC => ts.as_utc_parts(),
-					FormatTimezone::Local => ts.as_local_parts(),
+					Timezone::UTC => ts.as_utc_parts(),
+					Timezone::Local => ts.as_local_parts(),
 				};
 
 				buf.str(parts.month_name());
@@ -663,11 +663,11 @@ impl Format {
 				buf.str(" GMT");
 			}
 			// "1772457735"
-			Self::Timestamp(FormatPrecision::Seconds) => buf.u64_dec(ts.as_secs()),
+			Self::Timestamp(Precision::Seconds) => buf.u64_dec(ts.as_secs()),
 			// "1772457735488"
-			Self::Timestamp(FormatPrecision::Milliseconds) => buf.u128_dec(ts.as_millis()),
+			Self::Timestamp(Precision::Milliseconds) => buf.u128_dec(ts.as_millis()),
 			// "1772457735488167982"
-			Self::Timestamp(FormatPrecision::Nanoseconds) => buf.u128_dec(ts.as_nanos()),
+			Self::Timestamp(Precision::Nanoseconds) => buf.u128_dec(ts.as_nanos()),
 		}
 
 		buf.write(out)
@@ -700,69 +700,69 @@ impl Format {
 			// fixed-size formats
 
 			// 13:22:15
-			Self::Time(FormatTimezone::UTC, FormatPrecision::Seconds) => 8,
+			Self::Time(Timezone::UTC, Precision::Seconds) => 8,
 			// 13:22:15.488
-			Self::Time(FormatTimezone::UTC, FormatPrecision::Milliseconds) => 12,
+			Self::Time(Timezone::UTC, Precision::Milliseconds) => 12,
 			// 13:22:15.488167982
-			Self::Time(FormatTimezone::UTC, FormatPrecision::Nanoseconds) => 18,
+			Self::Time(Timezone::UTC, Precision::Nanoseconds) => 18,
 			// 15:22:15
-			Self::Time(FormatTimezone::Local, FormatPrecision::Seconds) => 8,
+			Self::Time(Timezone::Local, Precision::Seconds) => 8,
 			// 15:22:15.488
-			Self::Time(FormatTimezone::Local, FormatPrecision::Milliseconds) => 12,
+			Self::Time(Timezone::Local, Precision::Milliseconds) => 12,
 			// 15:22:15.488167982
-			Self::Time(FormatTimezone::Local, FormatPrecision::Nanoseconds) => 18,
+			Self::Time(Timezone::Local, Precision::Nanoseconds) => 18,
 			// Mar  2 13:22:15
-			Self::RFC3164(FormatTimezone::UTC) => 15,
+			Self::RFC3164(Timezone::UTC) => 15,
 			// Mar  2 15:22:15
-			Self::RFC3164(FormatTimezone::Local) => 15,
+			Self::RFC3164(Timezone::Local) => 15,
 
 			// variable length formats
 
 			// 2026-03-02 13:22:15
-			Self::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds) => 15 + digits_utc_year(ts),
+			Self::DateTime(Timezone::UTC, Precision::Seconds) => 15 + digits_utc_year(ts),
 			// 2026-03-02 13:22:15.488
-			Self::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds) => 19 + digits_utc_year(ts),
+			Self::DateTime(Timezone::UTC, Precision::Milliseconds) => 19 + digits_utc_year(ts),
 			// 2026-03-02 13:22:15.488167982
-			Self::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds) => 25 + digits_utc_year(ts),
+			Self::DateTime(Timezone::UTC, Precision::Nanoseconds) => 25 + digits_utc_year(ts),
 			// 2026-03-02 15:22:15 +0200
-			Self::DateTime(FormatTimezone::Local, FormatPrecision::Seconds) => 21 + digits_local_year(ts),
+			Self::DateTime(Timezone::Local, Precision::Seconds) => 21 + digits_local_year(ts),
 			// 2026-03-02 15:22:15.488 +0200
-			Self::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds) => 25 + digits_local_year(ts),
+			Self::DateTime(Timezone::Local, Precision::Milliseconds) => 25 + digits_local_year(ts),
 			// 2026-03-02 15:22:15.488167982 +0200
-			Self::DateTime(FormatTimezone::Local, FormatPrecision::Nanoseconds) => 31 + digits_local_year(ts),
+			Self::DateTime(Timezone::Local, Precision::Nanoseconds) => 31 + digits_local_year(ts),
 			// 2026-03-02
-			Self::Date(FormatTimezone::UTC) => 6 + digits_utc_year(ts),
+			Self::Date(Timezone::UTC) => 6 + digits_utc_year(ts),
 			// 2026-03-02
-			Self::Date(FormatTimezone::Local) => 6 + digits_local_year(ts),
+			Self::Date(Timezone::Local) => 6 + digits_local_year(ts),
 			// 2026-03-02_13-22-15
-			Self::FileName(FormatTimezone::UTC) => 15 + digits_utc_year(ts),
+			Self::FileName(Timezone::UTC) => 15 + digits_utc_year(ts),
 			// 2026-03-02_15-22-15
-			Self::FileName(FormatTimezone::Local) => 15 + digits_local_year(ts),
+			Self::FileName(Timezone::Local) => 15 + digits_local_year(ts),
 			// Mon, 02 Mar 2026 13:22:15 +0000
-			Self::RFC2822(FormatTimezone::UTC) => 27 + digits_utc_year(ts),
+			Self::RFC2822(Timezone::UTC) => 27 + digits_utc_year(ts),
 			// Mon, 02 Mar 2026 15:22:15 +0200
-			Self::RFC2822(FormatTimezone::Local) => 27 + digits_local_year(ts),
+			Self::RFC2822(Timezone::Local) => 27 + digits_local_year(ts),
 			// 2026-03-02T13:22:15Z
-			Self::RFC3339(FormatTimezone::UTC, FormatPrecision::Seconds) | Self::ISO8601(FormatTimezone::UTC, FormatPrecision::Seconds) => 16 + digits_utc_year(ts),
+			Self::RFC3339(Timezone::UTC, Precision::Seconds) | Self::ISO8601(Timezone::UTC, Precision::Seconds) => 16 + digits_utc_year(ts),
 			// 2026-03-02T13:22:15.488Z
-			Self::RFC3339(FormatTimezone::UTC, FormatPrecision::Milliseconds) | Self::ISO8601(FormatTimezone::UTC, FormatPrecision::Milliseconds) => 20 + digits_utc_year(ts),
+			Self::RFC3339(Timezone::UTC, Precision::Milliseconds) | Self::ISO8601(Timezone::UTC, Precision::Milliseconds) => 20 + digits_utc_year(ts),
 			// 2026-03-02T13:22:15.488167982Z
-			Self::RFC3339(FormatTimezone::UTC, FormatPrecision::Nanoseconds) | Self::ISO8601(FormatTimezone::UTC, FormatPrecision::Nanoseconds) => 26 + digits_utc_year(ts),
+			Self::RFC3339(Timezone::UTC, Precision::Nanoseconds) | Self::ISO8601(Timezone::UTC, Precision::Nanoseconds) => 26 + digits_utc_year(ts),
 			// 2026-03-02T15:22:15+02:00
-			Self::RFC3339(FormatTimezone::Local, FormatPrecision::Seconds) | Self::ISO8601(FormatTimezone::Local, FormatPrecision::Seconds) => 21 + digits_local_year(ts),
+			Self::RFC3339(Timezone::Local, Precision::Seconds) | Self::ISO8601(Timezone::Local, Precision::Seconds) => 21 + digits_local_year(ts),
 			// 2026-03-02T15:22:15.488+02:00
-			Self::RFC3339(FormatTimezone::Local, FormatPrecision::Milliseconds) | Self::ISO8601(FormatTimezone::Local, FormatPrecision::Milliseconds) => 25 + digits_local_year(ts),
+			Self::RFC3339(Timezone::Local, Precision::Milliseconds) | Self::ISO8601(Timezone::Local, Precision::Milliseconds) => 25 + digits_local_year(ts),
 			// 2026-03-02T15:22:15.488167982+02:00
-			Self::RFC3339(FormatTimezone::Local, FormatPrecision::Nanoseconds) | Self::ISO8601(FormatTimezone::Local, FormatPrecision::Nanoseconds) => 31 + digits_local_year(ts),
+			Self::RFC3339(Timezone::Local, Precision::Nanoseconds) | Self::ISO8601(Timezone::Local, Precision::Nanoseconds) => 31 + digits_local_year(ts),
 			// Mon, 02 Mar 2026 13:22:15 GMT
 			Self::HTTP | Self::RFC7231 => 25 + digits_utc_year(ts),
 
 			// 1772457735
-			Self::Timestamp(FormatPrecision::Seconds) => digits_u64(ts.as_secs()),
+			Self::Timestamp(Precision::Seconds) => digits_u64(ts.as_secs()),
 			// 1772457735488
-			Self::Timestamp(FormatPrecision::Milliseconds) => digits_u128(ts.as_millis()),
+			Self::Timestamp(Precision::Milliseconds) => digits_u128(ts.as_millis()),
 			// 1772457735488167982
-			Self::Timestamp(FormatPrecision::Nanoseconds) => digits_u128(ts.as_nanos()),
+			Self::Timestamp(Precision::Nanoseconds) => digits_u128(ts.as_nanos()),
 		}
 	}
 
@@ -783,9 +783,9 @@ impl Format {
 	pub fn as_integer(&self, ts: &Timestamp) -> Option<u128> {
 		match self {
 			Self::Timestamp(pr) => match pr {
-				FormatPrecision::Seconds => Some(ts.as_secs() as u128),
-				FormatPrecision::Milliseconds => Some(ts.as_millis()),
-				FormatPrecision::Nanoseconds => Some(ts.as_nanos()),
+				Precision::Seconds => Some(ts.as_secs() as u128),
+				Precision::Milliseconds => Some(ts.as_millis()),
+				Precision::Nanoseconds => Some(ts.as_nanos()),
 			},
 			_ => None,
 		}
@@ -814,31 +814,31 @@ mod test_format {
 	fn timestamp_as_number_string() {
 		let ts = Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts");
 
-		assert_eq!(Format::Timestamp(FormatPrecision::Seconds).as_string(&ts), "1772808229");
-		assert_eq!(Format::Timestamp(FormatPrecision::Milliseconds).as_string(&ts), "1772808229038");
-		assert_eq!(Format::Timestamp(FormatPrecision::Nanoseconds).as_string(&ts), "1772808229038023456");
+		assert_eq!(Format::Timestamp(Precision::Seconds).as_string(&ts), "1772808229");
+		assert_eq!(Format::Timestamp(Precision::Milliseconds).as_string(&ts), "1772808229038");
+		assert_eq!(Format::Timestamp(Precision::Nanoseconds).as_string(&ts), "1772808229038023456");
 	}
 
 	#[test]
 	fn timestamp_as_utc_string() {
 		let ts = Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts");
 
-		assert_eq!(Format::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds).as_string(&ts), "2026-03-06 14:43:49");
-		assert_eq!(Format::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds).as_string(&ts), "2026-03-06 14:43:49.038");
-		assert_eq!(Format::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds).as_string(&ts), "2026-03-06 14:43:49.038023456");
-		assert_eq!(Format::FileName(FormatTimezone::UTC).as_string(&ts), "2026-03-06_14-43-49");
-		assert_eq!(Format::Date(FormatTimezone::UTC).as_string(&ts), "2026-03-06");
-		assert_eq!(Format::Time(FormatTimezone::UTC, FormatPrecision::Seconds).as_string(&ts), "14:43:49");
-		assert_eq!(Format::Time(FormatTimezone::UTC, FormatPrecision::Milliseconds).as_string(&ts), "14:43:49.038");
-		assert_eq!(Format::Time(FormatTimezone::UTC, FormatPrecision::Nanoseconds).as_string(&ts), "14:43:49.038023456");
-		assert_eq!(Format::RFC2822(FormatTimezone::UTC).as_string(&ts), "Fri, 06 Mar 2026 14:43:49 +0000");
-		assert_eq!(Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Seconds).as_string(&ts), "2026-03-06T14:43:49Z");
-		assert_eq!(Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Milliseconds).as_string(&ts), "2026-03-06T14:43:49.038Z");
-		assert_eq!(Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Nanoseconds).as_string(&ts), "2026-03-06T14:43:49.038023456Z");
-		assert_eq!(Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Seconds).as_string(&ts), "2026-03-06T14:43:49Z");
-		assert_eq!(Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Milliseconds).as_string(&ts), "2026-03-06T14:43:49.038Z");
-		assert_eq!(Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Nanoseconds).as_string(&ts), "2026-03-06T14:43:49.038023456Z");
-		assert_eq!(Format::RFC3164(FormatTimezone::UTC).as_string(&ts), "Mar  6 14:43:49");
+		assert_eq!(Format::DateTime(Timezone::UTC, Precision::Seconds).as_string(&ts), "2026-03-06 14:43:49");
+		assert_eq!(Format::DateTime(Timezone::UTC, Precision::Milliseconds).as_string(&ts), "2026-03-06 14:43:49.038");
+		assert_eq!(Format::DateTime(Timezone::UTC, Precision::Nanoseconds).as_string(&ts), "2026-03-06 14:43:49.038023456");
+		assert_eq!(Format::FileName(Timezone::UTC).as_string(&ts), "2026-03-06_14-43-49");
+		assert_eq!(Format::Date(Timezone::UTC).as_string(&ts), "2026-03-06");
+		assert_eq!(Format::Time(Timezone::UTC, Precision::Seconds).as_string(&ts), "14:43:49");
+		assert_eq!(Format::Time(Timezone::UTC, Precision::Milliseconds).as_string(&ts), "14:43:49.038");
+		assert_eq!(Format::Time(Timezone::UTC, Precision::Nanoseconds).as_string(&ts), "14:43:49.038023456");
+		assert_eq!(Format::RFC2822(Timezone::UTC).as_string(&ts), "Fri, 06 Mar 2026 14:43:49 +0000");
+		assert_eq!(Format::RFC3339(Timezone::UTC, Precision::Seconds).as_string(&ts), "2026-03-06T14:43:49Z");
+		assert_eq!(Format::RFC3339(Timezone::UTC, Precision::Milliseconds).as_string(&ts), "2026-03-06T14:43:49.038Z");
+		assert_eq!(Format::RFC3339(Timezone::UTC, Precision::Nanoseconds).as_string(&ts), "2026-03-06T14:43:49.038023456Z");
+		assert_eq!(Format::ISO8601(Timezone::UTC, Precision::Seconds).as_string(&ts), "2026-03-06T14:43:49Z");
+		assert_eq!(Format::ISO8601(Timezone::UTC, Precision::Milliseconds).as_string(&ts), "2026-03-06T14:43:49.038Z");
+		assert_eq!(Format::ISO8601(Timezone::UTC, Precision::Nanoseconds).as_string(&ts), "2026-03-06T14:43:49.038023456Z");
+		assert_eq!(Format::RFC3164(Timezone::UTC).as_string(&ts), "Mar  6 14:43:49");
 		assert_eq!(Format::HTTP.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 GMT");
 		assert_eq!(Format::RFC7231.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 GMT");
 	}
@@ -848,31 +848,22 @@ mod test_format {
 		test_helpers::mocks::with_timezone("America/Montevideo", || {
 			let ts = Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts");
 
-			assert_eq!(Format::DateTime(FormatTimezone::Local, FormatPrecision::Seconds).as_string(&ts), "2026-03-06 11:43:49 -0300");
-			assert_eq!(Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds).as_string(&ts), "2026-03-06 11:43:49.038 -0300");
-			assert_eq!(
-				Format::DateTime(FormatTimezone::Local, FormatPrecision::Nanoseconds).as_string(&ts),
-				"2026-03-06 11:43:49.038023456 -0300"
-			);
-			assert_eq!(Format::FileName(FormatTimezone::Local).as_string(&ts), "2026-03-06_11-43-49");
-			assert_eq!(Format::Date(FormatTimezone::Local).as_string(&ts), "2026-03-06");
-			assert_eq!(Format::Time(FormatTimezone::Local, FormatPrecision::Seconds).as_string(&ts), "11:43:49");
-			assert_eq!(Format::Time(FormatTimezone::Local, FormatPrecision::Milliseconds).as_string(&ts), "11:43:49.038");
-			assert_eq!(Format::Time(FormatTimezone::Local, FormatPrecision::Nanoseconds).as_string(&ts), "11:43:49.038023456");
-			assert_eq!(Format::RFC2822(FormatTimezone::Local).as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -0300");
-			assert_eq!(Format::RFC3339(FormatTimezone::Local, FormatPrecision::Seconds).as_string(&ts), "2026-03-06T11:43:49-03:00");
-			assert_eq!(Format::RFC3339(FormatTimezone::Local, FormatPrecision::Milliseconds).as_string(&ts), "2026-03-06T11:43:49.038-03:00");
-			assert_eq!(
-				Format::RFC3339(FormatTimezone::Local, FormatPrecision::Nanoseconds).as_string(&ts),
-				"2026-03-06T11:43:49.038023456-03:00"
-			);
-			assert_eq!(Format::ISO8601(FormatTimezone::Local, FormatPrecision::Seconds).as_string(&ts), "2026-03-06T11:43:49-03:00");
-			assert_eq!(Format::ISO8601(FormatTimezone::Local, FormatPrecision::Milliseconds).as_string(&ts), "2026-03-06T11:43:49.038-03:00");
-			assert_eq!(
-				Format::ISO8601(FormatTimezone::Local, FormatPrecision::Nanoseconds).as_string(&ts),
-				"2026-03-06T11:43:49.038023456-03:00"
-			);
-			assert_eq!(Format::RFC3164(FormatTimezone::Local).as_string(&ts), "Mar  6 11:43:49");
+			assert_eq!(Format::DateTime(Timezone::Local, Precision::Seconds).as_string(&ts), "2026-03-06 11:43:49 -0300");
+			assert_eq!(Format::DateTime(Timezone::Local, Precision::Milliseconds).as_string(&ts), "2026-03-06 11:43:49.038 -0300");
+			assert_eq!(Format::DateTime(Timezone::Local, Precision::Nanoseconds).as_string(&ts), "2026-03-06 11:43:49.038023456 -0300");
+			assert_eq!(Format::FileName(Timezone::Local).as_string(&ts), "2026-03-06_11-43-49");
+			assert_eq!(Format::Date(Timezone::Local).as_string(&ts), "2026-03-06");
+			assert_eq!(Format::Time(Timezone::Local, Precision::Seconds).as_string(&ts), "11:43:49");
+			assert_eq!(Format::Time(Timezone::Local, Precision::Milliseconds).as_string(&ts), "11:43:49.038");
+			assert_eq!(Format::Time(Timezone::Local, Precision::Nanoseconds).as_string(&ts), "11:43:49.038023456");
+			assert_eq!(Format::RFC2822(Timezone::Local).as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -0300");
+			assert_eq!(Format::RFC3339(Timezone::Local, Precision::Seconds).as_string(&ts), "2026-03-06T11:43:49-03:00");
+			assert_eq!(Format::RFC3339(Timezone::Local, Precision::Milliseconds).as_string(&ts), "2026-03-06T11:43:49.038-03:00");
+			assert_eq!(Format::RFC3339(Timezone::Local, Precision::Nanoseconds).as_string(&ts), "2026-03-06T11:43:49.038023456-03:00");
+			assert_eq!(Format::ISO8601(Timezone::Local, Precision::Seconds).as_string(&ts), "2026-03-06T11:43:49-03:00");
+			assert_eq!(Format::ISO8601(Timezone::Local, Precision::Milliseconds).as_string(&ts), "2026-03-06T11:43:49.038-03:00");
+			assert_eq!(Format::ISO8601(Timezone::Local, Precision::Nanoseconds).as_string(&ts), "2026-03-06T11:43:49.038023456-03:00");
+			assert_eq!(Format::RFC3164(Timezone::Local).as_string(&ts), "Mar  6 11:43:49");
 		});
 	}
 
@@ -887,43 +878,43 @@ mod test_format {
 				Timestamp::try_from((54732890, 1, 26, 22, 50, 11, 111, 222)).expect("invalid parts for year 54732890"),
 			] {
 				for format in [
-					Format::Date(FormatTimezone::Local),
-					Format::Date(FormatTimezone::UTC),
-					Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds),
-					Format::DateTime(FormatTimezone::Local, FormatPrecision::Nanoseconds),
-					Format::DateTime(FormatTimezone::Local, FormatPrecision::Seconds),
-					Format::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds),
-					Format::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
-					Format::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds),
-					Format::FileName(FormatTimezone::Local),
-					Format::FileName(FormatTimezone::UTC),
+					Format::Date(Timezone::Local),
+					Format::Date(Timezone::UTC),
+					Format::DateTime(Timezone::Local, Precision::Milliseconds),
+					Format::DateTime(Timezone::Local, Precision::Nanoseconds),
+					Format::DateTime(Timezone::Local, Precision::Seconds),
+					Format::DateTime(Timezone::UTC, Precision::Milliseconds),
+					Format::DateTime(Timezone::UTC, Precision::Nanoseconds),
+					Format::DateTime(Timezone::UTC, Precision::Seconds),
+					Format::FileName(Timezone::Local),
+					Format::FileName(Timezone::UTC),
 					Format::HTTP,
-					Format::ISO8601(FormatTimezone::Local, FormatPrecision::Milliseconds),
-					Format::ISO8601(FormatTimezone::Local, FormatPrecision::Nanoseconds),
-					Format::ISO8601(FormatTimezone::Local, FormatPrecision::Seconds),
-					Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Milliseconds),
-					Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
-					Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Seconds),
-					Format::RFC2822(FormatTimezone::Local),
-					Format::RFC2822(FormatTimezone::UTC),
-					Format::RFC3164(FormatTimezone::Local),
-					Format::RFC3164(FormatTimezone::UTC),
-					Format::RFC3339(FormatTimezone::Local, FormatPrecision::Milliseconds),
-					Format::RFC3339(FormatTimezone::Local, FormatPrecision::Nanoseconds),
-					Format::RFC3339(FormatTimezone::Local, FormatPrecision::Seconds),
-					Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Milliseconds),
-					Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
-					Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Seconds),
+					Format::ISO8601(Timezone::Local, Precision::Milliseconds),
+					Format::ISO8601(Timezone::Local, Precision::Nanoseconds),
+					Format::ISO8601(Timezone::Local, Precision::Seconds),
+					Format::ISO8601(Timezone::UTC, Precision::Milliseconds),
+					Format::ISO8601(Timezone::UTC, Precision::Nanoseconds),
+					Format::ISO8601(Timezone::UTC, Precision::Seconds),
+					Format::RFC2822(Timezone::Local),
+					Format::RFC2822(Timezone::UTC),
+					Format::RFC3164(Timezone::Local),
+					Format::RFC3164(Timezone::UTC),
+					Format::RFC3339(Timezone::Local, Precision::Milliseconds),
+					Format::RFC3339(Timezone::Local, Precision::Nanoseconds),
+					Format::RFC3339(Timezone::Local, Precision::Seconds),
+					Format::RFC3339(Timezone::UTC, Precision::Milliseconds),
+					Format::RFC3339(Timezone::UTC, Precision::Nanoseconds),
+					Format::RFC3339(Timezone::UTC, Precision::Seconds),
 					Format::RFC7231,
-					Format::Time(FormatTimezone::Local, FormatPrecision::Milliseconds),
-					Format::Time(FormatTimezone::Local, FormatPrecision::Nanoseconds),
-					Format::Time(FormatTimezone::Local, FormatPrecision::Seconds),
-					Format::Time(FormatTimezone::UTC, FormatPrecision::Milliseconds),
-					Format::Time(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
-					Format::Time(FormatTimezone::UTC, FormatPrecision::Seconds),
-					Format::Timestamp(FormatPrecision::Milliseconds),
-					Format::Timestamp(FormatPrecision::Nanoseconds),
-					Format::Timestamp(FormatPrecision::Seconds),
+					Format::Time(Timezone::Local, Precision::Milliseconds),
+					Format::Time(Timezone::Local, Precision::Nanoseconds),
+					Format::Time(Timezone::Local, Precision::Seconds),
+					Format::Time(Timezone::UTC, Precision::Milliseconds),
+					Format::Time(Timezone::UTC, Precision::Nanoseconds),
+					Format::Time(Timezone::UTC, Precision::Seconds),
+					Format::Timestamp(Precision::Milliseconds),
+					Format::Timestamp(Precision::Nanoseconds),
+					Format::Timestamp(Precision::Seconds),
 				] {
 					assert_eq!(format.string_len(&ts), format.as_string(&ts).len(), "{} for {}", format, ts);
 				}
@@ -935,28 +926,28 @@ mod test_format {
 	fn timestamp_as_integer() {
 		let ts = Timestamp::try_from((2026, 1, 29, 7, 43, 19, 134, 943903)).expect("invalid parts");
 
-		assert_eq!(Format::Timestamp(FormatPrecision::Seconds).as_integer(&ts), Some(1769672599_u128));
-		assert_eq!(Format::Timestamp(FormatPrecision::Milliseconds).as_integer(&ts), Some(1769672599134_u128));
-		assert_eq!(Format::Timestamp(FormatPrecision::Nanoseconds).as_integer(&ts), Some(1769672599134943903_u128));
-		assert_eq!(Format::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds).as_integer(&ts), None);
-		assert_eq!(Format::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds).as_integer(&ts), None);
-		assert_eq!(Format::Time(FormatTimezone::UTC, FormatPrecision::Seconds).as_integer(&ts), None);
-		assert_eq!(Format::RFC2822(FormatTimezone::UTC).as_integer(&ts), None);
-		assert_eq!(Format::ISO8601(FormatTimezone::Local, FormatPrecision::Nanoseconds).as_integer(&ts), None);
+		assert_eq!(Format::Timestamp(Precision::Seconds).as_integer(&ts), Some(1769672599_u128));
+		assert_eq!(Format::Timestamp(Precision::Milliseconds).as_integer(&ts), Some(1769672599134_u128));
+		assert_eq!(Format::Timestamp(Precision::Nanoseconds).as_integer(&ts), Some(1769672599134943903_u128));
+		assert_eq!(Format::DateTime(Timezone::UTC, Precision::Seconds).as_integer(&ts), None);
+		assert_eq!(Format::DateTime(Timezone::UTC, Precision::Nanoseconds).as_integer(&ts), None);
+		assert_eq!(Format::Time(Timezone::UTC, Precision::Seconds).as_integer(&ts), None);
+		assert_eq!(Format::RFC2822(Timezone::UTC).as_integer(&ts), None);
+		assert_eq!(Format::ISO8601(Timezone::Local, Precision::Nanoseconds).as_integer(&ts), None);
 		assert_eq!(Format::HTTP.as_integer(&ts), None);
 		assert_eq!(Format::RFC7231.as_integer(&ts), None);
 	}
 
 	#[test]
 	fn format_is_integer() {
-		assert!(Format::Timestamp(FormatPrecision::Seconds).is_integer());
-		assert!(Format::Timestamp(FormatPrecision::Milliseconds).is_integer());
-		assert!(Format::Timestamp(FormatPrecision::Nanoseconds).is_integer());
-		assert!(!Format::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds).is_integer());
-		assert!(!Format::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds).is_integer());
-		assert!(!Format::Time(FormatTimezone::UTC, FormatPrecision::Seconds).is_integer());
-		assert!(!Format::RFC2822(FormatTimezone::UTC).is_integer());
-		assert!(!Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Milliseconds).is_integer());
+		assert!(Format::Timestamp(Precision::Seconds).is_integer());
+		assert!(Format::Timestamp(Precision::Milliseconds).is_integer());
+		assert!(Format::Timestamp(Precision::Nanoseconds).is_integer());
+		assert!(!Format::DateTime(Timezone::UTC, Precision::Seconds).is_integer());
+		assert!(!Format::DateTime(Timezone::UTC, Precision::Nanoseconds).is_integer());
+		assert!(!Format::Time(Timezone::UTC, Precision::Seconds).is_integer());
+		assert!(!Format::RFC2822(Timezone::UTC).is_integer());
+		assert!(!Format::ISO8601(Timezone::UTC, Precision::Milliseconds).is_integer());
 		assert!(!Format::HTTP.is_integer());
 		assert!(!Format::RFC7231.is_integer());
 	}

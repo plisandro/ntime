@@ -43,14 +43,14 @@
 //! ## String conversion and casting
 //!
 //! ```rust
-//! use ntime::{Format, FormatPrecision, FormatTimezone, Timestamp};
+//! use ntime::{Format, Precision, Timezone, Timestamp};
 //!
 //! let now = Timestamp::now();
 //! println!("nanos since epoch: {}", now.as_nanos());
 //! println!("debug:             {:?}", now);
 //! println!("to_string():       {}", now.to_string());
-//! println!("local time:        {}", now.as_string(&Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds)));
-//! println!("UTC time:          {}", now.as_string(&Format::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds)));
+//! println!("local time:        {}", now.as_string(&Format::DateTime(Timezone::Local, Precision::Milliseconds)));
+//! println!("UTC time:          {}", now.as_string(&Format::DateTime(Timezone::UTC, Precision::Nanoseconds)));
 //! println!("HTTP/1.1:          {}", now.as_string(&Format::RFC7231));
 //! println!("local week day     {}", now.as_local_parts().week_day);
 //! println!("UTC year day       {}", now.as_utc_parts().year_day);
@@ -133,7 +133,7 @@ mod timestamp;
 mod write;
 
 // Public exported symbols.
-pub use format::{Format, FormatPrecision, FormatTimezone};
+pub use format::{Format, Precision, Timezone};
 pub use parts::TimestampParts;
 pub use sleep::*;
 pub use std::time::Duration;

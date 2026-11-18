@@ -1,54 +1,54 @@
 use std::hint;
 
 use divan::{Bencher, counter};
-use ntime::{Format, FormatPrecision, FormatTimezone, Timestamp};
+use ntime::{Format, Precision, Timestamp, Timezone};
 
 const BENCHMARK_LOG_ITEMS: usize = 10000;
 
 const NUMERIC_FORMATS: &[Format] = &[
-	Format::Timestamp(FormatPrecision::Seconds),
-	Format::Timestamp(FormatPrecision::Milliseconds),
-	Format::Timestamp(FormatPrecision::Nanoseconds),
+	Format::Timestamp(Precision::Seconds),
+	Format::Timestamp(Precision::Milliseconds),
+	Format::Timestamp(Precision::Nanoseconds),
 ];
 
 const UTC_FORMATS: &[Format] = &[
-	Format::DateTime(FormatTimezone::UTC, FormatPrecision::Seconds),
-	Format::DateTime(FormatTimezone::UTC, FormatPrecision::Milliseconds),
-	Format::DateTime(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
-	Format::Date(FormatTimezone::UTC),
-	Format::Time(FormatTimezone::UTC, FormatPrecision::Seconds),
-	Format::Time(FormatTimezone::UTC, FormatPrecision::Milliseconds),
-	Format::Time(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
-	Format::FileName(FormatTimezone::UTC),
-	Format::RFC2822(FormatTimezone::UTC),
-	Format::RFC3164(FormatTimezone::UTC),
-	Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Seconds),
-	Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Milliseconds),
-	Format::RFC3339(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
-	Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Seconds),
-	Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Milliseconds),
-	Format::ISO8601(FormatTimezone::UTC, FormatPrecision::Nanoseconds),
+	Format::DateTime(Timezone::UTC, Precision::Seconds),
+	Format::DateTime(Timezone::UTC, Precision::Milliseconds),
+	Format::DateTime(Timezone::UTC, Precision::Nanoseconds),
+	Format::Date(Timezone::UTC),
+	Format::Time(Timezone::UTC, Precision::Seconds),
+	Format::Time(Timezone::UTC, Precision::Milliseconds),
+	Format::Time(Timezone::UTC, Precision::Nanoseconds),
+	Format::FileName(Timezone::UTC),
+	Format::RFC2822(Timezone::UTC),
+	Format::RFC3164(Timezone::UTC),
+	Format::RFC3339(Timezone::UTC, Precision::Seconds),
+	Format::RFC3339(Timezone::UTC, Precision::Milliseconds),
+	Format::RFC3339(Timezone::UTC, Precision::Nanoseconds),
+	Format::ISO8601(Timezone::UTC, Precision::Seconds),
+	Format::ISO8601(Timezone::UTC, Precision::Milliseconds),
+	Format::ISO8601(Timezone::UTC, Precision::Nanoseconds),
 	// Format::HTTP,
 	Format::RFC7231,
 ];
 
 const LOCAL_FORMATS: &[Format] = &[
-	Format::DateTime(FormatTimezone::Local, FormatPrecision::Seconds),
-	Format::DateTime(FormatTimezone::Local, FormatPrecision::Milliseconds),
-	Format::DateTime(FormatTimezone::Local, FormatPrecision::Nanoseconds),
-	Format::Date(FormatTimezone::Local),
-	Format::Time(FormatTimezone::Local, FormatPrecision::Seconds),
-	Format::Time(FormatTimezone::Local, FormatPrecision::Milliseconds),
-	Format::Time(FormatTimezone::Local, FormatPrecision::Nanoseconds),
-	Format::FileName(FormatTimezone::Local),
-	Format::RFC2822(FormatTimezone::Local),
-	Format::RFC3164(FormatTimezone::Local),
-	Format::RFC3339(FormatTimezone::Local, FormatPrecision::Seconds),
-	Format::RFC3339(FormatTimezone::Local, FormatPrecision::Milliseconds),
-	Format::RFC3339(FormatTimezone::Local, FormatPrecision::Nanoseconds),
-	Format::ISO8601(FormatTimezone::Local, FormatPrecision::Seconds),
-	Format::ISO8601(FormatTimezone::Local, FormatPrecision::Milliseconds),
-	Format::ISO8601(FormatTimezone::Local, FormatPrecision::Nanoseconds),
+	Format::DateTime(Timezone::Local, Precision::Seconds),
+	Format::DateTime(Timezone::Local, Precision::Milliseconds),
+	Format::DateTime(Timezone::Local, Precision::Nanoseconds),
+	Format::Date(Timezone::Local),
+	Format::Time(Timezone::Local, Precision::Seconds),
+	Format::Time(Timezone::Local, Precision::Milliseconds),
+	Format::Time(Timezone::Local, Precision::Nanoseconds),
+	Format::FileName(Timezone::Local),
+	Format::RFC2822(Timezone::Local),
+	Format::RFC3164(Timezone::Local),
+	Format::RFC3339(Timezone::Local, Precision::Seconds),
+	Format::RFC3339(Timezone::Local, Precision::Milliseconds),
+	Format::RFC3339(Timezone::Local, Precision::Nanoseconds),
+	Format::ISO8601(Timezone::Local, Precision::Seconds),
+	Format::ISO8601(Timezone::Local, Precision::Milliseconds),
+	Format::ISO8601(Timezone::Local, Precision::Nanoseconds),
 ];
 
 fn main() {
