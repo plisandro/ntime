@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod dummy_examples {
+	use std::io;
+
 	use ntime::{Duration, Format, Precision, Timestamp, Timezone, UTCDateTime};
 
 	#[test]
@@ -51,6 +53,19 @@ mod dummy_examples {
 		let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp A");
 		let b = Timestamp::try_from((2026, 3, 24, 17, 25, 30, 789, 12)).expect("invalid parameters for timestamp B");
 
-		println!("from {a} to {b}: {:?}", (a - b).unwrap());
+		println!("from {a} to {b} = {:?}", (a - b).unwrap());
+	}
+
+	#[test]
+	fn serialization() {
+		let mut sink = io::empty();
+
+		let start = Timestamp::now();
+		start.write(&mut sink, &Format::DateTime(Timezone::UTC, Precision::Milliseconds)).expect("UTC write failed");
+		println!("wrote a UTC timestamp to Empty in {elapsed:?}", elapsed = (Timestamp::now() - start).unwrap());
+
+		let start = Timestamp::now();
+		start.write(&mut sink, &Format::DateTime(Timezone::Local, Precision::Milliseconds)).expect("local write failed");
+		println!("wrote a local timestamp to Empty in {elapsed:?}", elapsed = (Timestamp::now() - start).unwrap());
 	}
 }

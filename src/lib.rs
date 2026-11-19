@@ -133,10 +133,10 @@
 //!
 //! let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp A");
 //! let b = Timestamp::try_from((2026, 3, 24, 17, 25, 30, 789, 12)).expect("invalid parameters for timestamp B");
-//! println!("from {a} to {b}: {:?}", (a - b).unwrap());
+//! println!("from {a} to {b} = {:?}", (a - b).unwrap());
 //! ```
 //! ```text
-//! from 2026-03-24 17:44:48.123 to 2026-03-24 17:25:30.789: 1157.334000444s
+//! from 2026-03-24 17:44:48.123 to 2026-03-24 17:25:30.789 = 1157.334000444s
 //! ```
 //!
 //! ## Parts Decomposition
