@@ -95,7 +95,7 @@
 //! ```text
 //! nanos since epoch: 1774369621732000558
 //! debug:             Timestamp { seconds: 1774369621, nanoseconds: 732000558 }
-//! to_string():       2026-03-24 16:27:01 +0000
+//! to_string():       2026-03-24 16:27:01.732
 //! local time:        2026-03-24 17:27:01.732 +0100
 //! UTC time:          2026-03-24 16:27:01.732000558 +0000
 //! HTTP/1.1:          Tue, 24 Mar 2026 16:27:01 GMT
@@ -121,7 +121,7 @@
 //! println!("[{a}] + {delta:?} = {}", a.add_duration(&delta).unwrap());
 //! ```
 //! ```text
-//! [2026-03-24 18:44:48 +0100] + 36000s = 2026-03-25 04:44:48 +0100
+//! [2026-03-24 17:44:48.123] + 36000s = 2026-03-25 03:44:48.123
 //! ```
 //!
 //! ### Difference
@@ -131,14 +131,12 @@
 //! ```rust
 //! use ntime::Timestamp;
 //!
-//! let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters");
-//! let b = Timestamp::try_from((2026, 3, 24, 17, 25, 30, 789, 12)).expect("invalid parameters");
-//! _ = dbg!(a - b);
+//! let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp A");
+//! let b = Timestamp::try_from((2026, 3, 24, 17, 25, 30, 789, 12)).expect("invalid parameters for timestamp B");
+//! println!("from {a} to {b}: {:?}", (a - b).unwrap());
 //! ```
 //! ```text
-//! a - b = Ok(
-//!     1157.334000444s,
-//! )
+//! from 2026-03-24 17:44:48.123 to 2026-03-24 17:25:30.789: 1157.334000444s
 //! ```
 //!
 //! ## Parts Decomposition

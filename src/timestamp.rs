@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use crate::constant::{TIMESTAMP_MAX_MILLISECONDS, TIMESTAMP_MAX_NANOSECONDS, TIMEZONE_UTC, U32_NANOS_IN_SECOND, U64_SECONDS_IN_DAY, U128_MILLIS_IN_SECOND, U128_NANOS_IN_MILLI, U128_NANOS_IN_SECOND};
 use crate::error::{CastError, TimestampOpError};
-use crate::format::{Format, Precision, Timezone};
+use crate::format::Format;
 use crate::parts::TimestampParts;
 
 /// A UTC datetime, which can be used to initialize [`Timestamp`]s.
@@ -379,7 +379,7 @@ impl<'i> Timestamp {
 
 impl fmt::Display for Timestamp {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		write!(f, "{}", self.as_string(&Format::DateTime(Timezone::Local, Precision::Seconds)))
+		write!(f, "{}", self.as_string(&Format::default()))
 	}
 }
 
@@ -410,7 +410,6 @@ mod tests {
 	use super::*;
 
 	use crate::constant::{TIMESTAMP_MAX_MILLISECONDS, TIMESTAMP_MAX_NANOSECONDS};
-	use crate::test_helpers;
 
 	#[test]
 	fn cast_from() {
@@ -550,13 +549,11 @@ mod tests {
 
 	#[test]
 	fn to_string() {
-		// the Display trait implementation serializes Timestamps into local time strings.
-		test_helpers::mocks::with_timezone("Asia/Kuching", || {
-			assert_eq!(Timestamp::new(1772457020, 789).to_string(), "2026-03-02 21:10:20 +0800",);
-			assert_eq!(Timestamp::from_secs(1772457213).to_string(), "2026-03-02 21:13:33 +0800",);
-			assert_eq!(Timestamp::from_millis(1772457213123).unwrap().to_string(), "2026-03-02 21:13:33 +0800",);
-			assert_eq!(Timestamp::try_from((2026, 3, 6, 14, 43, 39, 128, 564)).expect("invalid parts").to_string(), "2026-03-06 22:43:39 +0800",);
-		});
+		// the Display trait implementation serializes Timestamps into UTC time strings.
+		assert_eq!(Timestamp::new(1772457020, 789).to_string(), "2026-03-02 13:10:20.000",);
+		assert_eq!(Timestamp::from_secs(1772457213).to_string(), "2026-03-02 13:13:33.000");
+		assert_eq!(Timestamp::from_millis(1772457213123).unwrap().to_string(), "2026-03-02 13:13:33.123");
+		assert_eq!(Timestamp::try_from((2026, 3, 6, 14, 43, 39, 128, 564)).expect("invalid parts").to_string(), "2026-03-06 14:43:39.128");
 	}
 
 	#[test]
