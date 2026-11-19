@@ -45,7 +45,15 @@ mod dummy_examples {
 		let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp");
 		let delta = Duration::from_hours(10);
 
-		println!("[{a}] + {delta:?} = {}", a.add_duration(&delta).unwrap());
+		println!("[{a}] + {delta:?} = {}", a + delta);
+	}
+
+	#[test]
+	fn sub_duration() {
+		let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp");
+		let delta = Duration::from_hours(10);
+
+		println!("[{a}] - {delta:?} = {}", a - delta);
 	}
 
 	#[test]
@@ -53,7 +61,7 @@ mod dummy_examples {
 		let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp A");
 		let b = Timestamp::try_from((2026, 3, 24, 17, 25, 30, 789, 12)).expect("invalid parameters for timestamp B");
 
-		println!("from {a} to {b} = {:?}", (a - b).unwrap());
+		println!("from {a} to {b} = {:?}", a - b);
 	}
 
 	#[test]
@@ -62,10 +70,10 @@ mod dummy_examples {
 
 		let start = Timestamp::now();
 		start.write(&mut sink, &Format::DateTime(Timezone::Utc, Precision::Milliseconds)).expect("UTC write failed");
-		println!("wrote a UTC timestamp to Empty in {elapsed:?}", elapsed = (Timestamp::now() - start).unwrap());
+		println!("wrote a UTC timestamp to Empty in {elapsed:?}", elapsed = Timestamp::now() - start);
 
 		let start = Timestamp::now();
 		start.write(&mut sink, &Format::DateTime(Timezone::Local, Precision::Milliseconds)).expect("local write failed");
-		println!("wrote a local timestamp to Empty in {elapsed:?}", elapsed = (Timestamp::now() - start).unwrap());
+		println!("wrote a local timestamp to Empty in {elapsed:?}", elapsed = Timestamp::now() - start);
 	}
 }

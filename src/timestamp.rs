@@ -1,7 +1,7 @@
-use core::ops::Sub;
 use std::cmp::{Ord, Ordering, PartialOrd};
 use std::fmt;
 use std::io;
+use std::ops::{Add, AddAssign, Sub, SubAssign};
 use std::time;
 use std::time::Duration;
 
@@ -339,13 +339,33 @@ impl<'i> Timestamp {
 	/// # Errors
 	///
 	/// Returns [`TimestampOpError::Overflow`] if the sum exceeds the maximum [`Timestamp`] value.
-	pub fn add_duration(&self, d: &Duration) -> Result<Timestamp, TimestampOpError> {
+	pub fn try_add_duration(&self, d: &Duration) -> Result<Timestamp, TimestampOpError> {
 		let nanos = self.nanoseconds + d.subsec_nanos();
 
 		let nanoseconds = nanos % U32_NANOS_IN_SECOND;
 		let seconds = match self.seconds.checked_add(d.as_secs()).and_then(|s| s.checked_add((nanos / U32_NANOS_IN_SECOND) as u64)) {
 			Some(s) => s,
 			None => return Err(TimestampOpError::Overflow("total seconds overflow")),
+		};
+
+		Ok(Self { seconds, nanoseconds })
+	}
+
+	/// Returns a [`Timestamp`] with a [`time::Duration`] subtracted from the timestamp.
+	///
+	/// # Errors
+	///
+	/// Returns [`TimestampOpError::Underflow`] if the subtraction is less than the minimum [`Timestamp`] value.
+	pub fn try_sub_duration(&self, d: &Duration) -> Result<Timestamp, TimestampOpError> {
+		let (nanoseconds, delta_seconds) = if self.nanoseconds >= d.subsec_nanos() {
+			(self.nanoseconds - d.subsec_nanos(), 0)
+		} else {
+			(self.nanoseconds + U32_NANOS_IN_SECOND - d.subsec_nanos(), 1)
+		};
+
+		let seconds = match self.seconds.checked_sub(d.as_secs()).and_then(|s| s.checked_sub(delta_seconds)) {
+			Some(s) => s,
+			None => return Err(TimestampOpError::Underflow("total seconds underflow")),
 		};
 
 		Ok(Self { seconds, nanoseconds })
@@ -374,7 +394,7 @@ impl<'i> Timestamp {
 	/// # Errors
 	///
 	/// Returns [`TimestampOpError::Underflow`] if `other` is later than `self`.
-	pub fn diff_as_duration(&self, other: &Self) -> Result<Duration, TimestampOpError> {
+	pub fn try_sub_timestamp(&self, other: &Self) -> Result<Duration, TimestampOpError> {
 		let self_nanos = self.as_nanos();
 		let other_nanos = other.as_nanos();
 
@@ -408,11 +428,73 @@ impl Ord for Timestamp {
 	}
 }
 
+/// Returns a [`Timestamp`] with a [`time::Duration`] added to it.
+///
+/// # Panics
+///
+/// This call will panic upon invalid operations - f.ex. a result [`Timestamp`] later than [`Timestamp::MAX`].
+impl Add<Duration> for Timestamp {
+	type Output = Timestamp;
+
+	fn add(self, d: Duration) -> Timestamp {
+		match self.try_add_duration(&d) {
+			Ok(ts) => ts,
+			Err(e) => panic!("{e}"),
+		}
+	}
+}
+
+/// Adds a [`time::Duration`] to a [`Timestamp`], overwriting it.
+///
+/// # Panics
+///
+/// This call will panic upon invalid operations - f.ex. a result [`Timestamp`] later than [`Timestamp::MAX`].
+impl AddAssign<Duration> for Timestamp {
+	fn add_assign(&mut self, d: Duration) {
+		*self = *self + d;
+	}
+}
+
+/// Returns the difference between two [`Timestamp`]s.
+///
+/// # Panics
+///
+/// This call will panic upon invalid operations - f.ex. trying to subtract a [`Timestamp`] from a smaller one.
 impl Sub for Timestamp {
-	type Output = Result<Duration, TimestampOpError>;
+	type Output = Duration;
 
 	fn sub(self, other: Self) -> Self::Output {
-		self.diff_as_duration(&other)
+		match self.try_sub_timestamp(&other) {
+			Ok(d) => d,
+			Err(e) => panic!("{e}"),
+		}
+	}
+}
+
+/// Returns a [`Timestamp`] with a [`time::Duration`] subtracted from it.
+///
+/// # Panics
+///
+/// This call will panic upon invalid operations - f.ex. a result [`Timestamp`] earlier than [`Timestamp::EPOCH`].
+impl Sub<Duration> for Timestamp {
+	type Output = Timestamp;
+
+	fn sub(self, d: Duration) -> Self::Output {
+		match self.try_sub_duration(&d) {
+			Ok(ts) => ts,
+			Err(e) => panic!("{e}"),
+		}
+	}
+}
+
+/// Subtracts a [`time::Duration`] from a [`Timestamp`], overwriting it.
+///
+/// # Panics
+///
+/// This call will panic upon invalid operations - f.ex. a result [`Timestamp`] earlier than [`Timestamp::EPOCH`].
+impl SubAssign<Duration> for Timestamp {
+	fn sub_assign(&mut self, d: Duration) {
+		*self = *self - d;
 	}
 }
 
@@ -525,24 +607,67 @@ mod tests {
 
 	#[test]
 	fn operators() {
-		// addition
-		assert_eq!(Timestamp::from_secs(1234).add_duration(&Duration::ZERO), Ok(Timestamp::from_secs(1234)));
+		// Timestamp addition
+		assert_eq!(Timestamp::from_secs(1234) + Duration::ZERO, Timestamp::from_secs(1234));
 		assert_eq!(
-			Timestamp::from_nanos(TIMESTAMP_MAX_NANOSECONDS).unwrap().add_duration(&Duration::from_nanos(1)),
+			Timestamp::from_nanos(TIMESTAMP_MAX_NANOSECONDS).unwrap().try_add_duration(&Duration::from_nanos(1)),
 			Err(TimestampOpError::Overflow("total seconds overflow")),
 		);
 		assert_eq!(
-			Timestamp::new(0, 999999).unwrap().add_duration(&Duration::MAX),
+			Timestamp::new(0, 999999).unwrap().try_add_duration(&Duration::MAX),
 			Err(TimestampOpError::Overflow("total seconds overflow"))
 		);
 
-		// subtraction
-		assert_eq!(Timestamp::from_secs(1234) - Timestamp::from_secs(1234), Ok(Duration::ZERO));
+		// Timestamp addition-and-assign
+		let mut ts = Timestamp::from_secs(1234);
+		ts += Duration::ZERO;
+		assert_eq!(ts, Timestamp::from_secs(1234));
+
+		ts += Duration::from_secs(4000);
+		assert_eq!(ts, Timestamp::from_secs(5234));
+
+		// Timestamp subtraction
+		assert_eq!(Timestamp::from_secs(1234) - Timestamp::from_secs(1234), Duration::ZERO);
 		assert_eq!(
-			Timestamp::from_nanos(1234).unwrap() - Timestamp::from_nanos(5768).unwrap(),
+			Timestamp::from_nanos(1234).unwrap().try_sub_timestamp(&Timestamp::from_nanos(5768).unwrap()),
 			Err(TimestampOpError::Underflow("attempted to subtract a Timestamp from a smaller Timestamp"))
 		);
-		assert_eq!(Timestamp::from_secs(5678) - Timestamp::from_secs(1234), Ok(Duration::from_secs(4444)));
+		assert_eq!(Timestamp::from_secs(5678) - Timestamp::from_secs(1234), Duration::from_secs(4444));
+
+		// Timestamp subtraction-and-assign
+		let mut ts = Timestamp::from_secs(1234);
+		ts -= Duration::ZERO;
+		assert_eq!(ts, Timestamp::from_secs(1234));
+
+		ts -= Duration::from_secs(200);
+		assert_eq!(ts, Timestamp::from_secs(1034));
+
+		// Duration subtraction
+		assert_eq!(Timestamp::from_secs(1234) - Duration::ZERO, Timestamp::from_secs(1234));
+		assert_eq!(Timestamp::new(123, 456).unwrap() - Duration::new(78, 901), Timestamp::new(44, 999999555).unwrap());
+		assert_eq!(Timestamp::EPOCH.try_sub_duration(&Duration::from_nanos(1)), Err(TimestampOpError::Underflow("total seconds underflow")));
+		assert_eq!(
+			Timestamp::new(0, 999999).unwrap().try_sub_duration(&Duration::MAX),
+			Err(TimestampOpError::Underflow("total seconds underflow"))
+		);
+	}
+
+	#[test]
+	#[should_panic(expected = "total seconds overflow")]
+	fn timestamp_plus_duration_panic() {
+		_ = Timestamp::from_nanos(TIMESTAMP_MAX_NANOSECONDS).unwrap() + Duration::from_secs(1234);
+	}
+
+	#[test]
+	#[should_panic(expected = "total seconds underflow")]
+	fn timestamp_minus_duration_panic() {
+		_ = Timestamp::from_secs(1234) - Duration::from_secs(5678);
+	}
+
+	#[test]
+	#[should_panic(expected = "attempted to subtract a Timestamp from a smaller Timestamp")]
+	fn timestamp_minus_timestamp_panic() {
+		_ = Timestamp::from_secs(1234) - Timestamp::from_secs(5678);
 	}
 
 	#[test]
@@ -628,9 +753,9 @@ mod tests {
 	}
 
 	#[test]
-	fn add_duration() {
+	fn try_add_duration() {
 		let a = Timestamp::new(1234, 5678).unwrap();
-		let b = a.add_duration(&Duration::from_millis(2234));
+		let b = a.try_add_duration(&Duration::from_millis(2234));
 		assert_eq!(b, Ok(Timestamp::new(1236, 234005678).unwrap()));
 	}
 }

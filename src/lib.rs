@@ -49,7 +49,7 @@
 //! println!("initialized from date/time values to {ts}");
 //! ```
 //! ```text
-//! initialized from date/time values to 2026-11-18 23:17:19 +0100
+//! initialized from date/time values to 2026-11-18 22:17:19.000
 //! ```
 //!
 //! ### From [`UtcDateTime`]
@@ -72,7 +72,7 @@
 //! println!("{udt:?} converts to {ts}");
 //! ```
 //! ```text
-//! UtcDateTime { year: 2026, month: 3, day: 24, hour: 17, minutes: 44, seconds: 48, milliseconds: 123, nanoseconds: 456 } converts to 2026-03-24 18:44:48 +0100
+//! UtcDateTime { year: 2026, month: 3, day: 24, hour: 17, minutes: 44, seconds: 48, milliseconds: 123, nanoseconds: 456 } converts to 2026-03-24 17:44:48.123
 //! ```
 //!
 //! ## String conversion and casting
@@ -89,15 +89,15 @@
 //! println!("local time:        {}", now.to_string_as(&Format::DateTime(Timezone::Local, Precision::Milliseconds)));
 //! println!("UTC time:          {}", now.to_string_as(&Format::DateTime(Timezone::Utc, Precision::Nanoseconds)));
 //! println!("HTTP/1.1:          {}", now.to_string_as(&Format::Rfc7231));
-//! println!("local week day     {}", now.to_local_parts().week_day);
-//! println!("UTC year day       {}", now.to_utc_parts().year_day);
+//! println!("local week day:    {}", now.to_local_parts().week_day);
+//! println!("UTC year day:      {}", now.to_utc_parts().year_day);
 //! ```
 //! ```text
 //! nanos since epoch: 1774369621732000558
 //! debug:             Timestamp { seconds: 1774369621, nanoseconds: 732000558 }
 //! to_string():       2026-03-24 16:27:01.732
 //! local time:        2026-03-24 17:27:01.732 +0100
-//! UTC time:          2026-03-24 16:27:01.732000558 +0000
+//! UTC time:          2026-03-24 16:27:01.732000558
 //! HTTP/1.1:          Tue, 24 Mar 2026 16:27:01 GMT
 //! local week day:    3
 //! UTC year day:      83
@@ -109,8 +109,8 @@
 //!
 //! ### Addition
 //!
-//! Adding a [`std::time::Duration`] to a [`Timestamp`] yields a new [`Timestamp`]. Note that
-//! [`std::time::Duration`] is re-exported in the module's namespace for convenience.
+//! Adding a [`Duration`] to a [`Timestamp`] yields a new [`Timestamp`]. Note that
+//! [`Duration`] is re-exported in the module's namespace for convenience.
 //!
 //! ```rust
 //! use ntime::{Timestamp, Duration};
@@ -118,7 +118,7 @@
 //! let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp");
 //! let delta = Duration::from_hours(10);
 //!
-//! println!("[{a}] + {delta:?} = {}", a.add_duration(&delta).unwrap());
+//! println!("[{a}] + {delta:?} = {}", a + delta);
 //! ```
 //! ```text
 //! [2026-03-24 17:44:48.123] + 36000s = 2026-03-25 03:44:48.123
@@ -126,14 +126,28 @@
 //!
 //! ### Difference
 //!
-//! Subtracting [`Timestamp`]s yields a [`std::time::Duration`].
+//! Subtracting [`Duration`] from a [`Timestamp`] yields a new [`Timestamp`].
+//!
+//! ```rust
+//! use ntime::{Timestamp, Duration};
+//!
+//! let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp");
+//! let delta = Duration::from_hours(10);
+//!
+//! println!("[{a}] - {delta:?} = {}", a - delta);
+//! ```
+//! ```text
+//! [2026-03-24 17:44:48.123] - 36000s = 2026-03-24 07:44:48.123
+//! ```
+//!
+//! Subtracting [`Timestamp`]s yields a [`Duration`].
 //!
 //! ```rust
 //! use ntime::Timestamp;
 //!
 //! let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp A");
 //! let b = Timestamp::try_from((2026, 3, 24, 17, 25, 30, 789, 12)).expect("invalid parameters for timestamp B");
-//! println!("from {a} to {b} = {:?}", (a - b).unwrap());
+//! println!("from {a} to {b} = {:?}", a - b);
 //! ```
 //! ```text
 //! from 2026-03-24 17:44:48.123 to 2026-03-24 17:25:30.789 = 1157.334000444s
@@ -210,12 +224,17 @@
 //!
 //! ## Error Handling
 //!
-//! A number of [`Timestamp`] operations return errors:
+//! A number of [`Timestamp`] operations return errors...
 //!
 //!   - All casting operations from types which are fallible (i.e. implementing `TryFrom`) return `CastError` upon
 //!     failure - f.ex. invalid values in [`UtcDateTime`], or timestamps in milliseconds which are too big.
-//!   - Arithmetic operations for [`Timestamp`]s (f.ex. adding a [`Duration`]) return `TimestampOpError`
-//!     upon failure.
+//!   - Arithmetic operations for [`Timestamp`]s (f.ex. adding a [`Duration`]) using `try_*()` methods return
+//!     [`TimestampOpError`] upon failure.
+//!
+//! ...while some can panic:
+//!
+//!   - Arithmetic operations for [`Timestamp`]s (f.ex. adding a [`Duration`]) using `+` and `-` operators
+//!     will panic upon failure.
 //!
 //! ## Caveats
 //!
