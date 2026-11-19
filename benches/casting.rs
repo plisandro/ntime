@@ -38,7 +38,7 @@ mod write {
 
 		#[divan::bench]
 		fn utc(bench: Bencher) {
-			run(bench, &Format::DateTime(Timezone::UTC, Precision::Milliseconds));
+			run(bench, &Format::DateTime(Timezone::Utc, Precision::Milliseconds));
 		}
 
 		#[divan::bench]
@@ -74,7 +74,7 @@ mod write {
 
 		#[divan::bench]
 		fn utc(bench: Bencher) {
-			run(bench, &Format::DateTime(Timezone::UTC, Precision::Milliseconds));
+			run(bench, &Format::DateTime(Timezone::Utc, Precision::Milliseconds));
 		}
 
 		#[divan::bench]
@@ -109,7 +109,7 @@ mod to_string {
 
 	#[divan::bench]
 	fn utc(bench: Bencher) {
-		run(bench, &Format::DateTime(Timezone::UTC, Precision::Milliseconds));
+		run(bench, &Format::DateTime(Timezone::Utc, Precision::Milliseconds));
 	}
 
 	#[divan::bench]

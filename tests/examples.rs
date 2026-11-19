@@ -2,7 +2,7 @@
 mod dummy_examples {
 	use std::io;
 
-	use ntime::{Duration, Format, Precision, Timestamp, Timezone, UTCDateTime};
+	use ntime::{Duration, Format, Precision, Timestamp, Timezone, UtcDateTime};
 
 	#[test]
 	fn now() {
@@ -12,7 +12,7 @@ mod dummy_examples {
 		println!("current time as debug:  {:?}", now);
 		println!("current time as string: {}", now);
 		println!("current time (local):   {}", now.as_string(&Format::DateTime(Timezone::Local, Precision::Milliseconds)));
-		println!("current time (UTC):     {}", now.as_string(&Format::DateTime(Timezone::UTC, Precision::Milliseconds)));
+		println!("current time (UTC):     {}", now.as_string(&Format::DateTime(Timezone::Utc, Precision::Milliseconds)));
 		println!("week day (local):       {}", now.as_local_parts().week_day);
 		println!("year day (UTC):         {}", now.as_utc_parts().year_day);
 	}
@@ -25,7 +25,7 @@ mod dummy_examples {
 
 	#[test]
 	fn from_utcdatetime() {
-		let udt = UTCDateTime {
+		let udt = UtcDateTime {
 			year: 2026,
 			month: 3,
 			day: 24,
@@ -35,7 +35,7 @@ mod dummy_examples {
 			milliseconds: 123,
 			nanoseconds: 456,
 		};
-		let ts = Timestamp::try_from(&udt).expect("invalid UTCDateTime");
+		let ts = Timestamp::try_from(&udt).expect("invalid UtcDateTime");
 
 		println!("{udt:?} converts to {ts}");
 	}
@@ -61,7 +61,7 @@ mod dummy_examples {
 		let mut sink = io::empty();
 
 		let start = Timestamp::now();
-		start.write(&mut sink, &Format::DateTime(Timezone::UTC, Precision::Milliseconds)).expect("UTC write failed");
+		start.write(&mut sink, &Format::DateTime(Timezone::Utc, Precision::Milliseconds)).expect("UTC write failed");
 		println!("wrote a UTC timestamp to Empty in {elapsed:?}", elapsed = (Timestamp::now() - start).unwrap());
 
 		let start = Timestamp::now();

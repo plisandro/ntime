@@ -12,7 +12,7 @@ use crate::parts::TimestampParts;
 
 /// A UTC datetime, which can be used to initialize [`Timestamp`]s.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub struct UTCDateTime {
+pub struct UtcDateTime {
 	/// Year (`1970`-`584554051223`).
 	pub year: u64,
 	/// Month of the year (`1`-`12`).
@@ -31,8 +31,8 @@ pub struct UTCDateTime {
 	pub nanoseconds: u32,
 }
 
-impl UTCDateTime {
-	/// Minimum supported [`UTCDateTime`]: `1970-01-01 00:00:00.000000000 UTC`
+impl UtcDateTime {
+	/// Minimum supported [`UtcDateTime`]: `1970-01-01 00:00:00.000000000 UTC`
 	pub const MIN: Self = Self {
 		year: 1970,
 		month: 1,
@@ -44,7 +44,7 @@ impl UTCDateTime {
 		nanoseconds: 0,
 	};
 
-	/// Maximum supported [`UTCDateTime`]: `584554051223-11-09 07:00:15.999999999 UTC`
+	/// Maximum supported [`UtcDateTime`]: `584554051223-11-09 07:00:15.999999999 UTC`
 	pub const MAX: Self = Self {
 		year: 584554051223,
 		month: 11,
@@ -56,11 +56,11 @@ impl UTCDateTime {
 		nanoseconds: 999999,
 	};
 
-	/// UNIX epoch [`UTCDateTime`] (`1970-01-01 00:00:00 UTC`)
+	/// UNIX epoch [`UtcDateTime`] (`1970-01-01 00:00:00 UTC`)
 	pub const EPOCH: Self = Self::MIN;
 
-	/// Returns the UNIX epoch [`UTCDateTime`] (`1970-01-01 00:00:00 UTC`).
-	#[deprecated(note = "use UTCDateTime::EPOCH instead")]
+	/// Returns the UNIX epoch [`UtcDateTime`] (`1970-01-01 00:00:00 UTC`).
+	#[deprecated(note = "use UtcDateTime::EPOCH instead")]
 	#[inline]
 	pub fn epoch() -> Self {
 		Self::EPOCH
@@ -95,20 +95,20 @@ impl TryFrom<std::time::SystemTime> for Timestamp {
 	}
 }
 
-/// Initializes a [`Timestamp`] from a given [`UTCDateTime`], which gets consumed.
-impl TryFrom<UTCDateTime> for Timestamp {
+/// Initializes a [`Timestamp`] from a given [`UtcDateTime`], which gets consumed.
+impl TryFrom<UtcDateTime> for Timestamp {
 	type Error = CastError;
 
-	fn try_from(udt: UTCDateTime) -> Result<Self, Self::Error> {
+	fn try_from(udt: UtcDateTime) -> Result<Self, Self::Error> {
 		Timestamp::from_utc_datetime(&udt)
 	}
 }
 
-/// Initializes a [`Timestamp`] from a given [`UTCDateTime`] reference.
-impl<'i> TryFrom<&'i UTCDateTime> for Timestamp {
+/// Initializes a [`Timestamp`] from a given [`UtcDateTime`] reference.
+impl<'i> TryFrom<&'i UtcDateTime> for Timestamp {
 	type Error = CastError;
 
-	fn try_from(udt: &'i UTCDateTime) -> Result<Self, Self::Error> {
+	fn try_from(udt: &'i UtcDateTime) -> Result<Self, Self::Error> {
 		Timestamp::from_utc_datetime(udt)
 	}
 }
@@ -118,11 +118,11 @@ impl TryFrom<(u64, u8, u8)> for Timestamp {
 	type Error = CastError;
 
 	fn try_from((year, month, day): (u64, u8, u8)) -> Result<Self, Self::Error> {
-		Self::try_from(UTCDateTime {
+		Self::try_from(UtcDateTime {
 			year,
 			month,
 			day,
-			..UTCDateTime::EPOCH
+			..UtcDateTime::EPOCH
 		})
 	}
 }
@@ -132,14 +132,14 @@ impl TryFrom<(u64, u8, u8, u8, u8, u8)> for Timestamp {
 	type Error = CastError;
 
 	fn try_from((year, month, day, hour, minutes, seconds): (u64, u8, u8, u8, u8, u8)) -> Result<Self, Self::Error> {
-		Self::try_from(UTCDateTime {
+		Self::try_from(UtcDateTime {
 			year,
 			month,
 			day,
 			hour,
 			minutes,
 			seconds,
-			..UTCDateTime::EPOCH
+			..UtcDateTime::EPOCH
 		})
 	}
 }
@@ -149,7 +149,7 @@ impl TryFrom<(u64, u8, u8, u8, u8, u8, u16, u32)> for Timestamp {
 	type Error = CastError;
 
 	fn try_from((year, month, day, hour, minutes, seconds, milliseconds, nanoseconds): (u64, u8, u8, u8, u8, u8, u16, u32)) -> Result<Self, Self::Error> {
-		Self::try_from(UTCDateTime {
+		Self::try_from(UtcDateTime {
 			year,
 			month,
 			day,
@@ -233,8 +233,8 @@ impl<'i> Timestamp {
 		parts.to_timestamp()
 	}
 
-	/// Creates a [`Timestamp`] from a given [`UTCDateTime`].
-	fn from_utc_datetime(udt: &UTCDateTime) -> Result<Self, CastError> {
+	/// Creates a [`Timestamp`] from a given [`UtcDateTime`].
+	fn from_utc_datetime(udt: &UtcDateTime) -> Result<Self, CastError> {
 		TimestampParts {
 			nanoseconds: udt.nanoseconds,
 			milliseconds: udt.milliseconds,
@@ -496,7 +496,7 @@ mod tests {
 		);
 
 		assert_eq!(
-			Timestamp::try_from(UTCDateTime {
+			Timestamp::try_from(UtcDateTime {
 				year: 2026,
 				month: 3,
 				day: 7,
@@ -510,7 +510,7 @@ mod tests {
 				seconds: 1772858897,
 				nanoseconds: 446037892,
 			}),
-			"cast from UTCDateTime"
+			"cast from UtcDateTime"
 		);
 	}
 

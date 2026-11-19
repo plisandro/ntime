@@ -24,7 +24,7 @@
 //!   * Current time: [`Timestamp::now()`]
 //!   * A standard [`std::time::SystemTime`], via [`Timestamp::try_from()`].
 //!   * A UTC date & time tuple: [`Timestamp::try_from()`] with `(year, month, day[, hour, minutes, seconds[, millis, nanos]])`.
-//!   * A dedicated [`UTCDateTime`] struct, via [`Timestamp::try_from()`].
+//!   * A dedicated [`UtcDateTime`] struct, via [`Timestamp::try_from()`].
 //!   * From a timestamp in milliseconds/nanoseconds: [`Timestamp::new()`], [`Timestamp::from_secs()`], [`Timestamp::from_millis()`], [`Timestamp::from_nanos()`].
 //!   * From a [`TimestampParts`] struct: [`Timestamp::from_parts()`]
 //!
@@ -52,12 +52,12 @@
 //! initialized from date/time values to 2026-11-18 23:17:19 +0100
 //! ```
 //!
-//! ### From [`UTCDateTime`]
+//! ### From [`UtcDateTime`]
 //!
 //!  ```rust
-//! use ntime::{Timestamp, UTCDateTime};
+//! use ntime::{Timestamp, UtcDateTime};
 //!
-//! let udt = UTCDateTime {
+//! let udt = UtcDateTime {
 //!     year: 2026,
 //!     month: 3,
 //!     day: 24,
@@ -68,11 +68,11 @@
 //!     nanoseconds: 456,
 //! };
 //!
-//! let ts = Timestamp::try_from(&udt).expect("invalid UTCDateTime");
+//! let ts = Timestamp::try_from(&udt).expect("invalid UtcDateTime");
 //! println!("{udt:?} converts to {ts}");
 //! ```
 //! ```text
-//! UTCDateTime { year: 2026, month: 3, day: 24, hour: 17, minutes: 44, seconds: 48, milliseconds: 123, nanoseconds: 456 } converts to 2026-03-24 18:44:48 +0100
+//! UtcDateTime { year: 2026, month: 3, day: 24, hour: 17, minutes: 44, seconds: 48, milliseconds: 123, nanoseconds: 456 } converts to 2026-03-24 18:44:48 +0100
 //! ```
 //!
 //! ## String conversion and casting
@@ -87,8 +87,8 @@
 //! println!("debug:             {:?}", now);
 //! println!("to_string():       {}", now.to_string());
 //! println!("local time:        {}", now.as_string(&Format::DateTime(Timezone::Local, Precision::Milliseconds)));
-//! println!("UTC time:          {}", now.as_string(&Format::DateTime(Timezone::UTC, Precision::Nanoseconds)));
-//! println!("HTTP/1.1:          {}", now.as_string(&Format::RFC7231));
+//! println!("UTC time:          {}", now.as_string(&Format::DateTime(Timezone::Utc, Precision::Nanoseconds)));
+//! println!("HTTP/1.1:          {}", now.as_string(&Format::Rfc7231));
 //! println!("local week day     {}", now.as_local_parts().week_day);
 //! println!("UTC year day       {}", now.as_utc_parts().year_day);
 //! ```
@@ -142,7 +142,7 @@
 //! ## Parts Decomposition
 //!
 //! [`Timestamp`]s can be decomposed into date + time [`TimestampParts`], in both
-//! [local][Timezone::Local] and [UTC][Timezone::UTC] timezones.
+//! [local][Timezone::Local] and [UTC][Timezone::Utc] timezones.
 //!
 //! ```rust
 //! use ntime::Timestamp;
@@ -191,7 +191,7 @@
 //! for the operation. Attempting to perform these on unsupported [`Timestamp`] values will
 //! panic at runtime.
 //!
-//! ### [UTC][Timezone::UTC]
+//! ### [UTC][Timezone::Utc]
 //!
 //! For UTC, [`TimestampParts`] conversions are fully resolved with in-library logic, and
 //! support all possible [`Timestamp`] values.
@@ -213,7 +213,7 @@
 //! A number of [`Timestamp`] operations return errors:
 //!
 //!   - All casting operations from types which are fallible (i.e. implementing `TryFrom`) return `CastError` upon
-//!     failure - f.ex. invalid values in [`UTCDateTime`], or timestamps in milliseconds which are too big.
+//!     failure - f.ex. invalid values in [`UtcDateTime`], or timestamps in milliseconds which are too big.
 //!   - Arithmetic operations for [`Timestamp`]s (f.ex. adding a [`Duration`]) return `TimestampOpError`
 //!     upon failure.
 //!
@@ -245,4 +245,4 @@ pub use format::{Format, Precision, Timezone};
 pub use parts::TimestampParts;
 pub use sleep::*;
 pub use std::time::Duration;
-pub use timestamp::{Timestamp, UTCDateTime};
+pub use timestamp::{Timestamp, UtcDateTime};
