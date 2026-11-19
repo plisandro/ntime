@@ -10,7 +10,16 @@
 //! # Features
 //!
 //! NanoTime introduces the [`Timestamp`] struct, which encapsulates a timestamp as nanoseconds
-//! since Unix epoch (1970-01-01 00:00 UTC). [`Timestamp`]s can be instantiated by...
+//! since Unix epoch (1970-01-01 00:00 UTC).
+//!
+//! [`Timestamp`]s can be very efficiently converted into a text representation, with multiple
+//! [`Format`]s supported, and split into date + time [`TimestampParts`].
+//!
+//! # Usage examples
+//!
+//! ## Initialization
+//!
+//!  [`Timestamp`]s can be instantiated by...
 //!
 //!   * Current time: [`Timestamp::now()`]
 //!   * A standard [`std::time::SystemTime`], via [`Timestamp::try_from()`].
@@ -19,19 +28,7 @@
 //!   * From a timestamp in milliseconds/nanoseconds: [`Timestamp::new()`], [`Timestamp::from_secs()`], [`Timestamp::from_millis()`], [`Timestamp::from_nanos()`].
 //!   * From a [`TimestampParts`] struct: [`Timestamp::from_parts()`]
 //!
-//! [`Timestamp`]s can efficiently be converted into a text representation, with multiple [`Format`]s supported,
-//! and split into date + time [`TimestampParts`].
-//!
-//! [`Timestamp`] supports comparison, and a limited set of arithmetic operations (difference, for example), which
-//! return a [`std::time::Duration`]; this type is re-exported in the module's namespace for convenience.
-//!
-//! Finally, NanoTime supports a number of convenience tools such as [`sleep()`].
-//!
-//! # Usage examples
-//!
-//! ## Initialization
-//!
-//! [`Timestamp`]s can be initialized from current time...
+//! ### From Current Time
 //!
 //!  ```rust
 //! use ntime::Timestamp;
@@ -43,7 +40,7 @@
 //! Timestamp { seconds: 1774369621, nanoseconds: 732000558 }
 //! ```
 //!
-//! ...from UTC `(year, month, day[, hour, minutes, seconds[, millis, nanos]])` tuples...
+//! ### From UTC `(year, month, day[, hour, minutes, seconds[, millis, nanos]])` Tuples
 //!
 //!  ```rust
 //! use ntime::Timestamp;
@@ -55,7 +52,7 @@
 //! initialized from date/time values to 2026-11-18 23:17:19 +0100
 //! ```
 //!
-//! ...or the dedicated [`UTCDateTime`] struct:
+//! ### From [`UTCDateTime`]
 //!
 //!  ```rust
 //! use ntime::{Timestamp, UTCDateTime};
@@ -108,6 +105,29 @@
 //!
 //! ## Timestamp Arithmetic
 //!
+//! [`Timestamp`] supports comparisons, and a limited set of arithmetic operations.
+//!
+//! ### Addition
+//!
+//! Adding a [`std::time::Duration`] to a [`Timestamp`] yields a new [`Timestamp`]. Note that
+//! [`std::time::Duration`] is re-exported in the module's namespace for convenience.
+//!
+//! ```rust
+//! use ntime::{Timestamp, Duration};
+//!
+//! let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp");
+//! let delta = Duration::from_hours(10);
+//!
+//! println!("[{a}] + {delta:?} = {}", a.add_duration(&delta).unwrap());
+//! ```
+//! ```text
+//! [2026-03-24 18:44:48 +0100] + 36000s = 2026-03-25 04:44:48 +0100
+//! ```
+//!
+//! ### Difference
+//!
+//! Subtracting [`Timestamp`]s yields a [`std::time::Duration`].
+//!
 //! ```rust
 //! use ntime::Timestamp;
 //!
@@ -122,6 +142,9 @@
 //! ```
 //!
 //! ## Parts Decomposition
+//!
+//! [`Timestamp`]s can be decomposed into date + time [`TimestampParts`], in both
+//! [local][Timezone::Local] and [UTC][Timezone::UTC] timezones.
 //!
 //! ```rust
 //! use ntime::Timestamp;
@@ -142,8 +165,12 @@
 //! ```text
 //! today is Mon the 6th of Apr 2026, day 96 of the year in UTC
 //! ```
-//!:
-//! ## Sleeping
+//!
+//! ## Other
+//!
+//! NanoTime also provides convenience functionality not strictly related to timestamps.
+//!
+//! ### Sleeping
 //!
 //! ```rust
 //! use ntime;
@@ -189,8 +216,8 @@
 //!
 //!   - All casting operations from types which are fallible (i.e. implementing `TryFrom`) return `CastError` upon
 //!     failure - f.ex. invalid values in [`UTCDateTime`], or timestamps in milliseconds which are too big.
-//!   - All [`Timestamp`] operations yielding a new [`Timestamp`] (f.ex. adding a [`Duration`]) return `TimestampOpError`
-//!     upon failure - f.ex. overflows.
+//!   - Arithmetic operations for [`Timestamp`]s (f.ex. adding a [`Duration`]) return `TimestampOpError`
+//!     upon failure.
 //!
 //! ## Caveats
 //!

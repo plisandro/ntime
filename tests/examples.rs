@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod dummy_examples {
-	use ntime::{Format, Precision, Timestamp, Timezone, UTCDateTime};
+	use ntime::{Duration, Format, Precision, Timestamp, Timezone, UTCDateTime};
 
 	#[test]
 	fn now() {
@@ -39,7 +39,15 @@ mod dummy_examples {
 	}
 
 	#[test]
-	fn duration() {
+	fn add_duration() {
+		let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp");
+		let delta = Duration::from_hours(10);
+
+		println!("[{a}] + {delta:?} = {}", a.add_duration(&delta).unwrap());
+	}
+
+	#[test]
+	fn difference() {
 		let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp A");
 		let b = Timestamp::try_from((2026, 3, 24, 17, 25, 30, 789, 12)).expect("invalid parameters for timestamp B");
 
