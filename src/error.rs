@@ -7,13 +7,13 @@ use std::time;
 #[non_exhaustive]
 pub enum CastError {
 	/// A general conversion failure - f.ex. invalid values for date/time tuple.
-	Invalid(String),
+	Invalid(&'static str),
 	/// Tried to cast from a value which is too large for the target.
-	Overflow(String),
+	Overflow(&'static str),
 	/// Tried to cast from a value which is too small for the target.
-	Underflow(String),
+	Underflow(&'static str),
 	/// Invalid [`TimestampParts`][crate::parts::TimestampParts] contents
-	TimestampParts(String),
+	TimestampParts(&'static str),
 	/// A failed conversion from [`SystemTime`][time::SystemTime].
 	SystemTime(time::SystemTimeError),
 }
@@ -24,18 +24,6 @@ impl Error for CastError {
 			Self::SystemTime(e) => Some(e),
 			_ => None,
 		}
-	}
-}
-
-impl From<String> for CastError {
-	fn from(err: String) -> Self {
-		Self::Invalid(err)
-	}
-}
-
-impl From<&str> for CastError {
-	fn from(err: &str) -> Self {
-		Self::Invalid(String::from(err))
 	}
 }
 
@@ -92,11 +80,11 @@ impl fmt::Display for CastError {
 #[non_exhaustive]
 pub enum TimestampOpError {
 	/// A general operation failure.
-	Invalid(String),
+	Invalid(&'static str),
 	/// Overflow - f.ex. while adding [`Timestamp`][crate::timestamp::Timestamp]s.
-	Overflow(String),
+	Overflow(&'static str),
 	/// Underflow - f.ex. while subtracting [`Timestamp`][crate::timestamp::Timestamp]s.
-	Underflow(String),
+	Underflow(&'static str),
 }
 
 impl Error for TimestampOpError {}
@@ -114,9 +102,10 @@ impl fmt::Display for TimestampOpError {
 impl From<CastError> for TimestampOpError {
 	fn from(err: CastError) -> Self {
 		match err {
+			CastError::Invalid(e) | CastError::TimestampParts(e) => Self::Invalid(e),
+			CastError::SystemTime(_) => Self::Invalid("SystemTime error"),
 			CastError::Overflow(e) => Self::Overflow(e),
 			CastError::Underflow(e) => Self::Underflow(e),
-			_ => Self::Invalid(err.to_string()),
 		}
 	}
 }

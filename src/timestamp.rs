@@ -192,7 +192,7 @@ impl<'i> Timestamp {
 	/// Returns [`CastError::Overflow`] if the provided milliseconds don't fit a [`Timestamp`].
 	pub fn from_millis(millis: u128) -> Result<Self, CastError> {
 		if millis > TIMESTAMP_MAX_MILLISECONDS {
-			return Err(CastError::Overflow(format!("Timestamp cannot represent {} milliseconds from epoch", millis)));
+			return Err(CastError::Overflow("milliseconds from epoch is larger than what Timestamp can represent"));
 		}
 
 		Ok(Self {
@@ -208,7 +208,7 @@ impl<'i> Timestamp {
 	/// Returns [`CastError::Overflow`] if the provided nanoseconds don't fit a [`Timestamp`].
 	pub fn from_nanos(nanos: u128) -> Result<Self, CastError> {
 		if nanos > TIMESTAMP_MAX_NANOSECONDS {
-			return Err(CastError::Overflow(format!("Timestamp cannot represent {} nanoseconds from epoch", nanos)));
+			return Err(CastError::Overflow("nanoseconds from epoch is larger than what Timestamp can represent"));
 		}
 
 		Ok(Self {
@@ -366,7 +366,7 @@ impl<'i> Timestamp {
 		let other_nanos = other.as_nanos();
 
 		if other_nanos > self_nanos {
-			return Err(TimestampOpError::Underflow("attempted to subtract a Timestamp from a smaller Timestamp".into()));
+			return Err(TimestampOpError::Underflow("attempted to subtract a Timestamp from a smaller Timestamp"));
 		}
 
 		let delta = self_nanos - other_nanos;
@@ -430,7 +430,7 @@ mod tests {
 		);
 		assert_eq!(
 			Timestamp::from_millis(TIMESTAMP_MAX_MILLISECONDS + 1),
-			Err(CastError::Overflow("Timestamp cannot represent 18446744073709551616000 milliseconds from epoch".into()))
+			Err(CastError::Overflow("milliseconds from epoch is larger than what Timestamp can represent"))
 		);
 
 		// cast from nanoseconds
@@ -445,7 +445,7 @@ mod tests {
 		);
 		assert_eq!(
 			Timestamp::from_nanos(TIMESTAMP_MAX_NANOSECONDS + 1),
-			Err(CastError::Overflow("Timestamp cannot represent 18446744073709551616000000000 nanoseconds from epoch".into()))
+			Err(CastError::Overflow("nanoseconds from epoch is larger than what Timestamp can represent"))
 		);
 	}
 
@@ -507,14 +507,14 @@ mod tests {
 		assert_eq!(Timestamp::from_secs(1234).add_duration(&Duration::ZERO), Ok(Timestamp::from_secs(1234)));
 		assert_eq!(
 			Timestamp::from_nanos(TIMESTAMP_MAX_NANOSECONDS).unwrap().add_duration(&Duration::from_nanos(1)),
-			Err(TimestampOpError::Overflow("Timestamp cannot represent 18446744073709551616000000000 nanoseconds from epoch".into()))
+			Err(TimestampOpError::Overflow("nanoseconds from epoch is larger than what Timestamp can represent"))
 		);
 
 		// subtraction
 		assert_eq!(Timestamp::from_secs(1234) - Timestamp::from_secs(1234), Ok(Duration::ZERO));
 		assert_eq!(
 			Timestamp::from_nanos(1234).unwrap() - Timestamp::from_nanos(5768).unwrap(),
-			Err(TimestampOpError::Underflow("attempted to subtract a Timestamp from a smaller Timestamp".into()))
+			Err(TimestampOpError::Underflow("attempted to subtract a Timestamp from a smaller Timestamp"))
 		);
 		assert_eq!(Timestamp::from_secs(5678) - Timestamp::from_secs(1234), Ok(Duration::from_secs(4444)));
 	}
