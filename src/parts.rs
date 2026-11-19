@@ -387,7 +387,7 @@ impl<'i> TimestampParts<'i> {
 
 		let nanos = self.nanoseconds + ((self.milliseconds as u32) * U32_NANOS_IN_MILLI);
 
-		Ok(super::Timestamp::new(secs, nanos))
+		super::Timestamp::new(secs, nanos)
 	}
 }
 

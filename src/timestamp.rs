@@ -176,8 +176,15 @@ impl<'i> Timestamp {
 	pub const EPOCH: Self = Self::MIN;
 
 	/// Creates a [`Timestamp`] from a given epoch timestamp in seconds + nanoseconds.
-	pub fn new(secs: u64, nanos: u32) -> Self {
-		Self { seconds: secs, nanoseconds: nanos }
+	/// Overflowing nanoseconds (>= `1_000_000_000`) are carried over as seconds, if possible.
+	pub fn new(secs: u64, nanos: u32) -> Result<Self, CastError> {
+		let seconds = match secs.checked_add((nanos / U32_NANOS_IN_SECOND) as u64) {
+			Some(s) => s,
+			None => return Err(CastError::Overflow("total seconds overflow")),
+		};
+		let nanoseconds = nanos % U32_NANOS_IN_SECOND;
+
+		Ok(Self { seconds, nanoseconds })
 	}
 
 	/// Creates a [`Timestamp`] from a given epoch timestamp in seconds.
@@ -333,9 +340,15 @@ impl<'i> Timestamp {
 	///
 	/// Returns [`TimestampOpError::Overflow`] if the sum exceeds the maximum [`Timestamp`] value.
 	pub fn add_duration(&self, d: &Duration) -> Result<Timestamp, TimestampOpError> {
-		let total_nanos = self.as_nanos() + d.as_nanos();
+		let nanos = self.nanoseconds + d.subsec_nanos();
 
-		Ok(Timestamp::from_nanos(total_nanos)?)
+		let nanoseconds = nanos % U32_NANOS_IN_SECOND;
+		let seconds = match self.seconds.checked_add(d.as_secs()).and_then(|s| s.checked_add((nanos / U32_NANOS_IN_SECOND) as u64)) {
+			Some(s) => s,
+			None => return Err(TimestampOpError::Overflow("total seconds overflow")),
+		};
+
+		Ok(Self { seconds, nanoseconds })
 	}
 
 	/// Compares two timestamps for ordering.
@@ -410,6 +423,15 @@ mod tests {
 	use super::*;
 
 	use crate::constant::{TIMESTAMP_MAX_MILLISECONDS, TIMESTAMP_MAX_NANOSECONDS};
+
+	#[test]
+	fn new() {
+		assert_eq!(Timestamp::new(0, 0), Ok(Timestamp::EPOCH));
+		assert_eq!(Timestamp::new(1234, 2000000789), Ok(Timestamp { seconds: 1236, nanoseconds: 789 }));
+		assert_eq!(Timestamp::new(1772858897, 123000000), Ok(Timestamp::from_millis(1772858897123).unwrap()));
+		assert_eq!(Timestamp::new(u64::MAX, 123), Ok(Timestamp { seconds: u64::MAX, nanoseconds: 123 }));
+		assert_eq!(Timestamp::new(u64::MAX, 3123456789), Err(CastError::Overflow("total seconds overflow")));
+	}
 
 	#[test]
 	fn cast_from() {
@@ -494,11 +516,11 @@ mod tests {
 
 	#[test]
 	fn comparison() {
-		assert_eq!(Timestamp::new(1234, 100), Timestamp::new(1234, 100), "equal");
-		assert!(Timestamp::new(1234, 100) > Timestamp::new(1234, 50), "same secs, more millis");
-		assert!(Timestamp::new(1234, 100) < Timestamp::new(1234, 200), "same secs, less millis");
-		assert!(Timestamp::new(5678, 100) > Timestamp::new(1234, 100), "more secs");
-		assert!(Timestamp::new(1234, 100) < Timestamp::new(5768, 100), "less secs");
+		assert_eq!(Timestamp::new(1234, 100).unwrap(), Timestamp::new(1234, 100).unwrap(), "equal");
+		assert!(Timestamp::new(1234, 100).unwrap() > Timestamp::new(1234, 50).unwrap(), "same secs, more millis");
+		assert!(Timestamp::new(1234, 100).unwrap() < Timestamp::new(1234, 200).unwrap(), "same secs, less millis");
+		assert!(Timestamp::new(5678, 100).unwrap() > Timestamp::new(1234, 100).unwrap(), "more secs");
+		assert!(Timestamp::new(1234, 100).unwrap() < Timestamp::new(5768, 100).unwrap(), "less secs");
 	}
 
 	#[test]
@@ -507,7 +529,11 @@ mod tests {
 		assert_eq!(Timestamp::from_secs(1234).add_duration(&Duration::ZERO), Ok(Timestamp::from_secs(1234)));
 		assert_eq!(
 			Timestamp::from_nanos(TIMESTAMP_MAX_NANOSECONDS).unwrap().add_duration(&Duration::from_nanos(1)),
-			Err(TimestampOpError::Overflow("nanoseconds from epoch is larger than what Timestamp can represent"))
+			Err(TimestampOpError::Overflow("total seconds overflow")),
+		);
+		assert_eq!(
+			Timestamp::new(0, 999999).unwrap().add_duration(&Duration::MAX),
+			Err(TimestampOpError::Overflow("total seconds overflow"))
 		);
 
 		// subtraction
@@ -521,27 +547,27 @@ mod tests {
 
 	#[test]
 	fn copy_from() {
-		let mut ts_1 = Timestamp::new(1234, 888);
-		let ts_2 = Timestamp::new(5678, 999);
+		let mut ts_1 = Timestamp::new(1234, 888).unwrap();
+		let ts_2 = Timestamp::new(5678, 999).unwrap();
 		assert_ne!(ts_1, ts_2);
 
 		ts_1.copy_from(&ts_2);
 		assert_eq!(ts_1, ts_2);
-		assert_eq!(ts_1, Timestamp::new(5678, 999));
+		assert_eq!(ts_1, Timestamp::new(5678, 999).unwrap());
 	}
 
 	#[test]
 	fn days_since_epoch() {
 		assert_eq!(Timestamp::EPOCH.days_since_epoch(), 0);
 		assert_eq!(Timestamp::try_from((1980, 7, 19, 18, 15, 0)).unwrap().days_since_epoch(), 3852);
-		assert_eq!(Timestamp::new(1772457020, 789).days_since_epoch(), 20514);
+		assert_eq!(Timestamp::new(1772457020, 789).unwrap().days_since_epoch(), 20514);
 		assert_eq!(Timestamp::from_secs(1772457213).days_since_epoch(), 20514);
 		assert_eq!(Timestamp::from_millis(1772457213123).unwrap().days_since_epoch(), 20514);
 	}
 
 	#[test]
 	fn casting_to() {
-		let ts = Timestamp::new(1772457319, 38123456);
+		let ts = Timestamp::new(1772457319, 38123456).unwrap();
 		assert_eq!(ts.as_secs(), 1772457319, "cast to seconds");
 		assert_eq!(ts.as_millis(), 1772457319038, "cast to millis");
 		assert_eq!(ts.as_nanos(), 1772457319038123456, "cast to nanos");
@@ -550,7 +576,7 @@ mod tests {
 	#[test]
 	fn to_string() {
 		// the Display trait implementation serializes Timestamps into UTC time strings.
-		assert_eq!(Timestamp::new(1772457020, 789).to_string(), "2026-03-02 13:10:20.000",);
+		assert_eq!(Timestamp::new(1772457020, 789).unwrap().to_string(), "2026-03-02 13:10:20.000",);
 		assert_eq!(Timestamp::from_secs(1772457213).to_string(), "2026-03-02 13:13:33.000");
 		assert_eq!(Timestamp::from_millis(1772457213123).unwrap().to_string(), "2026-03-02 13:13:33.123");
 		assert_eq!(Timestamp::try_from((2026, 3, 6, 14, 43, 39, 128, 564)).expect("invalid parts").to_string(), "2026-03-06 14:43:39.128");
@@ -603,8 +629,8 @@ mod tests {
 
 	#[test]
 	fn add_duration() {
-		let a = Timestamp::new(1234, 5678);
+		let a = Timestamp::new(1234, 5678).unwrap();
 		let b = a.add_duration(&Duration::from_millis(2234));
-		assert_eq!(b, Ok(Timestamp::new(1236, 234005678)));
+		assert_eq!(b, Ok(Timestamp::new(1236, 234005678).unwrap()));
 	}
 }
