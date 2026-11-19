@@ -11,7 +11,7 @@ use crate::error::CastError;
 
 /// A decomposition of a [`Timestamp`] into date + time parts, for a given timezone.
 #[derive(Clone, Debug, PartialEq)]
-pub struct TimestampParts<'l> {
+pub struct TimestampParts {
 	/// Nanoseconds after the millisecond (`0`-`999999`).
 	pub nanoseconds: u32,
 	/// Milliseconds after the second (`0`-`999`).
@@ -39,10 +39,10 @@ pub struct TimestampParts<'l> {
 	/// Timezone GMT offset, in minutes.
 	pub gmt_offset_minutes: u8,
 	/// Timezone abbreviation. Note this is OS-provided, and not necessarily an IANA identifier.
-	pub timezone: &'l str,
+	pub timezone: &'static str,
 }
 
-impl<'i> TimestampParts<'i> {
+impl TimestampParts {
 	/// [`TimestampParts`] for UNIX epoch (`1970-01-01 00:00 UTC`)
 	pub const EPOCH: Self = Self {
 		nanoseconds: 0,
@@ -242,7 +242,7 @@ impl<'i> TimestampParts<'i> {
 	}
 
 	/// Returns a sign string for the timezone GMT offset (either `+` or `-`).
-	pub fn gmt_offset_sign(&self) -> &'i str {
+	pub fn gmt_offset_sign(&self) -> &'static str {
 		if self.gmt_offset_negative { "-" } else { "+" }
 	}
 

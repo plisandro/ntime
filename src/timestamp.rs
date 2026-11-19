@@ -105,10 +105,10 @@ impl TryFrom<UtcDateTime> for Timestamp {
 }
 
 /// Initializes a [`Timestamp`] from a given [`UtcDateTime`] reference.
-impl<'i> TryFrom<&'i UtcDateTime> for Timestamp {
+impl TryFrom<&UtcDateTime> for Timestamp {
 	type Error = CastError;
 
-	fn try_from(udt: &'i UtcDateTime) -> Result<Self, Self::Error> {
+	fn try_from(udt: &UtcDateTime) -> Result<Self, Self::Error> {
 		Timestamp::from_utc_datetime(udt)
 	}
 }
@@ -162,7 +162,7 @@ impl TryFrom<(u64, u8, u8, u8, u8, u8, u16, u32)> for Timestamp {
 	}
 }
 
-impl<'i> Timestamp {
+impl Timestamp {
 	/// Minimum supported [`Timestamp`]: `1970-01-01 00:00:00.000000000 UTC`.
 	pub const MIN: Timestamp = Self { seconds: 0, nanoseconds: 0 };
 
@@ -273,7 +273,7 @@ impl<'i> Timestamp {
 	/// # Errors
 	///
 	/// Returns [`CastError`] upon invalid [`TimestampParts`] fields.
-	pub fn try_from_parts(parts: &'i TimestampParts) -> Result<Self, CastError> {
+	pub fn try_from_parts(parts: &TimestampParts) -> Result<Self, CastError> {
 		parts.to_timestamp()
 	}
 
@@ -283,7 +283,7 @@ impl<'i> Timestamp {
 	///
 	/// Panics upon invalid [`TimestampParts`] fields.
 	#[inline]
-	pub fn from_parts(parts: &'i TimestampParts) -> Self {
+	pub fn from_parts(parts: &TimestampParts) -> Self {
 		match Self::try_from_parts(parts) {
 			Ok(ts) => ts,
 			Err(e) => panic!("{e}"),
@@ -362,12 +362,12 @@ impl<'i> Timestamp {
 	}
 
 	/// Returns a [`TimestampParts`] for the timezone, as UTC.
-	pub fn to_utc_parts(&self) -> TimestampParts<'i> {
+	pub fn to_utc_parts(&self) -> TimestampParts {
 		TimestampParts::utc(self)
 	}
 
 	/// Returns a [`TimestampParts`] for the timezone, in the local timezone.
-	pub fn to_local_parts(&self) -> TimestampParts<'i> {
+	pub fn to_local_parts(&self) -> TimestampParts {
 		TimestampParts::local(self)
 	}
 

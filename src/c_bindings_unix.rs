@@ -71,8 +71,8 @@ pub fn c_reload_tz_info() {
 }
 
 /// Extracts a timezone string from a c_tm struct.
-pub fn c_timezone_from_tm<'f>(tm: &c_tm) -> &'f str {
-	// SAFETY: Parsing a C pointer which is guaranteed to be initialized by (g)libc functions.
+pub fn c_timezone_from_tm(tm: &c_tm) -> &'static str {
+	// SAFETY: Parsing a static C pointer which is guaranteed to be initialized by (g)libc functions.
 	let c_timezone = unsafe { CStr::from_ptr(tm.tm_zone).to_str() };
 
 	match c_timezone {
