@@ -179,19 +179,6 @@
 //! today is Mon the 6th of Apr 2026, day 96 of the year in UTC
 //! ```
 //!
-//! ## Other
-//!
-//! NanoTime also provides convenience functionality not strictly related to timestamps.
-//!
-//! ### Sleeping
-//!
-//! ```rust
-//! use ntime;
-//!
-//! // let's be lazy
-//! ntime::sleep_millis(1500);
-//! ```
-//!
 //! # Limitations
 //!
 //! ## Timestamp Ranges
@@ -223,7 +210,7 @@
 //! These limitations apply also to formatting, so [`Timestamp`]s over these boundaries
 //! will panic if serialized as strings.
 //!
-//! ## Error Handling
+//! # Error Handling
 //!
 //! Operations on [`Timestamp`] which panic on failure have a `try_*()` counterpart
 //! that returns an error instead.
@@ -237,7 +224,7 @@
 //!   - Arithmetic operations for [`Timestamp`]s (f.ex. adding a [`Duration`]) using `+` and `-` operators
 //!     will panic upon failure.
 //!
-//! ## Caveats
+//! # Caveats
 //!
 //! As noted, NanoTime is not well suited for applications requiring calendar operations,
 //! and/or flexible timezone management.
@@ -253,7 +240,6 @@ mod constant;
 mod error;
 mod format;
 mod parts;
-mod sleep;
 #[cfg(test)]
 mod test_helpers;
 mod timestamp;
@@ -263,6 +249,5 @@ mod write;
 pub use error::{CastError, TimestampOpError};
 pub use format::{Format, Precision, Timezone};
 pub use parts::TimestampParts;
-pub use sleep::*;
 pub use std::time::Duration;
 pub use timestamp::{Timestamp, UtcDateTime};
