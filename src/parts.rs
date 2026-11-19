@@ -286,6 +286,7 @@ impl<'i> TimestampParts<'i> {
 	}
 
 	/// Validates [`TimestampParts`] individual fields for correctness.
+	// TODO: use Overflow/Underflow when necessary
 	fn validate_fields(&self) -> Result<(), CastError> {
 		let max_year = if self.is_utc() { TIMESTAMP_MAX_YEAR } else { TIMESTAMP_MAX_LOCAL_YEAR };
 
@@ -332,6 +333,10 @@ impl<'i> TimestampParts<'i> {
 	}
 
 	/// Validates [`TimestampParts`] for correctness.
+	///
+	/// # Errors
+	///
+	/// Returns a [`CastError`] upon invalid [`TimestampParts`] fields.
 	pub fn validate(&self) -> Result<(), CastError> {
 		self.validate_fields()?;
 
@@ -345,6 +350,11 @@ impl<'i> TimestampParts<'i> {
 	}
 
 	/// Converts the parts structure back into a [`Timestamp`], much like glibc's timegm().
+	///
+	/// # Errors
+	///
+	/// Returns a [`CastError`] upon invalid [`TimestampParts`] fields.
+	// TODO: use Overflow/Underflow when necessary
 	pub fn to_timestamp(&self) -> Result<Timestamp, CastError> {
 		self.validate_fields()?;
 
@@ -819,14 +829,14 @@ mod test {
 		};
 
 		// UTC parts
-		assert_eq!(parts.to_timestamp(), Ok(Timestamp::from_nanos(1772947335320123456)));
+		assert_eq!(parts.to_timestamp().unwrap(), Timestamp::from_nanos(1772947335320123456).unwrap());
 
 		// timezoned parts
 		parts.gmt_offset_negative = true;
 		parts.gmt_offset_hours = 9;
 		parts.gmt_offset_minutes = 30;
 		parts.timezone = "Pacific/Marquesas";
-		assert_eq!(parts.to_timestamp(), Ok(Timestamp::from_nanos(1772981535320123456)));
+		assert_eq!(parts.to_timestamp().unwrap(), Timestamp::from_nanos(1772981535320123456).unwrap());
 	}
 
 	#[test]

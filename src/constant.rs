@@ -9,6 +9,11 @@ pub const MONTH_TO_DAYS_LEAP_YEAR: [u16; 12] = [0, 31, 60, 91, 121, 152, 182, 21
 
 pub const TIMEZONE_UTC: &str = "UTC";
 
+/// Maximum supported timestamp, in milliseconds.
+pub const TIMESTAMP_MAX_MILLISECONDS: u128 = u64::MAX as u128 * U128_MILLIS_IN_SECOND + (U128_MILLIS_IN_SECOND - 1);
+/// Maximum supported timestamp, in nanoseconds.
+pub const TIMESTAMP_MAX_NANOSECONDS: u128 = u64::MAX as u128 * U128_NANOS_IN_SECOND + (U128_NANOS_IN_SECOND - 1);
+
 /// Maximum supported seconds timestamp for local TZ conversions.
 /// Imposed by the fact that (g)libc calls deal with seconds timestamps as
 /// signed types, while NanoTime uses u64 seconds timestamps.

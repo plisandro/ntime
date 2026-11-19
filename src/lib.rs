@@ -183,6 +183,15 @@
 //! These limitations apply also to formatting, so [`Timestamp`]s over these boundaries
 //! will panic if serialized as strings.
 //!
+//! ## Error Handling
+//!
+//! A number of [`Timestamp`] operations return errors:
+//!
+//!   - All casting operations from types which are fallible (i.e. implementing `TryFrom`) return `CastError` upon
+//!     failure - f.ex. invalid values in [`UTCDateTime`], or timestamps in milliseconds which are too big.
+//!   - All [`Timestamp`] operations yielding a new [`Timestamp`] (f.ex. adding a [`Duration`]) return `TimestampOpError`
+//!     upon failure - f.ex. overflows.
+//!
 //! ## Caveats
 //!
 //! As noted, NanoTime is not well suited for applications requiring calendar operations,
@@ -206,7 +215,7 @@ mod timestamp;
 mod write;
 
 // Public exported symbols.
-pub use error::CastError;
+pub use error::{CastError, TimestampOpError};
 pub use format::{Format, Precision, Timezone};
 pub use parts::TimestampParts;
 pub use sleep::*;
