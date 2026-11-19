@@ -305,28 +305,28 @@ impl<'i> Timestamp {
 	}
 
 	/// Returns a [`TimestampParts`] for the timezone, as UTC.
-	pub fn as_utc_parts(&self) -> TimestampParts<'i> {
+	pub fn to_utc_parts(&self) -> TimestampParts<'i> {
 		TimestampParts::utc(self)
 	}
 
 	/// Returns a [`TimestampParts`] for the timezone, in the local timezone.
-	pub fn as_local_parts(&self) -> TimestampParts<'i> {
+	pub fn to_local_parts(&self) -> TimestampParts<'i> {
 		TimestampParts::local(self)
 	}
 
 	/// Returns a string representation for the timestamp, in a given [`Format`].
-	pub fn as_string(&self, format: &Format) -> String {
-		format.as_string(self)
+	pub fn to_string_as(&self, format: &Format) -> String {
+		format.to_string_for(self)
 	}
 
 	/// Returns the string representation length for the given [`Format`].
-	pub fn string_len(&self, format: &Format) -> usize {
-		format.string_len(self)
+	pub fn string_len_as(&self, format: &Format) -> usize {
+		format.string_len_for(self)
 	}
 
 	/// Returns a integer representation for the timestamp, if the given [`Format`] supports it.
-	pub fn as_integer(&self, format: &Format) -> Option<u128> {
-		format.as_integer(self)
+	pub fn to_integer_as(&self, format: &Format) -> Option<u128> {
+		format.to_integer_for(self)
 	}
 
 	/// Serializes a string representation into a [`io::Write`],in the given [`Format`].
@@ -392,7 +392,7 @@ impl<'i> Timestamp {
 
 impl fmt::Display for Timestamp {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		write!(f, "{}", self.as_string(&Format::default()))
+		write!(f, "{}", self.to_string_as(&Format::default()))
 	}
 }
 
@@ -585,7 +585,7 @@ mod tests {
 	#[test]
 	fn utc_parts_conversion() {
 		assert_eq!(
-			Timestamp::from_millis(1772457319335).unwrap().as_utc_parts(),
+			Timestamp::from_millis(1772457319335).unwrap().to_utc_parts(),
 			TimestampParts {
 				nanoseconds: 0,
 				milliseconds: 335,
@@ -606,7 +606,7 @@ mod tests {
 		);
 
 		assert_eq!(
-			Timestamp::from_nanos(1772457319335012345).unwrap().as_utc_parts(),
+			Timestamp::from_nanos(1772457319335012345).unwrap().to_utc_parts(),
 			TimestampParts {
 				nanoseconds: 12345,
 				milliseconds: 335,

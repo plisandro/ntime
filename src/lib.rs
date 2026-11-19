@@ -86,11 +86,11 @@
 //! println!("nanos since epoch: {}", now.as_nanos());
 //! println!("debug:             {:?}", now);
 //! println!("to_string():       {}", now.to_string());
-//! println!("local time:        {}", now.as_string(&Format::DateTime(Timezone::Local, Precision::Milliseconds)));
-//! println!("UTC time:          {}", now.as_string(&Format::DateTime(Timezone::Utc, Precision::Nanoseconds)));
-//! println!("HTTP/1.1:          {}", now.as_string(&Format::Rfc7231));
-//! println!("local week day     {}", now.as_local_parts().week_day);
-//! println!("UTC year day       {}", now.as_utc_parts().year_day);
+//! println!("local time:        {}", now.to_string_as(&Format::DateTime(Timezone::Local, Precision::Milliseconds)));
+//! println!("UTC time:          {}", now.to_string_as(&Format::DateTime(Timezone::Utc, Precision::Nanoseconds)));
+//! println!("HTTP/1.1:          {}", now.to_string_as(&Format::Rfc7231));
+//! println!("local week day     {}", now.to_local_parts().week_day);
+//! println!("UTC year day       {}", now.to_utc_parts().year_day);
 //! ```
 //! ```text
 //! nanos since epoch: 1774369621732000558
@@ -148,7 +148,7 @@
 //! use ntime::Timestamp;
 //!
 //! let now = Timestamp::now();
-//! let now_parts = now.as_utc_parts();
+//! let now_parts = now.to_utc_parts();
 //!
 //! println!(
 //!     "today is {day_name} the {month_day}th of {month_name} {year}, \

@@ -296,7 +296,7 @@ impl Format {
 
 		match self {
 			Self::DateTime(Timezone::Utc, pr) => {
-				let parts = ts.as_utc_parts();
+				let parts = ts.to_utc_parts();
 				match pr {
 					Precision::Seconds => {
 						// "2026-03-02 13:22:15"
@@ -348,7 +348,7 @@ impl Format {
 				}
 			}
 			Self::DateTime(Timezone::Local, pr) => {
-				let parts = ts.as_local_parts();
+				let parts = ts.to_local_parts();
 				match pr {
 					Precision::Seconds => {
 						// "2026-03-02 15:22:15 +0200"
@@ -414,8 +414,8 @@ impl Format {
 			Self::FileName(tz) => {
 				// 	"2026-03-02_13-22-15"
 				let parts = match tz {
-					Timezone::Utc => ts.as_utc_parts(),
-					Timezone::Local => ts.as_local_parts(),
+					Timezone::Utc => ts.to_utc_parts(),
+					Timezone::Local => ts.to_local_parts(),
 				};
 
 				buf.u64_dec(parts.year);
@@ -433,8 +433,8 @@ impl Format {
 			Self::Date(tz) => {
 				// "2026-03-02"
 				let parts = match tz {
-					Timezone::Utc => ts.as_utc_parts(),
-					Timezone::Local => ts.as_local_parts(),
+					Timezone::Utc => ts.to_utc_parts(),
+					Timezone::Local => ts.to_local_parts(),
 				};
 
 				buf.u64_dec(parts.year);
@@ -445,8 +445,8 @@ impl Format {
 			}
 			Self::Time(tz, pr) => {
 				let parts = match tz {
-					Timezone::Utc => ts.as_utc_parts(),
-					Timezone::Local => ts.as_local_parts(),
+					Timezone::Utc => ts.to_utc_parts(),
+					Timezone::Local => ts.to_local_parts(),
 				};
 
 				match pr {
@@ -484,8 +484,8 @@ impl Format {
 			Self::Rfc2822(tz) => {
 				// "Mon, 02 Mar 2026 13:22:15 +0000" (UTC), "Mon, 02 Mar 2026 15:22:15 +0200" (local)
 				let parts = match tz {
-					Timezone::Utc => ts.as_utc_parts(),
-					Timezone::Local => ts.as_local_parts(),
+					Timezone::Utc => ts.to_utc_parts(),
+					Timezone::Local => ts.to_local_parts(),
 				};
 
 				buf.str(parts.day_name());
@@ -507,7 +507,7 @@ impl Format {
 				buf.u8_dec_padded(parts.gmt_offset_minutes, b'0', 2);
 			}
 			Self::Rfc3339(Timezone::Utc, pr) | Self::Iso8601(Timezone::Utc, pr) => {
-				let parts = ts.as_utc_parts();
+				let parts = ts.to_utc_parts();
 				match pr {
 					Precision::Seconds => {
 						// "2026-03-02T13:22:15Z"
@@ -562,7 +562,7 @@ impl Format {
 				};
 			}
 			Self::Rfc3339(Timezone::Local, pr) | Self::Iso8601(Timezone::Local, pr) => {
-				let parts = ts.as_local_parts();
+				let parts = ts.to_local_parts();
 
 				match pr {
 					Precision::Seconds => {
@@ -629,8 +629,8 @@ impl Format {
 			Self::Rfc3164(tz) => {
 				// "Mar  2 15:22:15"
 				let parts = match tz {
-					Timezone::Utc => ts.as_utc_parts(),
-					Timezone::Local => ts.as_local_parts(),
+					Timezone::Utc => ts.to_utc_parts(),
+					Timezone::Local => ts.to_local_parts(),
 				};
 
 				buf.str(parts.month_name());
@@ -645,7 +645,7 @@ impl Format {
 			}
 			Self::Rfc7231 => {
 				// "Mon, 02 Mar 2026 13:22:15 GMT"
-				let parts = ts.as_utc_parts();
+				let parts = ts.to_utc_parts();
 				buf.str(parts.day_name());
 				buf.str(", ");
 				buf.u8_dec_padded(parts.month_day, b'0', 2);
@@ -673,7 +673,7 @@ impl Format {
 	}
 
 	/// Returns the string representation length for a [`Timestamp`] using this [`Format`]
-	pub fn string_len(&self, ts: &Timestamp) -> usize {
+	pub fn string_len_for(&self, ts: &Timestamp) -> usize {
 		// minor optimization: every date before the timestamp for
 		// 9999-12-30 00:00:00 has a four-digit year, regardless of timezone.
 		const FOUR_DIGIT_YEAR_CUTOFF_TIMESTAMP_SECS: u64 = 253402128000;
@@ -684,14 +684,14 @@ impl Format {
 			if ts.as_secs() < FOUR_DIGIT_YEAR_CUTOFF_TIMESTAMP_SECS {
 				4
 			} else {
-				digits_u64(ts.as_utc_parts().year)
+				digits_u64(ts.to_utc_parts().year)
 			}
 		};
 		let digits_local_year = |ts: &Timestamp| -> usize {
 			if ts.as_secs() < FOUR_DIGIT_YEAR_CUTOFF_TIMESTAMP_SECS {
 				4
 			} else {
-				digits_u64(ts.as_local_parts().year)
+				digits_u64(ts.to_local_parts().year)
 			}
 		};
 
@@ -766,7 +766,7 @@ impl Format {
 	}
 
 	/// Serializes a [`Timestamp`] into a [`String`].
-	pub fn as_string(&self, ts: &Timestamp) -> String {
+	pub fn to_string_for(&self, ts: &Timestamp) -> String {
 		let mut out = Vec::new();
 		if let Err(e) = self.write(&mut out, ts) {
 			panic!("failed to serialize Timestamp: {}", e);
@@ -779,7 +779,7 @@ impl Format {
 	}
 
 	/// Serializes a [`Timestamp`] into an integer, if the format supports it.
-	pub fn as_integer(&self, ts: &Timestamp) -> Option<u128> {
+	pub fn to_integer_for(&self, ts: &Timestamp) -> Option<u128> {
 		match self {
 			Self::Timestamp(pr) => match pr {
 				Precision::Seconds => Some(ts.as_secs() as u128),
@@ -813,33 +813,33 @@ mod test_format {
 	fn timestamp_as_number_string() {
 		let ts = Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts");
 
-		assert_eq!(Format::Timestamp(Precision::Seconds).as_string(&ts), "1772808229");
-		assert_eq!(Format::Timestamp(Precision::Milliseconds).as_string(&ts), "1772808229038");
-		assert_eq!(Format::Timestamp(Precision::Nanoseconds).as_string(&ts), "1772808229038023456");
+		assert_eq!(Format::Timestamp(Precision::Seconds).to_string_for(&ts), "1772808229");
+		assert_eq!(Format::Timestamp(Precision::Milliseconds).to_string_for(&ts), "1772808229038");
+		assert_eq!(Format::Timestamp(Precision::Nanoseconds).to_string_for(&ts), "1772808229038023456");
 	}
 
 	#[test]
 	fn timestamp_as_utc_string() {
 		let ts = Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts");
 
-		assert_eq!(Format::DateTime(Timezone::Utc, Precision::Seconds).as_string(&ts), "2026-03-06 14:43:49");
-		assert_eq!(Format::DateTime(Timezone::Utc, Precision::Milliseconds).as_string(&ts), "2026-03-06 14:43:49.038");
-		assert_eq!(Format::DateTime(Timezone::Utc, Precision::Nanoseconds).as_string(&ts), "2026-03-06 14:43:49.038023456");
-		assert_eq!(Format::FileName(Timezone::Utc).as_string(&ts), "2026-03-06_14-43-49");
-		assert_eq!(Format::Date(Timezone::Utc).as_string(&ts), "2026-03-06");
-		assert_eq!(Format::Time(Timezone::Utc, Precision::Seconds).as_string(&ts), "14:43:49");
-		assert_eq!(Format::Time(Timezone::Utc, Precision::Milliseconds).as_string(&ts), "14:43:49.038");
-		assert_eq!(Format::Time(Timezone::Utc, Precision::Nanoseconds).as_string(&ts), "14:43:49.038023456");
-		assert_eq!(Format::Rfc2822(Timezone::Utc).as_string(&ts), "Fri, 06 Mar 2026 14:43:49 +0000");
-		assert_eq!(Format::Rfc3339(Timezone::Utc, Precision::Seconds).as_string(&ts), "2026-03-06T14:43:49Z");
-		assert_eq!(Format::Rfc3339(Timezone::Utc, Precision::Milliseconds).as_string(&ts), "2026-03-06T14:43:49.038Z");
-		assert_eq!(Format::Rfc3339(Timezone::Utc, Precision::Nanoseconds).as_string(&ts), "2026-03-06T14:43:49.038023456Z");
-		assert_eq!(Format::Iso8601(Timezone::Utc, Precision::Seconds).as_string(&ts), "2026-03-06T14:43:49Z");
-		assert_eq!(Format::Iso8601(Timezone::Utc, Precision::Milliseconds).as_string(&ts), "2026-03-06T14:43:49.038Z");
-		assert_eq!(Format::Iso8601(Timezone::Utc, Precision::Nanoseconds).as_string(&ts), "2026-03-06T14:43:49.038023456Z");
-		assert_eq!(Format::Rfc3164(Timezone::Utc).as_string(&ts), "Mar  6 14:43:49");
-		assert_eq!(Format::HTTP.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 GMT");
-		assert_eq!(Format::Rfc7231.as_string(&ts), "Fri, 06 Mar 2026 14:43:49 GMT");
+		assert_eq!(Format::DateTime(Timezone::Utc, Precision::Seconds).to_string_for(&ts), "2026-03-06 14:43:49");
+		assert_eq!(Format::DateTime(Timezone::Utc, Precision::Milliseconds).to_string_for(&ts), "2026-03-06 14:43:49.038");
+		assert_eq!(Format::DateTime(Timezone::Utc, Precision::Nanoseconds).to_string_for(&ts), "2026-03-06 14:43:49.038023456");
+		assert_eq!(Format::FileName(Timezone::Utc).to_string_for(&ts), "2026-03-06_14-43-49");
+		assert_eq!(Format::Date(Timezone::Utc).to_string_for(&ts), "2026-03-06");
+		assert_eq!(Format::Time(Timezone::Utc, Precision::Seconds).to_string_for(&ts), "14:43:49");
+		assert_eq!(Format::Time(Timezone::Utc, Precision::Milliseconds).to_string_for(&ts), "14:43:49.038");
+		assert_eq!(Format::Time(Timezone::Utc, Precision::Nanoseconds).to_string_for(&ts), "14:43:49.038023456");
+		assert_eq!(Format::Rfc2822(Timezone::Utc).to_string_for(&ts), "Fri, 06 Mar 2026 14:43:49 +0000");
+		assert_eq!(Format::Rfc3339(Timezone::Utc, Precision::Seconds).to_string_for(&ts), "2026-03-06T14:43:49Z");
+		assert_eq!(Format::Rfc3339(Timezone::Utc, Precision::Milliseconds).to_string_for(&ts), "2026-03-06T14:43:49.038Z");
+		assert_eq!(Format::Rfc3339(Timezone::Utc, Precision::Nanoseconds).to_string_for(&ts), "2026-03-06T14:43:49.038023456Z");
+		assert_eq!(Format::Iso8601(Timezone::Utc, Precision::Seconds).to_string_for(&ts), "2026-03-06T14:43:49Z");
+		assert_eq!(Format::Iso8601(Timezone::Utc, Precision::Milliseconds).to_string_for(&ts), "2026-03-06T14:43:49.038Z");
+		assert_eq!(Format::Iso8601(Timezone::Utc, Precision::Nanoseconds).to_string_for(&ts), "2026-03-06T14:43:49.038023456Z");
+		assert_eq!(Format::Rfc3164(Timezone::Utc).to_string_for(&ts), "Mar  6 14:43:49");
+		assert_eq!(Format::HTTP.to_string_for(&ts), "Fri, 06 Mar 2026 14:43:49 GMT");
+		assert_eq!(Format::Rfc7231.to_string_for(&ts), "Fri, 06 Mar 2026 14:43:49 GMT");
 	}
 
 	#[test]
@@ -847,27 +847,27 @@ mod test_format {
 		test_helpers::mocks::with_timezone("America/Montevideo", || {
 			let ts = Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts");
 
-			assert_eq!(Format::DateTime(Timezone::Local, Precision::Seconds).as_string(&ts), "2026-03-06 11:43:49 -0300");
-			assert_eq!(Format::DateTime(Timezone::Local, Precision::Milliseconds).as_string(&ts), "2026-03-06 11:43:49.038 -0300");
-			assert_eq!(Format::DateTime(Timezone::Local, Precision::Nanoseconds).as_string(&ts), "2026-03-06 11:43:49.038023456 -0300");
-			assert_eq!(Format::FileName(Timezone::Local).as_string(&ts), "2026-03-06_11-43-49");
-			assert_eq!(Format::Date(Timezone::Local).as_string(&ts), "2026-03-06");
-			assert_eq!(Format::Time(Timezone::Local, Precision::Seconds).as_string(&ts), "11:43:49");
-			assert_eq!(Format::Time(Timezone::Local, Precision::Milliseconds).as_string(&ts), "11:43:49.038");
-			assert_eq!(Format::Time(Timezone::Local, Precision::Nanoseconds).as_string(&ts), "11:43:49.038023456");
-			assert_eq!(Format::Rfc2822(Timezone::Local).as_string(&ts), "Fri, 06 Mar 2026 11:43:49 -0300");
-			assert_eq!(Format::Rfc3339(Timezone::Local, Precision::Seconds).as_string(&ts), "2026-03-06T11:43:49-03:00");
-			assert_eq!(Format::Rfc3339(Timezone::Local, Precision::Milliseconds).as_string(&ts), "2026-03-06T11:43:49.038-03:00");
-			assert_eq!(Format::Rfc3339(Timezone::Local, Precision::Nanoseconds).as_string(&ts), "2026-03-06T11:43:49.038023456-03:00");
-			assert_eq!(Format::Iso8601(Timezone::Local, Precision::Seconds).as_string(&ts), "2026-03-06T11:43:49-03:00");
-			assert_eq!(Format::Iso8601(Timezone::Local, Precision::Milliseconds).as_string(&ts), "2026-03-06T11:43:49.038-03:00");
-			assert_eq!(Format::Iso8601(Timezone::Local, Precision::Nanoseconds).as_string(&ts), "2026-03-06T11:43:49.038023456-03:00");
-			assert_eq!(Format::Rfc3164(Timezone::Local).as_string(&ts), "Mar  6 11:43:49");
+			assert_eq!(Format::DateTime(Timezone::Local, Precision::Seconds).to_string_for(&ts), "2026-03-06 11:43:49 -0300");
+			assert_eq!(Format::DateTime(Timezone::Local, Precision::Milliseconds).to_string_for(&ts), "2026-03-06 11:43:49.038 -0300");
+			assert_eq!(Format::DateTime(Timezone::Local, Precision::Nanoseconds).to_string_for(&ts), "2026-03-06 11:43:49.038023456 -0300");
+			assert_eq!(Format::FileName(Timezone::Local).to_string_for(&ts), "2026-03-06_11-43-49");
+			assert_eq!(Format::Date(Timezone::Local).to_string_for(&ts), "2026-03-06");
+			assert_eq!(Format::Time(Timezone::Local, Precision::Seconds).to_string_for(&ts), "11:43:49");
+			assert_eq!(Format::Time(Timezone::Local, Precision::Milliseconds).to_string_for(&ts), "11:43:49.038");
+			assert_eq!(Format::Time(Timezone::Local, Precision::Nanoseconds).to_string_for(&ts), "11:43:49.038023456");
+			assert_eq!(Format::Rfc2822(Timezone::Local).to_string_for(&ts), "Fri, 06 Mar 2026 11:43:49 -0300");
+			assert_eq!(Format::Rfc3339(Timezone::Local, Precision::Seconds).to_string_for(&ts), "2026-03-06T11:43:49-03:00");
+			assert_eq!(Format::Rfc3339(Timezone::Local, Precision::Milliseconds).to_string_for(&ts), "2026-03-06T11:43:49.038-03:00");
+			assert_eq!(Format::Rfc3339(Timezone::Local, Precision::Nanoseconds).to_string_for(&ts), "2026-03-06T11:43:49.038023456-03:00");
+			assert_eq!(Format::Iso8601(Timezone::Local, Precision::Seconds).to_string_for(&ts), "2026-03-06T11:43:49-03:00");
+			assert_eq!(Format::Iso8601(Timezone::Local, Precision::Milliseconds).to_string_for(&ts), "2026-03-06T11:43:49.038-03:00");
+			assert_eq!(Format::Iso8601(Timezone::Local, Precision::Nanoseconds).to_string_for(&ts), "2026-03-06T11:43:49.038023456-03:00");
+			assert_eq!(Format::Rfc3164(Timezone::Local).to_string_for(&ts), "Mar  6 11:43:49");
 		});
 	}
 
 	#[test]
-	fn timestamp_string_len() {
+	fn timestamp_string_len_for() {
 		test_helpers::mocks::with_timezone("America/Montevideo", || {
 			for ts in [
 				Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts for year 2026"),
@@ -915,7 +915,7 @@ mod test_format {
 					Format::Timestamp(Precision::Nanoseconds),
 					Format::Timestamp(Precision::Seconds),
 				] {
-					assert_eq!(format.string_len(&ts), format.as_string(&ts).len(), "{} for {}", format, ts);
+					assert_eq!(format.string_len_for(&ts), format.to_string_for(&ts).len(), "{} for {}", format, ts);
 				}
 			}
 		})
@@ -925,16 +925,16 @@ mod test_format {
 	fn timestamp_as_integer() {
 		let ts = Timestamp::try_from((2026, 1, 29, 7, 43, 19, 134, 943903)).expect("invalid parts");
 
-		assert_eq!(Format::Timestamp(Precision::Seconds).as_integer(&ts), Some(1769672599_u128));
-		assert_eq!(Format::Timestamp(Precision::Milliseconds).as_integer(&ts), Some(1769672599134_u128));
-		assert_eq!(Format::Timestamp(Precision::Nanoseconds).as_integer(&ts), Some(1769672599134943903_u128));
-		assert_eq!(Format::DateTime(Timezone::Utc, Precision::Seconds).as_integer(&ts), None);
-		assert_eq!(Format::DateTime(Timezone::Utc, Precision::Nanoseconds).as_integer(&ts), None);
-		assert_eq!(Format::Time(Timezone::Utc, Precision::Seconds).as_integer(&ts), None);
-		assert_eq!(Format::Rfc2822(Timezone::Utc).as_integer(&ts), None);
-		assert_eq!(Format::Iso8601(Timezone::Local, Precision::Nanoseconds).as_integer(&ts), None);
-		assert_eq!(Format::HTTP.as_integer(&ts), None);
-		assert_eq!(Format::Rfc7231.as_integer(&ts), None);
+		assert_eq!(Format::Timestamp(Precision::Seconds).to_integer_for(&ts), Some(1769672599_u128));
+		assert_eq!(Format::Timestamp(Precision::Milliseconds).to_integer_for(&ts), Some(1769672599134_u128));
+		assert_eq!(Format::Timestamp(Precision::Nanoseconds).to_integer_for(&ts), Some(1769672599134943903_u128));
+		assert_eq!(Format::DateTime(Timezone::Utc, Precision::Seconds).to_integer_for(&ts), None);
+		assert_eq!(Format::DateTime(Timezone::Utc, Precision::Nanoseconds).to_integer_for(&ts), None);
+		assert_eq!(Format::Time(Timezone::Utc, Precision::Seconds).to_integer_for(&ts), None);
+		assert_eq!(Format::Rfc2822(Timezone::Utc).to_integer_for(&ts), None);
+		assert_eq!(Format::Iso8601(Timezone::Local, Precision::Nanoseconds).to_integer_for(&ts), None);
+		assert_eq!(Format::HTTP.to_integer_for(&ts), None);
+		assert_eq!(Format::Rfc7231.to_integer_for(&ts), None);
 	}
 
 	#[test]

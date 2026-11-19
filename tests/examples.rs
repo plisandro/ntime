@@ -11,10 +11,10 @@ mod dummy_examples {
 		println!("current time as nanos:  {}", now.as_nanos());
 		println!("current time as debug:  {:?}", now);
 		println!("current time as string: {}", now);
-		println!("current time (local):   {}", now.as_string(&Format::DateTime(Timezone::Local, Precision::Milliseconds)));
-		println!("current time (UTC):     {}", now.as_string(&Format::DateTime(Timezone::Utc, Precision::Milliseconds)));
-		println!("week day (local):       {}", now.as_local_parts().week_day);
-		println!("year day (UTC):         {}", now.as_utc_parts().year_day);
+		println!("current time (local):   {}", now.to_string_as(&Format::DateTime(Timezone::Local, Precision::Milliseconds)));
+		println!("current time (UTC):     {}", now.to_string_as(&Format::DateTime(Timezone::Utc, Precision::Milliseconds)));
+		println!("week day (local):       {}", now.to_local_parts().week_day);
+		println!("year day (UTC):         {}", now.to_utc_parts().year_day);
 	}
 
 	#[test]

@@ -96,7 +96,7 @@ mod to_string {
 			.with_inputs(|| BENCHMARK_LOG_ITEMS)
 			.bench_local_refs(|total| {
 				for _ in 0..*total {
-					let res = hint::black_box(&now).as_string(format);
+					let res = hint::black_box(&now).to_string_as(format);
 					hint::black_box(res);
 				}
 			});
@@ -130,7 +130,7 @@ mod as_integer {
 			.with_inputs(|| BENCHMARK_LOG_ITEMS)
 			.bench_local_refs(|total| {
 				for _ in 0..*total {
-					let res = hint::black_box(&now).as_integer(format);
+					let res = hint::black_box(&now).to_integer_as(format);
 					hint::black_box(res);
 				}
 			});

@@ -528,13 +528,13 @@ mod test {
 	#[test]
 	#[should_panic]
 	fn parts_conversion_max_timestamp() {
-		_ = Timestamp::MAX.as_local_parts();
+		_ = Timestamp::MAX.to_local_parts();
 	}
 
 	#[test]
 	#[should_panic]
 	fn parts_conversion_timestamp_overflow() {
-		let _ = Timestamp::from_secs(TIMESTAMP_MAX_LOCAL_SECONDS + 1).as_local_parts();
+		let _ = Timestamp::from_secs(TIMESTAMP_MAX_LOCAL_SECONDS + 1).to_local_parts();
 	}
 
 	#[test]
@@ -719,7 +719,7 @@ mod test {
 
 	#[test]
 	fn epoch_parts() {
-		assert_eq!(Timestamp::EPOCH.as_utc_parts(), TimestampParts::EPOCH);
+		assert_eq!(Timestamp::EPOCH.to_utc_parts(), TimestampParts::EPOCH);
 	}
 
 	#[test]
@@ -1042,7 +1042,7 @@ mod test {
 				},
 			),
 		] {
-			let parts = ts.as_utc_parts();
+			let parts = ts.to_utc_parts();
 			assert_eq!(parts, want_parts);
 
 			let ts_from_parts: Timestamp = parts.to_timestamp().expect("invalid TimestampParts casted from Timestamp");
@@ -1055,8 +1055,8 @@ mod test {
 		test_helpers::mocks::with_timezone("America/Montevideo", || {
 			// GMT -03:00
 			let ts = Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts");
-			assert_eq!(ts.as_string(&Format::DateTime(Timezone::Local, Precision::Milliseconds)), "2026-03-06 11:43:49.038 -0300");
-			let parts = ts.as_local_parts();
+			assert_eq!(ts.to_string_as(&Format::DateTime(Timezone::Local, Precision::Milliseconds)), "2026-03-06 11:43:49.038 -0300");
+			let parts = ts.to_local_parts();
 			assert!(parts.gmt_offset_negative);
 			assert_eq!(parts.gmt_offset_hours, 3);
 			assert_eq!(parts.gmt_offset_minutes, 0);
@@ -1065,9 +1065,9 @@ mod test {
 		test_helpers::mocks::with_timezone("Pacific/Samoa", || {
 			// GMT -11:00
 			let ts = Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts");
-			assert_eq!(ts.as_string(&Format::DateTime(Timezone::Local, Precision::Milliseconds)), "2026-03-06 03:43:49.038 -1100");
+			assert_eq!(ts.to_string_as(&Format::DateTime(Timezone::Local, Precision::Milliseconds)), "2026-03-06 03:43:49.038 -1100");
 
-			let parts = ts.as_local_parts();
+			let parts = ts.to_local_parts();
 			assert!(parts.gmt_offset_negative);
 			assert_eq!(parts.gmt_offset_hours, 11);
 			assert_eq!(parts.gmt_offset_minutes, 0);
@@ -1076,9 +1076,9 @@ mod test {
 		test_helpers::mocks::with_timezone("Pacific/Kanton", || {
 			// GMT +13:00
 			let ts = Timestamp::try_from((2026, 3, 6, 14, 43, 49, 38, 23456)).expect("invalid parts");
-			assert_eq!(ts.as_string(&Format::DateTime(Timezone::Local, Precision::Milliseconds)), "2026-03-07 03:43:49.038 +1300");
+			assert_eq!(ts.to_string_as(&Format::DateTime(Timezone::Local, Precision::Milliseconds)), "2026-03-07 03:43:49.038 +1300");
 
-			let parts = ts.as_local_parts();
+			let parts = ts.to_local_parts();
 			assert!(!parts.gmt_offset_negative);
 			assert_eq!(parts.gmt_offset_hours, 13);
 			assert_eq!(parts.gmt_offset_minutes, 0);
@@ -1094,9 +1094,9 @@ mod test {
 			Timestamp::try_from((2026, 7, 1)).expect("invalid timestamp for 2026-07-01 00:00:00"),
 			Timestamp::try_from((2026, 7, 25, 11, 32, 12)).expect("invalid timestamp for 2026-07-25 11:32:12"),
 		] {
-			let local = &ts.as_local_parts();
+			let local = &ts.to_local_parts();
 			let gmt_offset_secs = local.gmt_offset_seconds();
-			let gmt_shifted = &Timestamp::from_secs((ts.as_secs() as i64 + gmt_offset_secs as i64) as u64).as_utc_parts();
+			let gmt_shifted = &Timestamp::from_secs((ts.as_secs() as i64 + gmt_offset_secs as i64) as u64).to_utc_parts();
 
 			assert_eq!(
 				(local.year, local.month, local.month_day, local.hour, local.minutes, local.seconds),
