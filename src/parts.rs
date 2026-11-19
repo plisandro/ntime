@@ -73,7 +73,7 @@ impl TimestampParts {
 		// Implements an short-circuit version of the Drepper-Neri-Schneider algorithm:
 		// https://github.com/gcc-mirror/gcc/commit/86a0df1a6c7fe4a835620b868e76ea78d42d6620 .
 		// Relies on the fact that most compilers will optimize "mod 25" without divisions.
-		(year & 3 == 0) && (!year.is_multiple_of(25) || year & 15 == 0)
+		(year & 3 == 0) && (year % 25 != 0 || year & 15 == 0)
 	}
 
 	/// Creates a UTC [`TimestampParts`] from a given [`Timestamp`].

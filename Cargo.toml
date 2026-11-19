@@ -10,6 +10,7 @@ exclude = [".github/", ".gitignore", "assets/"]
 readme = "README.md"
 keywords = ["duration", "time", "timestamp"]
 repository = "https://github.com/plisandro/ntime"
+rust-version = "1.85.0"
 
 include = [
   "Cargo.toml",
