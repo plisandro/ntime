@@ -25,8 +25,9 @@
 //!   * A standard [`std::time::SystemTime`], via [`Timestamp::try_from()`].
 //!   * A UTC date & time tuple: [`Timestamp::try_from()`] with `(year, month, day[, hour, minutes, seconds[, millis, nanos]])`.
 //!   * A dedicated [`UtcDateTime`] struct, via [`Timestamp::try_from()`].
+//!   * From a timestamp in milliseconds/nanoseconds (fallible): [`Timestamp::try_new()`], [`Timestamp::try_from_millis()`], [`Timestamp::try_from_nanos()`].
 //!   * From a timestamp in milliseconds/nanoseconds: [`Timestamp::new()`], [`Timestamp::from_secs()`], [`Timestamp::from_millis()`], [`Timestamp::from_nanos()`].
-//!   * From a [`TimestampParts`] struct: [`Timestamp::from_parts()`]
+//!   * From a [`TimestampParts`] struct: [`Timestamp::from_parts()`], [`Timestamp::try_from_parts()`]
 //!
 //! ### From Current Time
 //!
@@ -224,15 +225,15 @@
 //!
 //! ## Error Handling
 //!
-//! A number of [`Timestamp`] operations return errors...
+//! Operations on [`Timestamp`] which panic on failure have a `try_*()` counterpart
+//! that returns an error instead.
 //!
-//!   - All casting operations from types which are fallible (i.e. implementing `TryFrom`) return `CastError` upon
-//!     failure - f.ex. invalid values in [`UtcDateTime`], or timestamps in milliseconds which are too big.
+//!   - All `from_*()` casting operations (f.ex. [`Timestamp::from_millis()`]) panic upon
+//!     failure - f.ex. upon timestamps in milliseconds which are too big.
+//!   - All `try_from_*()` casting operations (f.ex. [`Timestamp::try_from_nanos()`]) return `CastError`
+//!     upon failure - f.ex. invalid values in [`UtcDateTime`].
 //!   - Arithmetic operations for [`Timestamp`]s (f.ex. adding a [`Duration`]) using `try_*()` methods return
 //!     [`TimestampOpError`] upon failure.
-//!
-//! ...while some can panic:
-//!
 //!   - Arithmetic operations for [`Timestamp`]s (f.ex. adding a [`Duration`]) using `+` and `-` operators
 //!     will panic upon failure.
 //!

@@ -353,7 +353,6 @@ impl<'i> TimestampParts<'i> {
 	/// # Errors
 	///
 	/// Returns a [`CastError`] upon invalid [`TimestampParts`] fields.
-	// TODO: use Overflow/Underflow when necessary
 	pub fn to_timestamp(&self) -> Result<Timestamp, CastError> {
 		self.validate_fields()?;
 
@@ -387,7 +386,7 @@ impl<'i> TimestampParts<'i> {
 
 		let nanos = self.nanoseconds + ((self.milliseconds as u32) * U32_NANOS_IN_MILLI);
 
-		super::Timestamp::new(secs, nanos)
+		super::Timestamp::try_new(secs, nanos)
 	}
 }
 
@@ -828,14 +827,14 @@ mod test {
 		};
 
 		// UTC parts
-		assert_eq!(parts.to_timestamp().unwrap(), Timestamp::from_nanos(1772947335320123456).unwrap());
+		assert_eq!(parts.to_timestamp().unwrap(), Timestamp::from_nanos(1772947335320123456));
 
 		// timezoned parts
 		parts.gmt_offset_negative = true;
 		parts.gmt_offset_hours = 9;
 		parts.gmt_offset_minutes = 30;
 		parts.timezone = "Pacific/Marquesas";
-		assert_eq!(parts.to_timestamp().unwrap(), Timestamp::from_nanos(1772981535320123456).unwrap());
+		assert_eq!(parts.to_timestamp().unwrap(), Timestamp::from_nanos(1772981535320123456));
 	}
 
 	#[test]
