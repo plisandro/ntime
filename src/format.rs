@@ -1,6 +1,7 @@
 use std::fmt;
 use std::io;
 
+use crate::CastError;
 use crate::timestamp::Timestamp;
 use crate::write;
 
@@ -769,15 +770,34 @@ impl Format {
 	}
 
 	/// Serializes a [`Timestamp`] into a [`String`].
-	pub fn to_string_for(&self, ts: &Timestamp) -> String {
+	///
+	/// # Errors
+	///
+	/// Returns a [`CastError`] upon conversion issues.
+	pub fn try_to_string_for(&self, ts: &Timestamp) -> Result<String, CastError> {
 		let mut out = Vec::new();
-		if let Err(e) = self.write(&mut out, ts) {
-			panic!("failed to serialize Timestamp: {}", e);
-		}
+		if let Err(err) = self.write(&mut out, ts) {
+			// unwrap the underlying CastError - if any
+			return Err(err
+				.into_inner()
+				.and_then(|b| b.downcast::<CastError>().ok())
+				.map(|b| *b)
+				.unwrap_or(CastError::Internal("failed to serialize Timestamp")));
+		};
 
-		match String::from_utf8(out) {
+		String::from_utf8(out).map_err(|_| CastError::Internal("Timestamp serialization generated invalid UTF-8"))
+	}
+
+	/// Serializes a [`Timestamp`] into a [`String`].
+	///
+	/// # Panics
+	///
+	/// Panics upon conversion issues.
+	#[inline]
+	pub fn to_string_for(&self, ts: &Timestamp) -> String {
+		match self.try_to_string_for(ts) {
 			Ok(s) => s,
-			Err(e) => panic!("failed to convert Timestamp to String: {}", e),
+			Err(e) => panic!("{e}"),
 		}
 	}
 

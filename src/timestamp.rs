@@ -385,8 +385,21 @@ impl Timestamp {
 	}
 
 	/// Returns a string representation for the timestamp, in a given [`Format`].
+	///
+	/// # Panics
+	///
+	/// Panics upon conversion issues.
 	pub fn to_string_as(&self, format: &Format) -> String {
 		format.to_string_for(self)
+	}
+
+	/// Returns a string representation for the timestamp, in a given [`Format`].
+	///
+	/// # Errors
+	///
+	/// Returns a [`CastError`] upon conversion issues.
+	pub fn try_to_string_as(&self, format: &Format) -> Result<String, CastError> {
+		format.try_to_string_for(self)
 	}
 
 	/// Returns the string representation length for the given [`Format`].
