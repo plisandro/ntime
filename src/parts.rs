@@ -62,7 +62,7 @@ impl TimestampParts {
 	};
 
 	/// Returns an UNIX epoch [`TimestampParts`] (`1970-01-01 00:00:00 UTC`).
-	#[deprecated(note = "use TimestampParts::EPOCH instead")]
+	#[deprecated(since = "1.0.0", note = "use TimestampParts::EPOCH instead")]
 	#[inline]
 	pub fn epoch() -> Self {
 		Self::EPOCH

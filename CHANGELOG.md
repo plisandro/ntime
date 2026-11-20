@@ -2,6 +2,23 @@
 
 A list of important changes for relevant `ntime` releases.
 
+## Version 1.0.0 (2026-11-xx)
+
+First major release 🙌🏻
+
+  - New and improved public API: fallible type conversions with dedicated error
+    types, a cleaner `Format` structure and much more consistent (and saner) method
+    naming.
+  - New `std::fmt`-less timestamp serializer. This **massively** improves `Format` conversion
+    performance, with a throughput boost of 1.35x-5.43x (!!!), and a mean of 3.05×.
+  - Formalize (and document) local TZ conversion limits for different platforms and (g)libc
+    implementations.
+  - NanoTime is now distibuted under either the MIT or Apache 2.0 licence.
+  - `Format::string_len()` now yields correct results for years 10,000 and higher.
+  - New `TimestampParts::leap_years_since_epoch()` method.
+  - Fix bug in RFC 7231 timestamp formatter.
+  - Fix a formatting bug for RFC 3339 timestamps on local TZ.
+
 ## Version 0.8.0 (2026-11-01)
 
   - Multiple bugfixes.

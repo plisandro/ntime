@@ -60,7 +60,7 @@ impl UtcDateTime {
 	pub const EPOCH: Self = Self::MIN;
 
 	/// Returns the UNIX epoch [`UtcDateTime`] (`1970-01-01 00:00:00 UTC`).
-	#[deprecated(note = "use UtcDateTime::EPOCH instead")]
+	#[deprecated(since = "1.0.0", note = "use UtcDateTime::EPOCH instead")]
 	#[inline]
 	pub fn epoch() -> Self {
 		Self::EPOCH
@@ -313,14 +313,14 @@ impl Timestamp {
 	}
 
 	/// Returns an UNIX epoch [`Timestamp`] (`1970-01-01 00:00:00 UTC`).
-	#[deprecated(note = "use Timestamp::EPOCH instead")]
+	#[deprecated(since = "1.0.0", note = "use Timestamp::EPOCH instead")]
 	#[inline]
 	pub fn epoch() -> Self {
 		Self::EPOCH
 	}
 
 	/// Creates a [`Timestamp`] from a given [`std::time::SystemTime`].
-	#[deprecated(note = "use Timestamp::try_from() instead")]
+	#[deprecated(since = "1.0.0", note = "use Timestamp::try_from() instead")]
 	pub fn from_system_time(st: std::time::SystemTime) -> Self {
 		Self::try_from(st).expect("failed to parse SystemTime")
 	}
