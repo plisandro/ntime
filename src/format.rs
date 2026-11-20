@@ -111,109 +111,109 @@ pub enum Format {
 #[allow(non_upper_case_globals)]
 impl Format {
 	/// Compact datetime format, in UTC: `2026-03-02 13:22:15`
-	#[deprecated(note = "use Format::DateTime(Timezone::Utc, Precision::Seconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::DateTime(Timezone::Utc, Precision::Seconds) instead")]
 	pub const UtcDateTime: Self = Self::DateTime(Timezone::Utc, Precision::Seconds);
 	/// Compact datetime with milliseconds, in UTC: `2026-03-02 13:22:15.488`
-	#[deprecated(note = "use Format::DateTime(Timezone::Utc, Precision::Milliseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::DateTime(Timezone::Utc, Precision::Milliseconds) instead")]
 	pub const UtcMillisDateTime: Self = Self::DateTime(Timezone::Utc, Precision::Milliseconds);
 	/// Compact datetime with nanoseconds, in UTC: `2026-03-02 13:22:15.488167982`
-	#[deprecated(note = "use Format::DateTime(Timezone::Utc, Precision::Nanoseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::DateTime(Timezone::Utc, Precision::Nanoseconds) instead")]
 	pub const UtcNanosDateTime: Self = Self::DateTime(Timezone::Utc, Precision::Nanoseconds);
 	/// Compact date, in UTC: `2026-03-02`
-	#[deprecated(note = "use Format::Date(Timezone::Utc) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Date(Timezone::Utc) instead")]
 	pub const UtcDate: Self = Self::Date(Timezone::Utc);
 	/// Compact time, in UTC: `13:22:15`
-	#[deprecated(note = "use Format::Time(Timezone::Utc, Precision::Seconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Time(Timezone::Utc, Precision::Seconds) instead")]
 	pub const UtcTime: Self = Self::Time(Timezone::Utc, Precision::Seconds);
 	/// Compact time with milliseconds, in UTC: `13:22:15.488`
-	#[deprecated(note = "use Format::Time(Timezone::Utc, Precision::Milliseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Time(Timezone::Utc, Precision::Milliseconds) instead")]
 	pub const UtcMillisTime: Self = Self::Time(Timezone::Utc, Precision::Milliseconds);
 	/// Compact time with nanoseconds, in UTC: `13:22:15.488167982`
-	#[deprecated(note = "use Format::Time(Timezone::Utc, Precision::Nanoseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Time(Timezone::Utc, Precision::Nanoseconds) instead")]
 	pub const UtcNanosTime: Self = Self::Time(Timezone::Utc, Precision::Nanoseconds);
 	/// Date/time format suitable to append to filenames. in UTC: `2026-03-02_13-22-15`
-	#[deprecated(note = "use Format::FileName(Timezone::Utc) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::FileName(Timezone::Utc) instead")]
 	pub const UtcFileName: Self = Self::FileName(Timezone::Utc);
 	/// [RFC 2822](https://www.rfc-editor.org/rfc/rfc2822.html) (Internet Message Format), in UTC: `Mon, 02 Mar 2026 13:22:15 +0000`
-	#[deprecated(note = "use Format::Rfc2822(Timezone::Utc) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Rfc2822(Timezone::Utc) instead")]
 	pub const UtcRFC2822: Self = Self::Rfc2822(Timezone::Utc);
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF), in UTC: `2026-03-02T13:22:15Z`
-	#[deprecated(note = "use Format::Rfc3339(Timezone::Utc, Precision::Seconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Rfc3339(Timezone::Utc, Precision::Seconds) instead")]
 	pub const UtcRFC3339: Self = Self::Rfc3339(Timezone::Utc, Precision::Seconds);
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with millisecond precision, in UTC: `2026-03-02T13:22:15.488Z`
-	#[deprecated(note = "use Format::Rfc3339(Timezone::Utc, Precision::Milliseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Rfc3339(Timezone::Utc, Precision::Milliseconds) instead")]
 	pub const UtcMillisRFC3339: Self = Self::Rfc3339(Timezone::Utc, Precision::Milliseconds);
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with nanosecond precision, in UTC: `2026-03-02T13:22:15.488167982Z`
-	#[deprecated(note = "use Format::Rfc3339(Timezone::Utc, Precision::Nanoseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Rfc3339(Timezone::Utc, Precision::Nanoseconds) instead")]
 	pub const UtcNanosRFC3339: Self = Self::Rfc3339(Timezone::Utc, Precision::Nanoseconds);
 	/// Abridged datetime format for syslog [RFC 3164](https://www.rfc-editor.org/rfc/rfc3164.html), in UTC: `Mar  2 13:22:15`
-	#[deprecated(note = "use Format::Rfc3164(Timezone::Utc) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Rfc3164(Timezone::Utc) instead")]
 	pub const UtcRFC3164: Self = Self::Rfc3164(Timezone::Utc);
 	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), in UTC: `2026-03-02T13:22:15Z`
-	#[deprecated(note = "use Format::Iso8601(Timezone::Utc, Precision::Seconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Iso8601(Timezone::Utc, Precision::Seconds) instead")]
 	pub const UtcISO8601: Self = Self::Iso8601(Timezone::Utc, Precision::Seconds);
 	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), with millisecond precision, in UTC: `2026-03-02T13:22:15.488Z`
-	#[deprecated(note = "use Format::Iso8601(Timezone::Utc, Precision::Milliseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Iso8601(Timezone::Utc, Precision::Milliseconds) instead")]
 	pub const UtcMillisISO8601: Self = Self::Iso8601(Timezone::Utc, Precision::Milliseconds);
 	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), with nanosecond precision, in UTC: `2026-03-02T13:22:15.488167982Z`
-	#[deprecated(note = "use Format::Iso8601(Timezone::Utc, Precision::Nanoseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Iso8601(Timezone::Utc, Precision::Nanoseconds) instead")]
 	pub const UtcNanosISO8601: Self = Self::Iso8601(Timezone::Utc, Precision::Nanoseconds);
 	/// Compact datetime, in local timezone: `2026-03-02 15:22:15 +0200`
-	#[deprecated(note = "use Format::DateTime(Timezone::Local, Precision::Seconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::DateTime(Timezone::Local, Precision::Seconds) instead")]
 	pub const LocalDateTime: Self = Self::DateTime(Timezone::Local, Precision::Seconds);
 	/// Compact datetime with milliseconds, in local timezone: `2026-03-02 15:22:15.488 +0200`
-	#[deprecated(note = "use Format::DateTime(Timezone::Local, Precision::Milliseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::DateTime(Timezone::Local, Precision::Milliseconds) instead")]
 	pub const LocalMillisDateTime: Self = Self::DateTime(Timezone::Local, Precision::Milliseconds);
 	/// Compact datetime with nanoseconds, in local timezone: `2026-03-02 15:22:15.488167982 +0200`
-	#[deprecated(note = "use Format::DateTime(Timezone::Local, Precision::Nanoseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::DateTime(Timezone::Local, Precision::Nanoseconds) instead")]
 	pub const LocalNanosDateTime: Self = Self::DateTime(Timezone::Local, Precision::Nanoseconds);
 	/// Compact date, in local timezone: `2026-03-02`
-	#[deprecated(note = "use Format::Date(Timezone::Local) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Date(Timezone::Local) instead")]
 	pub const LocalDate: Self = Self::Date(Timezone::Local);
 	/// Compact time, in local timezone: `15:22:15`
-	#[deprecated(note = "use Format::Time(Timezone::Local, Precision::Seconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Time(Timezone::Local, Precision::Seconds) instead")]
 	pub const LocalTime: Self = Self::Time(Timezone::Local, Precision::Seconds);
 	/// Compact time with milliseconds, in local timezone: `15:22:15.488`
-	#[deprecated(note = "use Format::Time(Timezone::Local, Precision::Milliseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Time(Timezone::Local, Precision::Milliseconds) instead")]
 	pub const LocalMillisTime: Self = Self::Time(Timezone::Local, Precision::Milliseconds);
 	/// Compact time with nanoseconds, in local timezone: `15:22:15.488167982`
-	#[deprecated(note = "use Format::Time(Timezone::Local, Precision::Nanoseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Time(Timezone::Local, Precision::Nanoseconds) instead")]
 	pub const LocalNanosTime: Self = Self::Time(Timezone::Local, Precision::Nanoseconds);
 	/// Date/time format suitable to append to filenames. in local timezone: `2026-03-02_15-22-15`
-	#[deprecated(note = "use Format::FileName(Timezone::Local) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::FileName(Timezone::Local) instead")]
 	pub const LocalFileName: Self = Self::FileName(Timezone::Local);
 	/// [RFC 2822](https://www.rfc-editor.org/rfc/rfc2822.html) (Internet Message Format), in local timezone: `Mon, 02 Mar 2026 15:22:15 +0200`
-	#[deprecated(note = "use Format::Rfc2822(Timezone::Local) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Rfc2822(Timezone::Local) instead")]
 	pub const LocalRFC2822: Self = Self::Rfc2822(Timezone::Local);
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF), in local timezone: `2026-03-02T15:22:15+02:00`
-	#[deprecated(note = "use Format::Rfc3339(Timezone::Local, Precision::Seconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Rfc3339(Timezone::Local, Precision::Seconds) instead")]
 	pub const LocalRFC3339: Self = Self::Rfc3339(Timezone::Local, Precision::Seconds);
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with millisecond precision, in local timezone: `2026-03-02T15:22:15.488+02:00`
-	#[deprecated(note = "use Format::Rfc3339(Timezone::Local, Precision::Milliseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Rfc3339(Timezone::Local, Precision::Milliseconds) instead")]
 	pub const LocalMillisRFC3339: Self = Self::Rfc3339(Timezone::Local, Precision::Milliseconds);
 	/// [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html) (IETF) with nanosecond precision, in local timezone: `2026-03-02T15:22:15.488167982+02:00`
-	#[deprecated(note = "use Format::Rfc3339(Timezone::Local, Precision::Nanoseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Rfc3339(Timezone::Local, Precision::Nanoseconds) instead")]
 	pub const LocalNanosRFC3339: Self = Self::Rfc3339(Timezone::Local, Precision::Nanoseconds);
 	/// Abridged datetime format for syslog [RFC 3164](https://www.rfc-editor.org/rfc/rfc3164.html), in local timezone: `Mar  2 15:22:15`
-	#[deprecated(note = "use Format::Rfc3164(Timezone::Local) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Rfc3164(Timezone::Local) instead")]
 	pub const LocalRFC3164: Self = Self::Rfc3164(Timezone::Local);
 	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), in local timezone: `2026-03-02T15:22:15+02:00`
-	#[deprecated(note = "use Format::Iso8601(Timezone::Local, Precision::Seconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Iso8601(Timezone::Local, Precision::Seconds) instead")]
 	pub const LocalISO8601: Self = Self::Iso8601(Timezone::Local, Precision::Seconds);
 	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), with millisecond precision, in local timezone: `2026-03-02T15:22:15.488+02:00`
-	#[deprecated(note = "use Format::Iso8601(Timezone::Local, Precision::Milliseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Iso8601(Timezone::Local, Precision::Milliseconds) instead")]
 	pub const LocalMillisISO8601: Self = Self::Iso8601(Timezone::Local, Precision::Milliseconds);
 	/// [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html), with nanosecond precision, in local timezone: `2026-03-02T15:22:15.488167982+02:00`
-	#[deprecated(note = "use Format::Iso8601(Timezone::Local, Precision::Nanoseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Iso8601(Timezone::Local, Precision::Nanoseconds) instead")]
 	pub const LocalNanosISO8601: Self = Self::Iso8601(Timezone::Local, Precision::Nanoseconds);
 	/// Seconds since UNIX epoch: `1772457735`
-	#[deprecated(note = "use Format::Timestamp(Precision::Seconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Timestamp(Precision::Seconds) instead")]
 	pub const TimestampSeconds: Self = Self::Timestamp(Precision::Seconds);
 	/// Milliseconds since UNIX epoch: `1772457735488`
-	#[deprecated(note = "use Format::Timestamp(Precision::Milliseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Timestamp(Precision::Milliseconds) instead")]
 	pub const TimestampMilliseconds: Self = Self::Timestamp(Precision::Milliseconds);
 	/// Nanoseconds since UNIX epoch: `1772457735488167982`
-	#[deprecated(note = "use Format::Timestamp(Precision::Nanoseconds) instead")]
+	#[deprecated(since = "1.0.0", note = "use Format::Timestamp(Precision::Nanoseconds) instead")]
 	pub const TimestampNanoseconds: Self = Self::Timestamp(Precision::Nanoseconds);
 }
 
@@ -838,7 +838,7 @@ impl Format {
 	}
 
 	/// Evaluates whether this [`Format`] is [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339.html).
-	#[deprecated(note = "match to Format::Rfc3339 instead")]
+	#[deprecated(since = "1.0.0", note = "match to Format::Rfc3339 instead")]
 	pub fn is_rfc_3339(&self) -> bool {
 		matches!(self, Self::Rfc3339(_, _))
 	}

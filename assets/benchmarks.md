@@ -9,6 +9,46 @@ than real-world sinks.
 
 All figures below were collected on 16-core AMD Ryzen 9 5950X system with 64GB of DDR4 memory.
 
+## Version 1.0.0 (2026-11-22)
+
+First major release. This version introduces a new highly optimized format serializer,
+yielding a throughput boost of 1.31x to 7.03x _(!!!)_ depending on the `Format`, with
+mean of ~3.72×.
+
+```
+Timer precision: 20 ns
+casting               fastest       │ slowest       │ median        │ mean          │ samples │ iters
+├─ as_integer                       │               │               │               │         │
+│  ├─ milliseconds    12.19 µs      │ 21.71 µs      │ 12.19 µs      │ 12.29 µs      │ 100     │ 100
+│  │                  819.6 Mitem/s │ 460.4 Mitem/s │ 819.6 Mitem/s │ 813.1 Mitem/s │         │
+│  ├─ nanoseconds     10.16 µs      │ 23.52 µs      │ 10.21 µs      │ 10.47 µs      │ 100     │ 100
+│  │                  983.3 Mitem/s │ 424.9 Mitem/s │ 978.4 Mitem/s │ 954.2 Mitem/s │         │
+│  ╰─ seconds         8.949 µs      │ 14.78 µs      │ 9.054 µs      │ 10.01 µs      │ 100     │ 100
+│                     1.117 Gitem/s │ 676.1 Mitem/s │ 1.104 Gitem/s │ 998.3 Mitem/s │         │
+├─ to_string                        │               │               │               │         │
+│  ├─ local           873.5 µs      │ 1.516 ms      │ 928.5 µs      │ 959.2 µs      │ 100     │ 100
+│  │                  11.44 Mitem/s │ 6.593 Mitem/s │ 10.76 Mitem/s │ 10.42 Mitem/s │         │
+│  ├─ nanoseconds     298.1 µs      │ 546.7 µs      │ 310.8 µs      │ 321.3 µs      │ 100     │ 100
+│  │                  33.54 Mitem/s │ 18.28 Mitem/s │ 32.16 Mitem/s │ 31.12 Mitem/s │         │
+│  ╰─ utc             376.4 µs      │ 559.9 µs      │ 402.3 µs      │ 420.1 µs      │ 100     │ 100
+│                     26.56 Mitem/s │ 17.85 Mitem/s │ 24.85 Mitem/s │ 23.79 Mitem/s │         │
+╰─ write                            │               │               │               │         │
+   ├─ io_empty                      │               │               │               │         │
+   │  ├─ local        588.4 µs      │ 1.131 ms      │ 605.9 µs      │ 633.3 µs      │ 100     │ 100
+   │  │               16.99 Mitem/s │ 8.837 Mitem/s │ 16.5 Mitem/s  │ 15.78 Mitem/s │         │
+   │  ├─ nanoseconds  126.7 µs      │ 195.9 µs      │ 131 µs        │ 140.9 µs      │ 100     │ 100
+   │  │               78.9 Mitem/s  │ 51.04 Mitem/s │ 76.28 Mitem/s │ 70.94 Mitem/s │         │
+   │  ╰─ utc          125.1 µs      │ 147 µs        │ 129.5 µs      │ 130.4 µs      │ 100     │ 100
+   │                  79.87 Mitem/s │ 68.02 Mitem/s │ 77.19 Mitem/s │ 76.63 Mitem/s │         │
+   ╰─ mem_buffer                    │               │               │               │         │
+      ├─ local        630.7 µs      │ 1.128 ms      │ 643.5 µs      │ 671.3 µs      │ 100     │ 100
+      │               15.85 Mitem/s │ 8.863 Mitem/s │ 15.53 Mitem/s │ 14.89 Mitem/s │         │
+      ├─ nanoseconds  147.9 µs      │ 240.8 µs      │ 154.5 µs      │ 165.3 µs      │ 100     │ 100
+      │               67.6 Mitem/s  │ 41.51 Mitem/s │ 64.68 Mitem/s │ 60.46 Mitem/s │         │
+      ╰─ utc          178.1 µs      │ 272.2 µs      │ 181 µs        │ 189.9 µs      │ 100     │ 100
+                      56.11 Mitem/s │ 36.73 Mitem/s │ 55.22 Mitem/s │ 52.65 Mitem/s │         │
+```
+
 ## Version 0.8.0 (2026-11-01)
 
 ```

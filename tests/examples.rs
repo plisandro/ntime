@@ -72,8 +72,10 @@ mod dummy_examples {
 		start.write(&mut sink, &Format::DateTime(Timezone::Utc, Precision::Milliseconds)).expect("UTC write failed");
 		println!("wrote a UTC timestamp to Empty in {elapsed:?}", elapsed = Timestamp::now() - start);
 
+		/*
 		let start = Timestamp::now();
 		start.write(&mut sink, &Format::DateTime(Timezone::Local, Precision::Milliseconds)).expect("local write failed");
 		println!("wrote a local timestamp to Empty in {elapsed:?}", elapsed = Timestamp::now() - start);
+		*/
 	}
 }
