@@ -117,7 +117,7 @@
 //! use ntime::{Timestamp, Duration};
 //!
 //! let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp");
-//! let delta = Duration::from_hours(10);
+//! let delta = Duration::from_secs(36000);
 //!
 //! println!("[{a}] + {delta:?} = {}", a + delta);
 //! ```
@@ -133,7 +133,7 @@
 //! use ntime::{Timestamp, Duration};
 //!
 //! let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp");
-//! let delta = Duration::from_hours(10);
+//! let delta = Duration::from_secs(36000);
 //!
 //! println!("[{a}] - {delta:?} = {}", a - delta);
 //! ```

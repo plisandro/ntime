@@ -43,7 +43,7 @@ mod dummy_examples {
 	#[test]
 	fn add_duration() {
 		let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp");
-		let delta = Duration::from_hours(10);
+		let delta = Duration::from_secs(36000);
 
 		println!("[{a}] + {delta:?} = {}", a + delta);
 	}
@@ -51,7 +51,7 @@ mod dummy_examples {
 	#[test]
 	fn sub_duration() {
 		let a = Timestamp::try_from((2026, 3, 24, 17, 44, 48, 123, 456)).expect("invalid parameters for timestamp");
-		let delta = Duration::from_hours(10);
+		let delta = Duration::from_secs(36000);
 
 		println!("[{a}] - {delta:?} = {}", a - delta);
 	}
