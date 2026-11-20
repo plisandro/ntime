@@ -677,7 +677,11 @@ impl Format {
 	}
 
 	/// Returns the string representation length for a [`Timestamp`] using this [`Format`]
-	pub fn string_len_for(&self, ts: &Timestamp) -> usize {
+	///
+	/// # Errors
+	///
+	/// Returns a [`CastError`] upon conversion issues.
+	pub fn try_string_len_for(&self, ts: &Timestamp) -> Result<usize, CastError> {
 		// minor optimization: every date before the timestamp for
 		// 9999-12-30 00:00:00 has a four-digit year, regardless of timezone.
 		const FOUR_DIGIT_YEAR_CUTOFF_TIMESTAMP_SECS: u64 = 253402128000;
@@ -691,15 +695,15 @@ impl Format {
 				digits_u64(ts.to_utc_parts().year)
 			}
 		};
-		let digits_local_year = |ts: &Timestamp| -> usize {
+		let digits_local_year = |ts: &Timestamp| -> Result<usize, CastError> {
 			if ts.as_secs() < FOUR_DIGIT_YEAR_CUTOFF_TIMESTAMP_SECS {
-				4
+				Ok(4)
 			} else {
-				digits_u64(ts.to_local_parts().year)
+				Ok(digits_u64(ts.try_to_local_parts()?.year))
 			}
 		};
 
-		match self {
+		Ok(match self {
 			// fixed-size formats
 
 			// 13:22:15
@@ -728,23 +732,23 @@ impl Format {
 			// 2026-03-02 13:22:15.488167982
 			Self::DateTime(Timezone::Utc, Precision::Nanoseconds) => 25 + digits_utc_year(ts),
 			// 2026-03-02 15:22:15 +0200
-			Self::DateTime(Timezone::Local, Precision::Seconds) => 21 + digits_local_year(ts),
+			Self::DateTime(Timezone::Local, Precision::Seconds) => 21 + digits_local_year(ts)?,
 			// 2026-03-02 15:22:15.488 +0200
-			Self::DateTime(Timezone::Local, Precision::Milliseconds) => 25 + digits_local_year(ts),
+			Self::DateTime(Timezone::Local, Precision::Milliseconds) => 25 + digits_local_year(ts)?,
 			// 2026-03-02 15:22:15.488167982 +0200
-			Self::DateTime(Timezone::Local, Precision::Nanoseconds) => 31 + digits_local_year(ts),
+			Self::DateTime(Timezone::Local, Precision::Nanoseconds) => 31 + digits_local_year(ts)?,
 			// 2026-03-02
 			Self::Date(Timezone::Utc) => 6 + digits_utc_year(ts),
 			// 2026-03-02
-			Self::Date(Timezone::Local) => 6 + digits_local_year(ts),
+			Self::Date(Timezone::Local) => 6 + digits_local_year(ts)?,
 			// 2026-03-02_13-22-15
 			Self::FileName(Timezone::Utc) => 15 + digits_utc_year(ts),
 			// 2026-03-02_15-22-15
-			Self::FileName(Timezone::Local) => 15 + digits_local_year(ts),
+			Self::FileName(Timezone::Local) => 15 + digits_local_year(ts)?,
 			// Mon, 02 Mar 2026 13:22:15 +0000
 			Self::Rfc2822(Timezone::Utc) => 27 + digits_utc_year(ts),
 			// Mon, 02 Mar 2026 15:22:15 +0200
-			Self::Rfc2822(Timezone::Local) => 27 + digits_local_year(ts),
+			Self::Rfc2822(Timezone::Local) => 27 + digits_local_year(ts)?,
 			// 2026-03-02T13:22:15Z
 			Self::Rfc3339(Timezone::Utc, Precision::Seconds) | Self::Iso8601(Timezone::Utc, Precision::Seconds) => 16 + digits_utc_year(ts),
 			// 2026-03-02T13:22:15.488Z
@@ -752,11 +756,11 @@ impl Format {
 			// 2026-03-02T13:22:15.488167982Z
 			Self::Rfc3339(Timezone::Utc, Precision::Nanoseconds) | Self::Iso8601(Timezone::Utc, Precision::Nanoseconds) => 26 + digits_utc_year(ts),
 			// 2026-03-02T15:22:15+02:00
-			Self::Rfc3339(Timezone::Local, Precision::Seconds) | Self::Iso8601(Timezone::Local, Precision::Seconds) => 21 + digits_local_year(ts),
+			Self::Rfc3339(Timezone::Local, Precision::Seconds) | Self::Iso8601(Timezone::Local, Precision::Seconds) => 21 + digits_local_year(ts)?,
 			// 2026-03-02T15:22:15.488+02:00
-			Self::Rfc3339(Timezone::Local, Precision::Milliseconds) | Self::Iso8601(Timezone::Local, Precision::Milliseconds) => 25 + digits_local_year(ts),
+			Self::Rfc3339(Timezone::Local, Precision::Milliseconds) | Self::Iso8601(Timezone::Local, Precision::Milliseconds) => 25 + digits_local_year(ts)?,
 			// 2026-03-02T15:22:15.488167982+02:00
-			Self::Rfc3339(Timezone::Local, Precision::Nanoseconds) | Self::Iso8601(Timezone::Local, Precision::Nanoseconds) => 31 + digits_local_year(ts),
+			Self::Rfc3339(Timezone::Local, Precision::Nanoseconds) | Self::Iso8601(Timezone::Local, Precision::Nanoseconds) => 31 + digits_local_year(ts)?,
 			// Mon, 02 Mar 2026 13:22:15 GMT
 			Self::Rfc7231 => 25 + digits_utc_year(ts),
 
@@ -766,6 +770,19 @@ impl Format {
 			Self::Timestamp(Precision::Milliseconds) => digits_u128(ts.as_millis()),
 			// 1772457735488167982
 			Self::Timestamp(Precision::Nanoseconds) => digits_u128(ts.as_nanos()),
+		})
+	}
+
+	/// Returns the string representation length for a [`Timestamp`] using this [`Format`]
+	///
+	/// # Panics
+	///
+	/// Panics upon conversion issues.
+	#[inline]
+	pub fn string_len_for(&self, ts: &Timestamp) -> usize {
+		match self.try_string_len_for(ts) {
+			Ok(l) => l,
+			Err(e) => panic!("{e}"),
 		}
 	}
 

@@ -403,8 +403,21 @@ impl Timestamp {
 	}
 
 	/// Returns the string representation length for the given [`Format`].
+	///
+	/// # Panics
+	///
+	/// Panics upon conversion issues.
 	pub fn string_len_as(&self, format: &Format) -> usize {
 		format.string_len_for(self)
+	}
+
+	/// Returns the string representation length for the given [`Format`].
+	///
+	/// # Errors
+	///
+	/// Returns a [`CastError`] upon conversion issues.
+	pub fn try_string_len_as(&self, format: &Format) -> Result<usize, CastError> {
+		format.try_string_len_for(self)
 	}
 
 	/// Returns a integer representation for the timestamp, if the given [`Format`] supports it.
