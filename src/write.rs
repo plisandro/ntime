@@ -38,44 +38,44 @@ impl Buffer {
 	}
 
 	/// Serializes a single [`u8`] into the [`Buffer`].
-	#[inline]
+	#[inline(always)]
 	pub fn u8(&mut self, c: u8) {
 		self.buf[self.idx] = c;
 		self.idx += 1;
 	}
 
 	/// Serializes a space (` `) into the [`Buffer`].
-	#[inline]
+	#[inline(always)]
 	pub fn space(&mut self) {
 		self.u8(b' ');
 	}
 
 	/// Serializes a colon (`:`) into the [`Buffer`].
-	#[inline]
+	#[inline(always)]
 	pub fn colon(&mut self) {
 		self.u8(b':');
 	}
 
 	/// Serializes a hyphen (`-`) into the [`Buffer`].
-	#[inline]
+	#[inline(always)]
 	pub fn hyphen(&mut self) {
 		self.u8(b'-');
 	}
 
 	/// Serializes a dot (`.`) into the [`Buffer`].
-	#[inline]
+	#[inline(always)]
 	pub fn dot(&mut self) {
 		self.u8(b'.');
 	}
 
 	/// Serializes an underscore (`_`) into the [`Buffer`].
-	#[inline]
+	#[inline(always)]
 	pub fn underscore(&mut self) {
 		self.u8(b'_');
 	}
 
 	/// Serializes a [`&str`] into the [`Buffer`].
-	#[inline]
+	#[inline(always)]
 	pub fn str(&mut self, s: &str) {
 		let len = s.len();
 		self.buf[self.idx..self.idx + len].copy_from_slice(s.as_bytes());
@@ -83,14 +83,14 @@ impl Buffer {
 	}
 
 	/// Computes the number of digits for a [`u64`].
-	#[inline]
+	#[inline(always)]
 	fn u64_digits(n: u64) -> usize {
 		n.checked_ilog10().unwrap_or(0) as usize + 1
 	}
 
 	/// Serializes a [`u8`] as a decimal string into the [`Buffer`], with configurable padding.
 	/// Expects the provided number to fit the (supported) pad size.
-	#[inline]
+	#[inline(always)]
 	pub fn u8_dec_padded(&mut self, n: u8, pad: u8, pad_size: usize) {
 		if pad_size == 2 {
 			if pad == b'0' {
@@ -110,7 +110,7 @@ impl Buffer {
 	}
 
 	/// Serializes a [`u64`] as a decimal string into the [`Buffer`].
-	#[inline]
+	#[inline(always)]
 	pub fn u64_dec(&mut self, n: u64) {
 		match n {
 			0..10 => {
@@ -165,7 +165,7 @@ impl Buffer {
 	///
 	/// Optimized for `pad` = `0`, where exactly pad_size digits will be written. For other pad
 	/// types, the output will be `max(<digits in n>, pad_size)` in length.
-	#[inline]
+	#[inline(always)]
 	pub fn u64_dec_padded(&mut self, n: u64, pad: u8, pad_size: usize) {
 		match pad {
 			b'0' => {
@@ -199,7 +199,7 @@ impl Buffer {
 	}
 
 	/// Serializes a [`u128`] as a decimal string into the [`Buffer`].
-	#[inline]
+	#[inline(always)]
 	pub fn u128_dec(&mut self, n: u128) {
 		match u64::try_from(n) {
 			Ok(n) => self.u64_dec(n),
@@ -227,19 +227,19 @@ impl Buffer {
 	}
 
 	/// Serializes a [`u16`] as a decimal string into the [`Buffer`], with configurable padding.
-	#[inline]
+	#[inline(always)]
 	pub fn u16_dec_padded(&mut self, n: u16, pad: u8, pad_size: usize) {
 		self.u64_dec_padded(n as u64, pad, pad_size);
 	}
 
 	/// Serializes a [`u32`] as a decimal string into the [`Buffer`], with configurable padding.
-	#[inline]
+	#[inline(always)]
 	pub fn u32_dec_padded(&mut self, n: u32, pad: u8, pad_size: usize) {
 		self.u64_dec_padded(n as u64, pad, pad_size);
 	}
 
 	/// Writes the contents of the [`Buffer`] into a given [`std::io::Write`].
-	#[inline]
+	#[inline(always)]
 	pub fn write<T: io::Write>(&self, out: &mut T) -> io::Result<()> {
 		out.write_all(&self.buf[0..self.idx])
 	}
