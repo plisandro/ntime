@@ -81,9 +81,19 @@ wrote a timestamp to Empty in 2.34µs
   * [CHANGELOG]
   * [Real-world benchmarks][benchmarks]
 
+## Support
+
+Comments, feedback and bug reports are always welcome!
+
+Contributions will be accepted under the [project's license](#license).
+
 ## License
 
-NanoTime is distributed under the [MIT license][mit].
+NanoTime is distributed under the terms of the [MIT][mit] or [Apache 2.0][apache] license, at your option.
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in NanoTime
+by you, as defined in the [Apache 2.0][apache] license, shall be dual licensed as above, without any
+additional terms or conditions.
 
 <img src="assets/Developed-By-a-Human-Not-By-AI-Badge-white.svg" title="Courtesy of https://notbyai.fyi/" height="80px"/>
 
@@ -92,4 +102,5 @@ NanoTime is distributed under the [MIT license][mit].
 [crates-io]: https://crates.io/crates/ntime
 [CHANGELOG]: CHANGELOG.md
 [benchmarks]: assets/benchmarks.md
-[mit]: LICENSE
+[mit]: LICENSE-MIT
+[apache]: LICENSE-APACHE

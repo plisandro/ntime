@@ -229,6 +229,13 @@
 //! As noted, NanoTime is not well suited for applications requiring calendar operations,
 //! and/or flexible timezone management.
 //!
+//! # Repository
+//!
+//! This project is currently hosted at [GitHub](https://github.com/plisandro/ntime).
+//!
+//! # License
+//!
+//! NanoTime is distributed under the MIT or Apache 2.0 license, at your option.
 
 #![deny(missing_docs)]
 #![deny(dead_code)]

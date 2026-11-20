@@ -4,9 +4,8 @@ description = "NanoTime is a lightweight, high performance Rust library for nano
 version = "0.8.0"
 authors = ["Lisandro Pin <lisandrop@proton.me>"]
 categories = ["date-and-time"]
-license = "MIT"
+license = "MIT OR Apache-2.0"
 edition = "2024"
-exclude = [".github/", ".gitignore", "assets/"]
 readme = "README.md"
 keywords = ["duration", "time", "timestamp"]
 repository = "https://github.com/plisandro/ntime"
@@ -14,7 +13,7 @@ rust-version = "1.85.0"
 
 include = [
   "Cargo.toml",
-  "LICENSE",
+  "LICENSE*",
   "src/**/*",
 ]
 
