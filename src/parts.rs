@@ -163,16 +163,20 @@ impl TimestampParts {
 	}
 
 	/// Creates a local timezone [`TimestampParts`] from a given [`Timestamp`].
-	pub fn local(ts: &Timestamp) -> Self {
+	///
+	/// # Errors
+	///
+	/// Returns a [`CastError`] upon conversion issues.
+	pub fn try_local(ts: &Timestamp) -> Result<Self, CastError> {
 		let (seconds, nanos) = ts.epoch_offset();
 		if seconds > TIMESTAMP_MAX_LOCAL_SECONDS {
-			panic!("timestamp {ts:?} cannot be converted to local timezone due to libc limitations");
+			return Err(CastError::Overflow("timestamp is larger than libc-imposed limits"));
 		}
 
 		let c_secs = seconds as c_bindings::CTime;
 		let tm = match c_bindings::c_time_to_local_tm(c_secs) {
 			Some(tm) => tm,
-			None => panic!("failed to parse local parts for {ts:?}"),
+			None => return Err(CastError::Internal("libc failed")),
 		};
 
 		let gmt_offset_secs: i32;
@@ -192,7 +196,7 @@ impl TimestampParts {
 
 		let (gmt_offset_negative, gmt_offset_hours, gmt_offset_minutes) = Self::_gmt_offset_parts(gmt_offset_secs);
 
-		TimestampParts {
+		Ok(TimestampParts {
 			nanoseconds: (nanos % U32_NANOS_IN_MILLI) as _,
 			milliseconds: (nanos / U32_NANOS_IN_MILLI) as _,
 			seconds: tm.tm_sec as _,
@@ -207,6 +211,19 @@ impl TimestampParts {
 			gmt_offset_hours,
 			gmt_offset_minutes,
 			timezone,
+		})
+	}
+
+	/// Creates a local timezone [`TimestampParts`] from a given [`Timestamp`].
+	///
+	/// # Panics
+	///
+	/// Panics upon conversion issues.
+	#[inline]
+	pub fn local(ts: &Timestamp) -> Self {
+		match Self::try_local(ts) {
+			Ok(p) => p,
+			Err(e) => panic!("{e}"),
 		}
 	}
 

@@ -8,6 +8,8 @@ use std::time;
 pub enum CastError {
 	/// A general conversion failure - f.ex. invalid values for date/time tuple.
 	Invalid(&'static str),
+	/// An internal error, which should be treated as unrecoverable.
+	Internal(&'static str),
 	/// Tried to cast from a value which is too large for the target.
 	Overflow(&'static str),
 	/// Tried to cast from a value which is too small for the target.
@@ -40,6 +42,10 @@ impl PartialEq for CastError {
 				Self::Invalid(os) => ss == os,
 				_ => false,
 			},
+			Self::Internal(ss) => match other {
+				Self::Internal(os) => ss == os,
+				_ => false,
+			},
 			Self::Overflow(ss) => match other {
 				Self::Overflow(os) => ss == os,
 				_ => false,
@@ -67,6 +73,7 @@ impl fmt::Display for CastError {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
 			Self::Invalid(s) => write!(f, "{}", s),
+			Self::Internal(s) => write!(f, "Internal: {}", s),
 			Self::Overflow(s) => write!(f, "Overflow: {}", s),
 			Self::Underflow(s) => write!(f, "Underflow: {}", s),
 			Self::TimestampParts(s) => write!(f, "TimestampParts: {}", s),
@@ -102,7 +109,7 @@ impl fmt::Display for TimestampOpError {
 impl From<CastError> for TimestampOpError {
 	fn from(err: CastError) -> Self {
 		match err {
-			CastError::Invalid(e) | CastError::TimestampParts(e) => Self::Invalid(e),
+			CastError::Invalid(e) | CastError::TimestampParts(e) | CastError::Internal(e) => Self::Invalid(e),
 			CastError::SystemTime(_) => Self::Invalid("SystemTime error"),
 			CastError::Overflow(e) => Self::Overflow(e),
 			CastError::Underflow(e) => Self::Underflow(e),

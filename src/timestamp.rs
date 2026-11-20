@@ -367,8 +367,21 @@ impl Timestamp {
 	}
 
 	/// Returns a [`TimestampParts`] for the timezone, in the local timezone.
+	///
+	/// # Panics
+	///
+	/// Panics upon conversion issues.
 	pub fn to_local_parts(&self) -> TimestampParts {
 		TimestampParts::local(self)
+	}
+
+	/// Returns a [`TimestampParts`] for the timezone, in the local timezone.
+	///
+	/// # Errors
+	///
+	/// Returns a [`CastError`] upon conversion issues.
+	pub fn try_to_local_parts(&self) -> Result<TimestampParts, CastError> {
+		TimestampParts::try_local(self)
 	}
 
 	/// Returns a string representation for the timestamp, in a given [`Format`].
