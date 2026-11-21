@@ -1,5 +1,3 @@
-use super::Timestamp;
-
 use crate::c_bindings;
 use crate::constant::{
 	DAY_NAMES, DAYS_IN_MONTH_COMMON_YEAR, DAYS_IN_MONTH_LEAP_YEAR, MONTH_NAMES, MONTH_TO_DAYS_COMMON_YEAR, MONTH_TO_DAYS_LEAP_YEAR, TIMESTAMP_MAX_LOCAL_SECONDS, TIMESTAMP_MAX_LOCAL_YEAR,
@@ -8,6 +6,7 @@ use crate::constant::{
 	U64_SECONDS_IN_COMMON_YEAR, U64_SECONDS_IN_DAY, U64_SECONDS_IN_HOUR, U64_SECONDS_IN_MINUTE, U64_TM_YEAR_OFFSET, U64_UNIX_EPOCH_SHIFT_IN_DAYS,
 };
 use crate::error::CastError;
+use crate::timestamp::Timestamp;
 
 /// A decomposition of a [`Timestamp`] into date + time parts, for a given timezone.
 #[derive(Clone, Debug, PartialEq)]
@@ -76,8 +75,11 @@ impl TimestampParts {
 		(year & 3 == 0) && (year % 25 != 0 || year & 15 == 0)
 	}
 
-	/// Creates a UTC [`TimestampParts`] from a given [`Timestamp`].
-	pub fn utc(ts: &Timestamp) -> Self {
+	/// Updates a [`TimestampParts`] with UTC details from a given [`Timestamp`].
+	///
+	/// This allows to generate a [`TimestampParts`] without having to return it
+	/// through the stack, ensuring struct size has no impact on call performance.
+	pub(crate) fn _utc_ref(ts: &Timestamp, parts: &mut TimestampParts) {
 		let (seconds, nanos) = ts.epoch_offset();
 
 		let days_since_epoch = seconds / U64_SECONDS_IN_DAY;
@@ -144,30 +146,41 @@ impl TimestampParts {
 			} as u64
 		};
 
-		TimestampParts {
-			nanoseconds: day_nanoseconds as _,
-			milliseconds: day_milliseconds as _,
-			seconds: day_seconds as _,
-			minutes: day_minutes as _,
-			hour: day_hour as _,
-			month_day: day as _,
-			month: month as _,
-			year: year as _,
-			week_day: week_day as _,
-			year_day: year_day as _,
-			gmt_offset_negative: false,
-			gmt_offset_hours: 0 as _,
-			gmt_offset_minutes: 0 as _,
-			timezone: TIMEZONE_UTC,
-		}
+		parts.nanoseconds = day_nanoseconds as _;
+		parts.milliseconds = day_milliseconds as _;
+		parts.seconds = day_seconds as _;
+		parts.minutes = day_minutes as _;
+		parts.hour = day_hour as _;
+		parts.month_day = day as _;
+		parts.month = month as _;
+		parts.year = year as _;
+		parts.week_day = week_day as _;
+		parts.year_day = year_day as _;
+		parts.gmt_offset_negative = false;
+		parts.gmt_offset_hours = 0 as _;
+		parts.gmt_offset_minutes = 0 as _;
+		parts.timezone = TIMEZONE_UTC;
 	}
 
-	/// Creates a local timezone [`TimestampParts`] from a given [`Timestamp`].
+	/// Creates a UTC [`TimestampParts`] from a given [`Timestamp`].
+	#[inline]
+	pub fn utc(ts: &Timestamp) -> Self {
+		let mut parts = Self::EPOCH;
+
+		Self::_utc_ref(ts, &mut parts);
+		parts
+	}
+
+	/// Updates a [`TimestampParts`] with local TZ details from a given [`Timestamp`].
+	///
+	/// This allows to generate a [`TimestampParts`] without having to return a full
+	/// `Result<TimestampParts, CastError>` and blowing up the stack frame size,
+	/// which has a measurable perfomance impact (13-17%).
 	///
 	/// # Errors
 	///
 	/// Returns a [`CastError`] upon conversion issues.
-	pub fn try_local(ts: &Timestamp) -> Result<Self, CastError> {
+	pub(crate) fn _try_local_ref(ts: &Timestamp, parts: &mut TimestampParts) -> Result<(), CastError> {
 		let (seconds, nanos) = ts.epoch_offset();
 		if seconds > TIMESTAMP_MAX_LOCAL_SECONDS {
 			return Err(CastError::Overflow("timestamp is larger than libc-imposed limits"));
@@ -196,22 +209,35 @@ impl TimestampParts {
 
 		let (gmt_offset_negative, gmt_offset_hours, gmt_offset_minutes) = Self::_gmt_offset_parts(gmt_offset_secs);
 
-		Ok(TimestampParts {
-			nanoseconds: (nanos % U32_NANOS_IN_MILLI) as _,
-			milliseconds: (nanos / U32_NANOS_IN_MILLI) as _,
-			seconds: tm.tm_sec as _,
-			minutes: tm.tm_min as _,
-			hour: tm.tm_hour as _,
-			month_day: tm.tm_mday as _,
-			month: (1 + tm.tm_mon) as _,
-			year: tm.tm_year as u64 + U64_TM_YEAR_OFFSET,
-			week_day: (1 + tm.tm_wday) as _,
-			year_day: (1 + tm.tm_yday) as _,
-			gmt_offset_negative,
-			gmt_offset_hours,
-			gmt_offset_minutes,
-			timezone,
-		})
+		parts.nanoseconds = (nanos % U32_NANOS_IN_MILLI) as _;
+		parts.milliseconds = (nanos / U32_NANOS_IN_MILLI) as _;
+		parts.seconds = tm.tm_sec as _;
+		parts.minutes = tm.tm_min as _;
+		parts.hour = tm.tm_hour as _;
+		parts.month_day = tm.tm_mday as _;
+		parts.month = (1 + tm.tm_mon) as _;
+		parts.year = tm.tm_year as u64 + U64_TM_YEAR_OFFSET;
+		parts.week_day = (1 + tm.tm_wday) as _;
+		parts.year_day = (1 + tm.tm_yday) as _;
+		parts.gmt_offset_negative = gmt_offset_negative;
+		parts.gmt_offset_hours = gmt_offset_hours;
+		parts.gmt_offset_minutes = gmt_offset_minutes;
+		parts.timezone = timezone;
+
+		Ok(())
+	}
+
+	/// Creates a local timezone [`TimestampParts`] from a given [`Timestamp`].
+	///
+	/// # Errors
+	///
+	/// Returns a [`CastError`] upon conversion issues.
+	#[inline]
+	pub fn try_local(ts: &Timestamp) -> Result<Self, CastError> {
+		let mut parts = Self::EPOCH;
+
+		Self::_try_local_ref(ts, &mut parts)?;
+		Ok(parts)
 	}
 
 	/// Creates a local timezone [`TimestampParts`] from a given [`Timestamp`].
@@ -221,9 +247,11 @@ impl TimestampParts {
 	/// Panics upon conversion issues.
 	#[inline]
 	pub fn local(ts: &Timestamp) -> Self {
-		match Self::try_local(ts) {
-			Ok(p) => p,
-			Err(e) => panic!("{e}"),
+		let mut parts = TimestampParts::EPOCH;
+
+		match Self::_try_local_ref(ts, &mut parts) {
+			Ok(_) => parts,
+			Err(e) => panic! {"{e}"},
 		}
 	}
 

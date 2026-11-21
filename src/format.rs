@@ -2,6 +2,7 @@ use std::fmt;
 use std::io;
 
 use crate::CastError;
+use crate::TimestampParts;
 use crate::timestamp::Timestamp;
 use crate::write;
 
@@ -294,12 +295,15 @@ impl Format {
 	/// Serializes a [`Timestamp`] as string, into a given [`std::io::Write`].
 	pub fn write<T: io::Write>(&self, out: &mut T, ts: &Timestamp) -> io::Result<()> {
 		let mut buf = write::Buffer::new();
-		let utc_parts = || ts.to_utc_parts();
-		let local_parts = || ts.try_to_local_parts().map_err(io::Error::other);
+
+		let load_utc_parts = |parts: &mut TimestampParts| TimestampParts::_utc_ref(ts, parts);
+		let load_local_parts = |parts: &mut TimestampParts| TimestampParts::_try_local_ref(ts, parts).map_err(io::Error::other);
 
 		match self {
 			Self::DateTime(Timezone::Utc, pr) => {
-				let parts = utc_parts();
+				let mut parts = TimestampParts::EPOCH;
+				load_utc_parts(&mut parts);
+
 				match pr {
 					Precision::Seconds => {
 						// "2026-03-02 13:22:15"
@@ -351,7 +355,9 @@ impl Format {
 				}
 			}
 			Self::DateTime(Timezone::Local, pr) => {
-				let parts = local_parts()?;
+				let mut parts = TimestampParts::EPOCH;
+				load_local_parts(&mut parts)?;
+
 				match pr {
 					Precision::Seconds => {
 						// "2026-03-02 15:22:15 +0200"
@@ -416,9 +422,10 @@ impl Format {
 			}
 			Self::FileName(tz) => {
 				// 	"2026-03-02_13-22-15"
-				let parts = match tz {
-					Timezone::Utc => utc_parts(),
-					Timezone::Local => local_parts()?,
+				let mut parts = TimestampParts::EPOCH;
+				match tz {
+					Timezone::Utc => load_utc_parts(&mut parts),
+					Timezone::Local => load_local_parts(&mut parts)?,
 				};
 
 				buf.u64_dec(parts.year);
@@ -435,9 +442,10 @@ impl Format {
 			}
 			Self::Date(tz) => {
 				// "2026-03-02"
-				let parts = match tz {
-					Timezone::Utc => utc_parts(),
-					Timezone::Local => local_parts()?,
+				let mut parts = TimestampParts::EPOCH;
+				match tz {
+					Timezone::Utc => load_utc_parts(&mut parts),
+					Timezone::Local => load_local_parts(&mut parts)?,
 				};
 
 				buf.u64_dec(parts.year);
@@ -447,9 +455,10 @@ impl Format {
 				buf.u8_dec_padded(parts.month_day, b'0', 2);
 			}
 			Self::Time(tz, pr) => {
-				let parts = match tz {
-					Timezone::Utc => utc_parts(),
-					Timezone::Local => local_parts()?,
+				let mut parts = TimestampParts::EPOCH;
+				match tz {
+					Timezone::Utc => load_utc_parts(&mut parts),
+					Timezone::Local => load_local_parts(&mut parts)?,
 				};
 
 				match pr {
@@ -486,9 +495,10 @@ impl Format {
 			}
 			Self::Rfc2822(tz) => {
 				// "Mon, 02 Mar 2026 13:22:15 +0000" (UTC), "Mon, 02 Mar 2026 15:22:15 +0200" (local)
-				let parts = match tz {
-					Timezone::Utc => utc_parts(),
-					Timezone::Local => local_parts()?,
+				let mut parts = TimestampParts::EPOCH;
+				match tz {
+					Timezone::Utc => load_utc_parts(&mut parts),
+					Timezone::Local => load_local_parts(&mut parts)?,
 				};
 
 				buf.str(parts.day_name());
@@ -510,7 +520,9 @@ impl Format {
 				buf.u8_dec_padded(parts.gmt_offset_minutes, b'0', 2);
 			}
 			Self::Rfc3339(Timezone::Utc, pr) | Self::Iso8601(Timezone::Utc, pr) => {
-				let parts = utc_parts();
+				let mut parts = TimestampParts::EPOCH;
+				load_utc_parts(&mut parts);
+
 				match pr {
 					Precision::Seconds => {
 						// "2026-03-02T13:22:15Z"
@@ -565,7 +577,8 @@ impl Format {
 				};
 			}
 			Self::Rfc3339(Timezone::Local, pr) | Self::Iso8601(Timezone::Local, pr) => {
-				let parts = local_parts()?;
+				let mut parts = TimestampParts::EPOCH;
+				load_local_parts(&mut parts)?;
 
 				match pr {
 					Precision::Seconds => {
@@ -631,9 +644,10 @@ impl Format {
 			}
 			Self::Rfc3164(tz) => {
 				// "Mar  2 15:22:15"
-				let parts = match tz {
-					Timezone::Utc => utc_parts(),
-					Timezone::Local => local_parts()?,
+				let mut parts = TimestampParts::EPOCH;
+				match tz {
+					Timezone::Utc => load_utc_parts(&mut parts),
+					Timezone::Local => load_local_parts(&mut parts)?,
 				};
 
 				buf.str(parts.month_name());
@@ -648,7 +662,8 @@ impl Format {
 			}
 			Self::Rfc7231 => {
 				// "Mon, 02 Mar 2026 13:22:15 GMT"
-				let parts = utc_parts();
+				let mut parts = TimestampParts::EPOCH;
+				load_utc_parts(&mut parts);
 
 				buf.str(parts.day_name());
 				buf.str(", ");
