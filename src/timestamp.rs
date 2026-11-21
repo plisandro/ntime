@@ -6,7 +6,7 @@ use std::time;
 use std::time::Duration;
 
 use crate::constant::{TIMESTAMP_MAX_MILLISECONDS, TIMESTAMP_MAX_NANOSECONDS, TIMEZONE_UTC, U32_NANOS_IN_SECOND, U64_SECONDS_IN_DAY, U128_MILLIS_IN_SECOND, U128_NANOS_IN_MILLI, U128_NANOS_IN_SECOND};
-use crate::error::{CastError, TimestampOpError};
+use crate::error::{CastError, PartsError, TimestampOpError};
 use crate::format::Format;
 use crate::parts::TimestampParts;
 
@@ -380,7 +380,7 @@ impl Timestamp {
 	/// # Errors
 	///
 	/// Returns a [`CastError`] upon conversion issues.
-	pub fn try_to_local_parts(&self) -> Result<TimestampParts, CastError> {
+	pub fn try_to_local_parts(&self) -> Result<TimestampParts, PartsError> {
 		TimestampParts::try_local(self)
 	}
 

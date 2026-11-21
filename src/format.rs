@@ -351,8 +351,7 @@ impl Format {
 				}
 			}
 			Self::DateTime(Timezone::Local, pr) => {
-				let mut parts = TimestampParts::EPOCH;
-				TimestampParts::_try_local_ref(&mut parts, ts).map_err(io::Error::other)?;
+				let parts = TimestampParts::try_local(ts).map_err(io::Error::other)?;
 
 				match pr {
 					Precision::Seconds => {
@@ -418,10 +417,9 @@ impl Format {
 			}
 			Self::FileName(tz) => {
 				// 	"2026-03-02_13-22-15"
-				let mut parts = TimestampParts::EPOCH;
-				match tz {
-					Timezone::Utc => TimestampParts::_utc_ref(&mut parts, ts),
-					Timezone::Local => TimestampParts::_try_local_ref(&mut parts, ts).map_err(io::Error::other)?,
+				let parts = match tz {
+					Timezone::Utc => TimestampParts::utc(ts),
+					Timezone::Local => TimestampParts::try_local(ts).map_err(io::Error::other)?,
 				};
 
 				buf.u64_dec(parts.year);
@@ -438,10 +436,9 @@ impl Format {
 			}
 			Self::Date(tz) => {
 				// "2026-03-02"
-				let mut parts = TimestampParts::EPOCH;
-				match tz {
-					Timezone::Utc => TimestampParts::_utc_ref(&mut parts, ts),
-					Timezone::Local => TimestampParts::_try_local_ref(&mut parts, ts).map_err(io::Error::other)?,
+				let parts = match tz {
+					Timezone::Utc => TimestampParts::utc(ts),
+					Timezone::Local => TimestampParts::try_local(ts).map_err(io::Error::other)?,
 				};
 
 				buf.u64_dec(parts.year);
@@ -451,10 +448,9 @@ impl Format {
 				buf.u8_dec_padded(parts.month_day, b'0', 2);
 			}
 			Self::Time(tz, pr) => {
-				let mut parts = TimestampParts::EPOCH;
-				match tz {
-					Timezone::Utc => TimestampParts::_utc_ref(&mut parts, ts),
-					Timezone::Local => TimestampParts::_try_local_ref(&mut parts, ts).map_err(io::Error::other)?,
+				let parts = match tz {
+					Timezone::Utc => TimestampParts::utc(ts),
+					Timezone::Local => TimestampParts::try_local(ts).map_err(io::Error::other)?,
 				};
 
 				match pr {
@@ -491,10 +487,9 @@ impl Format {
 			}
 			Self::Rfc2822(tz) => {
 				// "Mon, 02 Mar 2026 13:22:15 +0000" (UTC), "Mon, 02 Mar 2026 15:22:15 +0200" (local)
-				let mut parts = TimestampParts::EPOCH;
-				match tz {
-					Timezone::Utc => TimestampParts::_utc_ref(&mut parts, ts),
-					Timezone::Local => TimestampParts::_try_local_ref(&mut parts, ts).map_err(io::Error::other)?,
+				let parts = match tz {
+					Timezone::Utc => TimestampParts::utc(ts),
+					Timezone::Local => TimestampParts::try_local(ts).map_err(io::Error::other)?,
 				};
 
 				buf.str(parts.day_name());
@@ -572,8 +567,7 @@ impl Format {
 				};
 			}
 			Self::Rfc3339(Timezone::Local, pr) | Self::Iso8601(Timezone::Local, pr) => {
-				let mut parts = TimestampParts::EPOCH;
-				TimestampParts::_try_local_ref(&mut parts, ts).map_err(io::Error::other)?;
+				let parts = TimestampParts::try_local(ts).map_err(io::Error::other)?;
 
 				match pr {
 					Precision::Seconds => {
@@ -639,10 +633,9 @@ impl Format {
 			}
 			Self::Rfc3164(tz) => {
 				// "Mar  2 15:22:15"
-				let mut parts = TimestampParts::EPOCH;
-				match tz {
-					Timezone::Utc => TimestampParts::_utc_ref(&mut parts, ts),
-					Timezone::Local => TimestampParts::_try_local_ref(&mut parts, ts).map_err(io::Error::other)?,
+				let parts = match tz {
+					Timezone::Utc => TimestampParts::utc(ts),
+					Timezone::Local => TimestampParts::try_local(ts).map_err(io::Error::other)?,
 				};
 
 				buf.str(parts.month_name());

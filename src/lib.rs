@@ -253,7 +253,7 @@ mod timestamp;
 mod write;
 
 // Public exported symbols.
-pub use error::{CastError, TimestampOpError};
+pub use error::{CastError, PartsError, TimestampOpError};
 pub use format::{Format, Precision, Timezone};
 pub use parts::TimestampParts;
 pub use std::time::Duration;

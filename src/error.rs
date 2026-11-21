@@ -2,7 +2,28 @@ use std::error::Error;
 use std::fmt;
 use std::time;
 
-/// Failed to convert a type into a NanoTime type.
+/// Errors converting [`Timestamp`][crate::timestamp::Timestamp] to [`TimestampParts`][crate::parts::TimestampParts`].
+#[derive(Debug, Clone, Eq, PartialEq)]
+#[non_exhaustive]
+pub struct PartsError {
+	desc: &'static str,
+}
+
+impl Error for PartsError {}
+
+impl From<&'static str> for PartsError {
+	fn from(desc: &'static str) -> Self {
+		Self { desc }
+	}
+}
+
+impl fmt::Display for PartsError {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		write!(f, "Parts for Timestamp: {}", self.desc)
+	}
+}
+
+/// Errors converting generic types into a NanoTime type.
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub enum CastError {
@@ -26,6 +47,12 @@ impl Error for CastError {
 			Self::SystemTime(e) => Some(e),
 			_ => None,
 		}
+	}
+}
+
+impl From<PartsError> for CastError {
+	fn from(err: PartsError) -> Self {
+		Self::Internal(err.desc)
 	}
 }
 
