@@ -68,6 +68,7 @@ impl TimestampParts {
 	}
 
 	/// Resolves whether a given year is a leap year.
+	#[inline]
 	fn _is_leap_year(year: u64) -> bool {
 		// Implements an short-circuit version of the Drepper-Neri-Schneider algorithm:
 		// https://github.com/gcc-mirror/gcc/commit/86a0df1a6c7fe4a835620b868e76ea78d42d6620 .
@@ -274,6 +275,7 @@ impl TimestampParts {
 	}
 
 	/// Returns a short day name: `Tue`
+	#[inline]
 	pub fn day_name(&self) -> &str {
 		if self.week_day == 0 {
 			panic!("invalid week day for {self:?}");
@@ -282,6 +284,7 @@ impl TimestampParts {
 	}
 
 	/// Returns a short month name: `Mar`
+	#[inline]
 	pub fn month_name(&self) -> &str {
 		if self.month == 0 {
 			panic!("invalid month for {self:?}");
@@ -290,11 +293,13 @@ impl TimestampParts {
 	}
 
 	/// Resolves whether the year is a leap year ([`true`]) or common ([`false`]).
+	#[inline]
 	pub fn is_leap_year(&self) -> bool {
 		Self::_is_leap_year(self.year)
 	}
 
 	/// Resolves the total number of leap since UNIX epoch.
+	#[inline]
 	pub fn leap_years_since_epoch(&self) -> u64 {
 		if self.year < TIMESTAMP_MIN_YEAR {
 			return 0;
@@ -356,6 +361,7 @@ impl TimestampParts {
 	/// # Errors
 	///
 	/// Returns a [`CastError`] upon invalid [`TimestampParts`] fields.
+	#[inline]
 	pub fn validate(&self) -> Result<(), CastError> {
 		self.validate_fields()?;
 

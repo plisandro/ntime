@@ -181,6 +181,7 @@ impl Timestamp {
 	/// # Errors
 	///
 	/// Returns [`CastError::Overflow`] if the provided parameters won't fit a [`Timestamp`].
+	#[inline]
 	pub fn try_new(secs: u64, nanos: u32) -> Result<Self, CastError> {
 		let seconds = match secs.checked_add((nanos / U32_NANOS_IN_SECOND) as u64) {
 			Some(s) => s,
@@ -206,6 +207,7 @@ impl Timestamp {
 	}
 
 	/// Creates a [`Timestamp`] from a given epoch timestamp in seconds.
+	#[inline]
 	pub fn from_secs(secs: u64) -> Self {
 		Self { seconds: secs, nanoseconds: 0 }
 	}
@@ -326,37 +328,44 @@ impl Timestamp {
 	}
 
 	/// Creates a [`Timestamp`] for the current time.
+	#[inline]
 	pub fn now() -> Self {
 		Self::try_from(time::SystemTime::now()).expect("failed to parse current SystemTime")
 	}
 
 	/// Updates a [`Timestamp`] in place, with the contents of another [`Timestamp`].
+	#[inline]
 	pub fn copy_from(&mut self, other: &Self) {
 		self.seconds = other.seconds;
 		self.nanoseconds = other.nanoseconds;
 	}
 
 	/// Returns the number of seconds + nanoseconds since UNIX epoch.
+	#[inline]
 	pub fn epoch_offset(&self) -> (u64, u32) {
 		(self.seconds, self.nanoseconds)
 	}
 
 	/// Returns the number of days since UNIX epoch.
+	#[inline]
 	pub fn days_since_epoch(&self) -> u64 {
 		self.seconds / U64_SECONDS_IN_DAY
 	}
 
 	/// Returns number of seconds since UNIX epoch.
+	#[inline]
 	pub fn as_secs(&self) -> u64 {
 		self.seconds
 	}
 
 	/// Returns number of milliseconds since UNIX epoch.
+	#[inline]
 	pub fn as_millis(&self) -> u128 {
 		(self.seconds as u128) * U128_MILLIS_IN_SECOND + (self.nanoseconds as u128 / U128_NANOS_IN_MILLI)
 	}
 
 	/// Returns number of nanoseconds since UNIX epoch.
+	#[inline]
 	pub fn as_nanos(&self) -> u128 {
 		(self.seconds as u128) * U128_NANOS_IN_SECOND + self.nanoseconds as u128
 	}
@@ -389,6 +398,7 @@ impl Timestamp {
 	/// # Panics
 	///
 	/// Panics upon conversion issues.
+	#[inline]
 	pub fn to_string_as(&self, format: &Format) -> String {
 		format.to_string_for(self)
 	}
@@ -407,6 +417,7 @@ impl Timestamp {
 	/// # Panics
 	///
 	/// Panics upon conversion issues.
+	#[inline]
 	pub fn string_len_as(&self, format: &Format) -> usize {
 		format.string_len_for(self)
 	}
@@ -421,11 +432,13 @@ impl Timestamp {
 	}
 
 	/// Returns a integer representation for the timestamp, if the given [`Format`] supports it.
+	#[inline]
 	pub fn to_integer_as(&self, format: &Format) -> Option<u128> {
 		format.to_integer_for(self)
 	}
 
 	/// Serializes a string representation into a [`io::Write`],in the given [`Format`].
+	#[inline]
 	pub fn write<T: io::Write>(&self, out: &mut T, format: &Format) -> io::Result<()> {
 		format.write(out, self)
 	}
