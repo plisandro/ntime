@@ -79,7 +79,7 @@ impl TimestampParts {
 	///
 	/// This allows to generate a [`TimestampParts`] without having to return it
 	/// through the stack, ensuring struct size has no impact on call performance.
-	pub(crate) fn _utc_ref(ts: &Timestamp, parts: &mut TimestampParts) {
+	pub(crate) fn _utc_ref(parts: &mut TimestampParts, ts: &Timestamp) {
 		let (seconds, nanos) = ts.epoch_offset();
 
 		let days_since_epoch = seconds / U64_SECONDS_IN_DAY;
@@ -167,7 +167,7 @@ impl TimestampParts {
 	pub fn utc(ts: &Timestamp) -> Self {
 		let mut parts = Self::EPOCH;
 
-		Self::_utc_ref(ts, &mut parts);
+		Self::_utc_ref(&mut parts, ts);
 		parts
 	}
 
@@ -180,7 +180,7 @@ impl TimestampParts {
 	/// # Errors
 	///
 	/// Returns a [`CastError`] upon conversion issues.
-	pub(crate) fn _try_local_ref(ts: &Timestamp, parts: &mut TimestampParts) -> Result<(), CastError> {
+	pub(crate) fn _try_local_ref(parts: &mut TimestampParts, ts: &Timestamp) -> Result<(), CastError> {
 		let (seconds, nanos) = ts.epoch_offset();
 		if seconds > TIMESTAMP_MAX_LOCAL_SECONDS {
 			return Err(CastError::Overflow("timestamp is larger than libc-imposed limits"));
@@ -236,7 +236,7 @@ impl TimestampParts {
 	pub fn try_local(ts: &Timestamp) -> Result<Self, CastError> {
 		let mut parts = Self::EPOCH;
 
-		Self::_try_local_ref(ts, &mut parts)?;
+		Self::_try_local_ref(&mut parts, ts)?;
 		Ok(parts)
 	}
 
@@ -249,7 +249,7 @@ impl TimestampParts {
 	pub fn local(ts: &Timestamp) -> Self {
 		let mut parts = TimestampParts::EPOCH;
 
-		match Self::_try_local_ref(ts, &mut parts) {
+		match Self::_try_local_ref(&mut parts, ts) {
 			Ok(_) => parts,
 			Err(e) => panic! {"{e}"},
 		}
